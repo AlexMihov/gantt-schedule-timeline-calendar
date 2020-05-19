@@ -1703,7 +1703,7 @@
           simple = lib;
       }
       if (appendix)
-          return `${simple} ${simple}--${appendix}`;
+          return `${simple} ${simple}--${appendix.replace(/[^\w]+/gi, '-')}`;
       return simple;
   }
 

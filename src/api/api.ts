@@ -40,7 +40,7 @@ export function getClass(name: string, appendix: string = '') {
   if (name === lib) {
     simple = lib;
   }
-  if (appendix) return `${simple} ${simple}--${appendix}`;
+  if (appendix) return `${simple} ${simple}--${appendix.replace(/[^\w]+/gi, '-')}`;
   return simple;
 }
 
