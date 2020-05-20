@@ -5965,10 +5965,10 @@
 	    // Initialize plugins
 	    const pluginsDestroy = [];
 	    function destroyPlugins() {
-	        pluginsDestroy.forEach(destroy => destroy());
+	        pluginsDestroy.forEach((destroy) => destroy());
 	        pluginsDestroy.length = 0;
 	    }
-	    onDestroy(state.subscribe('config.plugins', plugins => {
+	    onDestroy(state.subscribe('config.plugins', (plugins) => {
 	        // plugins was changed but it could be whole config that was changed
 	        // - we need to destroy actual plugins and mount them again
 	        destroyPlugins();
@@ -5987,9 +5987,9 @@
 	    onDestroy(destroyPlugins);
 	    const componentSubs = [];
 	    let ListComponent;
-	    componentSubs.push(state.subscribe('config.components.List', value => (ListComponent = value)));
+	    componentSubs.push(state.subscribe('config.components.List', (value) => (ListComponent = value)));
 	    let ChartComponent;
-	    componentSubs.push(state.subscribe('config.components.Chart', value => (ChartComponent = value)));
+	    componentSubs.push(state.subscribe('config.components.Chart', (value) => (ChartComponent = value)));
 	    const List = createComponent(ListComponent);
 	    onDestroy(() => {
 	        if (List)
@@ -6001,12 +6001,12 @@
 	            Chart.destroy();
 	    });
 	    onDestroy(() => {
-	        componentSubs.forEach(unsub => unsub());
+	        componentSubs.forEach((unsub) => unsub());
 	    });
 	    let wrapper;
-	    onDestroy(state.subscribe('config.wrappers.Main', value => (wrapper = value)));
+	    onDestroy(state.subscribe('config.wrappers.Main', (value) => (wrapper = value)));
 	    let componentActions;
-	    onDestroy(state.subscribe('config.actions.main', actions => (componentActions = actions)));
+	    onDestroy(state.subscribe('config.actions.main', (actions) => (componentActions = actions)));
 	    const styleMap = new StyleMap({});
 	    let rowsHeight = 0;
 	    let resizerActive = false;
@@ -6175,16 +6175,16 @@
 	        'config.chart.items.*.height',
 	        'config.chart.items.*.rowId',
 	        'config.list.rows.*.$data.outerHeight',
-	        'config.scroll.vertical.area'
+	        'config.scroll.vertical.area',
 	    ], prepareExpandedCalculateRowHeightsAndFixOverlapped, { bulk: true }));
 	    onDestroy(state.subscribeAll(['$data.innerHeight', '$data.list.rowsHeight'], calculateHeightRelatedThings));
 	    onDestroy(state.subscribeAll([
 	        'config.chart.items.*.time',
 	        'config.chart.items.*.$data.position',
 	        '$data.list.visibleRows',
-	        'config.scroll.vertical.offset'
+	        'config.scroll.vertical.offset',
 	    ], calculateVisibleRowsHeights, {
-	        bulk: true
+	        bulk: true,
 	    }));
 	    onDestroy(state.subscribeAll(['$data.list.rowsWithParentsExpanded', 'config.scroll.vertical.dataIndex', 'config.chart.items.*.rowId'], generateVisibleRowsAndItems, { bulk: true /*, ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected']*/ }));
 	    function getLastPageDatesWidth(chartWidth, allDates) {
@@ -6221,7 +6221,7 @@
 	            period,
 	            time,
 	            callOnDate: false,
-	            callOnLevelDates: true
+	            callOnLevelDates: true,
 	        });
 	        const className = api.getClass('chart-calendar-date');
 	        for (const date of dates) {
@@ -6230,7 +6230,7 @@
 	                timeEnd: date.rightGlobalDate,
 	                vido,
 	                className,
-	                props: { date }
+	                props: { date },
 	            });
 	        }
 	        return dates;
@@ -6273,7 +6273,7 @@
 	        if (!time.zoom)
 	            return time;
 	        for (const level of levels) {
-	            const formatting = level.formats.find(format => +time.zoom <= +format.zoomTo);
+	            const formatting = level.formats.find((format) => +time.zoom <= +format.zoomTo);
 	            if (formatting && level.main) {
 	                time.period = formatting.period;
 	            }
@@ -6299,12 +6299,12 @@
 	        time.allDates = new Array(levels.length);
 	        // first of all we need to generate main dates because plugins may use it (HideWeekends for example)
 	        const mainLevel = levels[time.level];
-	        const formatting = mainLevel.formats.find(format => +time.zoom <= +format.zoomTo);
+	        const formatting = mainLevel.formats.find((format) => +time.zoom <= +format.zoomTo);
 	        time.allDates[time.level] = generatePeriodDates(formatting, time, mainLevel, time.level);
 	        let levelIndex = 0;
 	        for (const level of levels) {
 	            if (!level.main) {
-	                const formatting = level.formats.find(format => +time.zoom <= +format.zoomTo);
+	                const formatting = level.formats.find((format) => +time.zoom <= +format.zoomTo);
 	                time.allDates[levelIndex] = generatePeriodDates(formatting, time, level, levelIndex);
 	            }
 	            levelIndex++;
@@ -6314,7 +6314,7 @@
 	    function getPeriodDates(allLevelDates, time) {
 	        if (!allLevelDates.length)
 	            return [];
-	        const filtered = allLevelDates.filter(date => {
+	        const filtered = allLevelDates.filter((date) => {
 	            return ((date.leftGlobal >= time.leftGlobal && date.leftGlobal <= time.rightGlobal) ||
 	                (date.rightGlobal >= time.leftGlobal && date.rightGlobal <= time.rightGlobal) ||
 	                (date.leftGlobal <= time.leftGlobal && date.rightGlobal >= time.rightGlobal) ||
@@ -6332,7 +6332,7 @@
 	            date.currentView = {
 	                leftPx,
 	                rightPx: date.rightPx,
-	                width: date.width
+	                width: date.width,
 	            };
 	            if (firstLeftDiff < 0) {
 	                date.currentView.width = date.width + firstLeftDiff;
@@ -6352,14 +6352,14 @@
 	        time.levels = [];
 	        let levelIndex = 0;
 	        for (const level of levels) {
-	            const format = level.formats.find(format => +time.zoom <= +format.zoomTo);
+	            const format = level.formats.find((format) => +time.zoom <= +format.zoomTo);
 	            if (level.main) {
 	                time.format = format;
 	                time.level = levelIndex;
 	            }
 	            if (format) {
 	                let dates = getPeriodDates(time.allDates[levelIndex], time);
-	                time.onCurrentViewLevelDates.forEach(onCurrentViewLevelDates => {
+	                time.onCurrentViewLevelDates.forEach((onCurrentViewLevelDates) => {
 	                    dates = onCurrentViewLevelDates({ dates, format, time, level, levelIndex });
 	                });
 	                time.levels.push(dates);
@@ -6434,7 +6434,7 @@
 	                $data.position.viewTop = viewTop;
 	                return $data;
 	            }, {
-	                data: 'updateVisibleItems'
+	                data: 'updateVisibleItems',
 	            });
 	        }
 	        return multi;
@@ -6458,7 +6458,7 @@
 	        }
 	        time.fromDate = api.time.date(time.from);
 	        time.toDate = api.time.date(time.to);
-	        const mainLevel = calendar.levels.find(level => level.main);
+	        const mainLevel = calendar.levels.find((level) => level.main);
 	        if (!mainLevel) {
 	            throw new Error('Main calendar level not found (config.chart.calendar.levels).');
 	        }
@@ -6466,7 +6466,7 @@
 	        time.level = mainLevelIndex;
 	        if (!time.calculatedZoomMode) {
 	            if (time.period !== oldTime.period) {
-	                let periodFormat = mainLevel.formats.find(format => format.period === time.period && format.default);
+	                let periodFormat = mainLevel.formats.find((format) => format.period === time.period && format.default);
 	                if (periodFormat) {
 	                    time.zoom = periodFormat.zoomTo;
 	                }
@@ -6615,7 +6615,7 @@
 	        scrollDataIndex: 0,
 	        chartWidth: 0,
 	        from: 0,
-	        to: 0
+	        to: 0,
 	    };
 	    function recalculationIsNeeded() {
 	        const configTime = state.get('config.chart.time');
@@ -6656,7 +6656,7 @@
 	        '$data.chart.time',
 	        'config.chart.calendar.levels',
 	        'config.scroll.horizontal.dataIndex',
-	        '$data.chart.dimensions.width'
+	        '$data.chart.dimensions.width',
 	    ], () => {
 	        let reason = recalculationIsNeeded();
 	        if (reason.name)
@@ -6686,7 +6686,7 @@
 	            'jsrun.pro',
 	            'jsrun.top',
 	            'jsfiddle.net',
-	            'jsbin.com'
+	            'jsbin.com',
 	        ];
 	        let loc = location.host;
 	        const locParts = loc.split('.');
@@ -6720,8 +6720,8 @@
 	                mode: 'cors',
 	                credentials: 'omit',
 	                redirect: 'follow',
-	                body: JSON.stringify({ location: { href: location.href, host: location.host } })
-	            }).catch(e => { });
+	                body: JSON.stringify({ location: { href: location.href, host: location.host } }),
+	            }).catch((e) => { });
 	            localStorage.setItem('gstcus', 'true');
 	        }
 	    }
@@ -6761,7 +6761,7 @@
 	        ro.disconnect();
 	    });
 	    let horizontalScrollMultiplier, verticalScrollMultiplier;
-	    onDestroy(state.subscribe('config.scroll', scroll => {
+	    onDestroy(state.subscribe('config.scroll', (scroll) => {
 	        horizontalScrollMultiplier = scroll.horizontal.multiplier;
 	        verticalScrollMultiplier = scroll.vertical.multiplier;
 	    }));
@@ -6790,7 +6790,7 @@
 	    const mainActions = Actions.create(componentActions, actionProps);
 	    const slots = api.generateSlots('main', vido, props);
 	    onDestroy(slots.destroy);
-	    return templateProps => wrapper(html `
+	    return (templateProps) => wrapper(html `
         <div
           data-info-url="https://github.com/neuronetio/gantt-schedule-timeline-calendar"
           class=${className}
@@ -7560,33 +7560,33 @@
 	            data.state.update('$data.elements.list-column-rows', elements);
 	    }
 	    destroy(element, data) {
-	        data.state.update('$data.elements.list-column-rows', (elements) => {
-	            return elements.filter((el) => el !== element);
+	        data.state.update('$data.elements.list-column-rows', elements => {
+	            return elements.filter(el => el !== element);
 	        });
 	    }
 	}
 	function ListColumnRow(vido, props) {
-	    const { api, state, onDestroy, Detach, Actions, update, html, createComponent, onChange, StyleMap, unsafeHTML, } = vido;
+	    const { api, state, onDestroy, Detach, Actions, update, html, createComponent, onChange, StyleMap, unsafeHTML } = vido;
 	    const componentName = 'list-column-row';
 	    const actionProps = Object.assign(Object.assign({}, props), { api, state });
 	    let shouldDetach = false;
 	    const detach = new Detach(() => shouldDetach);
 	    let wrapper;
-	    onDestroy(state.subscribe('config.wrappers.ListColumnRow', (value) => (wrapper = value)));
+	    onDestroy(state.subscribe('config.wrappers.ListColumnRow', value => (wrapper = value)));
 	    let ListColumnRowExpanderComponent;
-	    onDestroy(state.subscribe('config.components.ListColumnRowExpander', (value) => (ListColumnRowExpanderComponent = value)));
+	    onDestroy(state.subscribe('config.components.ListColumnRowExpander', value => (ListColumnRowExpanderComponent = value)));
 	    const styleMap = new StyleMap(props.column.expander
 	        ? {
 	            height: '',
 	            top: '',
 	            ['--height']: '',
 	            ['--expander-padding-width']: '',
-	            ['--expander-size']: '',
+	            ['--expander-size']: ''
 	        }
 	        : {
 	            height: '',
 	            top: '',
-	            ['--height']: '',
+	            ['--height']: ''
 	        }, true);
 	    const ListColumnRowExpander = createComponent(ListColumnRowExpanderComponent, { row: props.row });
 	    let className = api.getClass(componentName);
@@ -7594,7 +7594,7 @@
 	    let classNameCurrent = api.getClass(componentName);
 	    const slots = api.generateSlots(componentName, vido, props);
 	    function onPropsChange(changedProps, options) {
-	        if (options.leave || changedProps.row === undefined || changedProps.column === undefined) {
+	        if (options.leave || !changedProps || changedProps.row === undefined || changedProps.column === undefined) {
 	            shouldDetach = true;
 	            slots.change(changedProps, options);
 	            update();
@@ -7684,7 +7684,7 @@
 	    if (!componentActions.includes(BindElementAction$1))
 	        componentActions.push(BindElementAction$1);
 	    const actions = Actions.create(componentActions, actionProps);
-	    return (templateProps) => wrapper(html `
+	    return templateProps => wrapper(html `
         <div detach=${detach} class=${classNameCurrent} style=${styleMap} data-actions=${actions}>
           ${props.column.expander ? ListColumnRowExpander.html() : null}
           <div class=${classNameContent}>
