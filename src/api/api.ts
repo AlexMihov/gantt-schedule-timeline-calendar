@@ -483,7 +483,7 @@ export class Api {
     for (let len = rowsWithParentsExpanded.length; index <= len; index++) {
       const rowId = rowsWithParentsExpanded[index];
       const row = rows[rowId];
-      if (row === undefined) continue;
+      if (!row || !row.$data) return [];
       if (currentRowsOffset <= innerHeight) {
         row.$data.position.viewTop = currentRowsOffset;
         visibleRows.push(row.id);
