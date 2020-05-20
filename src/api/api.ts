@@ -26,7 +26,7 @@ import {
   DefaultItem,
   DataChartTimeLevelDate,
   ScrollTypeVertical,
-  Rows,
+  Rows
 } from '../gstc';
 import { generateSlots } from './slots';
 import { lithtml } from '@neuronet.io/vido/src/vido';
@@ -56,7 +56,7 @@ function mergeActions(userConfig: Config, defaultConfig: Config, merge) {
   const defaultConfigActions = merge({}, defaultConfig.actions);
   const userActions = merge({}, userConfig.actions);
   let allActionNames = [...Object.keys(defaultConfigActions), ...Object.keys(userActions)];
-  allActionNames = allActionNames.filter((i) => allActionNames.includes(i));
+  allActionNames = allActionNames.filter(i => allActionNames.includes(i));
   const actions = {};
   for (const actionName of allActionNames) {
     actions[actionName] = [];
@@ -109,7 +109,7 @@ export const publicApi = {
     this.state.update('config.chart.time.period', period);
     return this.state.get('config.chart.time.zoom');
   },
-  dayjs,
+  dayjs
 };
 
 export interface WheelResult {
@@ -198,7 +198,7 @@ export class Api {
     const configRows: Rows = this.state.get('config.list.rows');
     const rows = [];
     for (const rowId of rowsId) {
-      rows.push(configRows[rowId]);
+      if (configRows[rowId]) rows.push(configRows[rowId]);
     }
     return rows;
   }
@@ -212,7 +212,7 @@ export class Api {
     const items = [];
     const configItems: Items = this.state.get('config.chart.items');
     for (const itemId of itemsId) {
-      items.push(configItems[itemId]);
+      if (configItems[itemId]) items.push(configItems[itemId]);
     }
     return items;
   }
@@ -222,7 +222,7 @@ export class Api {
     for (const linkedItemId of allLinkedIds) {
       const linkedItem = items[linkedItemId];
       if (!linkedItem) throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
-      linkedItem.linkedWith = allLinkedIds.filter((linkedItemId) => linkedItemId !== linkedItem.id);
+      linkedItem.linkedWith = allLinkedIds.filter(linkedItemId => linkedItemId !== linkedItem.id);
     }
   }
 
@@ -249,15 +249,15 @@ export class Api {
             actualRight: 0,
             top: item.top || 0,
             actualTop: item.top || 0,
-            viewTop: 0,
+            viewTop: 0
           },
           width: -1,
           actualWidth: -1,
-          detached: false,
+          detached: false
         };
       item.$data.time = {
         startDate: this.time.date(item.time.start),
-        endDate: this.time.date(item.time.end),
+        endDate: this.time.date(item.time.end)
       };
       item.$data.actualHeight = item.height;
       if (typeof item.top !== 'number') item.top = 0;
@@ -284,11 +284,11 @@ export class Api {
             top: 0,
             topPercent: 0,
             bottomPercent: 0,
-            viewTop: 0,
+            viewTop: 0
           },
           items: [],
           actualHeight: 0,
-          outerHeight: 0,
+          outerHeight: 0
         };
       if (typeof row.height !== 'number') {
         row.height = defaultHeight;
@@ -365,7 +365,7 @@ export class Api {
     if (fixOverlapped) {
       const rowItems = this.getItems(row.$data.items);
       this.fixOverlappedItems(rowItems);
-      row.$data.items = this.sortItemsByPositionTop(rowItems).map((item) => item.id);
+      row.$data.items = this.sortItemsByPositionTop(rowItems).map(item => item.id);
     }
     for (const item of this.getItems(row.$data.items)) {
       actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);
@@ -476,7 +476,7 @@ export class Api {
     if (!innerHeight) return [];
     const rows: Rows = this.state.get('config.list.rows');
     innerHeight += verticalScroll.offset || 0;
-    let strictTopRow = rowsWithParentsExpanded.find((rowId) => rowId === topRow.id);
+    let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
     let index = rowsWithParentsExpanded.indexOf(strictTopRow);
     if (index === undefined) return [];
     let currentRowsOffset = 0;

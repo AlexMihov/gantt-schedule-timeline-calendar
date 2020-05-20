@@ -7560,33 +7560,33 @@
 	            data.state.update('$data.elements.list-column-rows', elements);
 	    }
 	    destroy(element, data) {
-	        data.state.update('$data.elements.list-column-rows', elements => {
-	            return elements.filter(el => el !== element);
+	        data.state.update('$data.elements.list-column-rows', (elements) => {
+	            return elements.filter((el) => el !== element);
 	        });
 	    }
 	}
 	function ListColumnRow(vido, props) {
-	    const { api, state, onDestroy, Detach, Actions, update, html, createComponent, onChange, StyleMap, unsafeHTML } = vido;
+	    const { api, state, onDestroy, Detach, Actions, update, html, createComponent, onChange, StyleMap, unsafeHTML, } = vido;
 	    const componentName = 'list-column-row';
 	    const actionProps = Object.assign(Object.assign({}, props), { api, state });
 	    let shouldDetach = false;
 	    const detach = new Detach(() => shouldDetach);
 	    let wrapper;
-	    onDestroy(state.subscribe('config.wrappers.ListColumnRow', value => (wrapper = value)));
+	    onDestroy(state.subscribe('config.wrappers.ListColumnRow', (value) => (wrapper = value)));
 	    let ListColumnRowExpanderComponent;
-	    onDestroy(state.subscribe('config.components.ListColumnRowExpander', value => (ListColumnRowExpanderComponent = value)));
+	    onDestroy(state.subscribe('config.components.ListColumnRowExpander', (value) => (ListColumnRowExpanderComponent = value)));
 	    const styleMap = new StyleMap(props.column.expander
 	        ? {
 	            height: '',
 	            top: '',
 	            ['--height']: '',
 	            ['--expander-padding-width']: '',
-	            ['--expander-size']: ''
+	            ['--expander-size']: '',
 	        }
 	        : {
 	            height: '',
 	            top: '',
-	            ['--height']: ''
+	            ['--height']: '',
 	        }, true);
 	    const ListColumnRowExpander = createComponent(ListColumnRowExpanderComponent, { row: props.row });
 	    let className = api.getClass(componentName);
@@ -7684,7 +7684,7 @@
 	    if (!componentActions.includes(BindElementAction$1))
 	        componentActions.push(BindElementAction$1);
 	    const actions = Actions.create(componentActions, actionProps);
-	    return templateProps => wrapper(html `
+	    return (templateProps) => wrapper(html `
         <div detach=${detach} class=${classNameCurrent} style=${styleMap} data-actions=${actions}>
           ${props.column.expander ? ListColumnRowExpander.html() : null}
           <div class=${classNameContent}>
@@ -11075,7 +11075,7 @@
 	    const defaultConfigActions = merge({}, defaultConfig.actions);
 	    const userActions = merge({}, userConfig.actions);
 	    let allActionNames = [...Object.keys(defaultConfigActions), ...Object.keys(userActions)];
-	    allActionNames = allActionNames.filter((i) => allActionNames.includes(i));
+	    allActionNames = allActionNames.filter(i => allActionNames.includes(i));
 	    const actions = {};
 	    for (const actionName of allActionNames) {
 	        actions[actionName] = [];
@@ -11127,7 +11127,7 @@
 	        this.state.update('config.chart.time.period', period);
 	        return this.state.get('config.chart.time.zoom');
 	    },
-	    dayjs: dayjs_min,
+	    dayjs: dayjs_min
 	};
 	class Api {
 	    constructor(state) {
@@ -11194,7 +11194,8 @@
 	        const configRows = this.state.get('config.list.rows');
 	        const rows = [];
 	        for (const rowId of rowsId) {
-	            rows.push(configRows[rowId]);
+	            if (configRows[rowId])
+	                rows.push(configRows[rowId]);
 	        }
 	        return rows;
 	    }
@@ -11207,7 +11208,8 @@
 	        const items = [];
 	        const configItems = this.state.get('config.chart.items');
 	        for (const itemId of itemsId) {
-	            items.push(configItems[itemId]);
+	            if (configItems[itemId])
+	                items.push(configItems[itemId]);
 	        }
 	        return items;
 	    }
@@ -11217,7 +11219,7 @@
 	            const linkedItem = items[linkedItemId];
 	            if (!linkedItem)
 	                throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
-	            linkedItem.linkedWith = allLinkedIds.filter((linkedItemId) => linkedItemId !== linkedItem.id);
+	            linkedItem.linkedWith = allLinkedIds.filter(linkedItemId => linkedItemId !== linkedItem.id);
 	        }
 	    }
 	    prepareItems(items) {
@@ -11244,15 +11246,15 @@
 	                        actualRight: 0,
 	                        top: item.top || 0,
 	                        actualTop: item.top || 0,
-	                        viewTop: 0,
+	                        viewTop: 0
 	                    },
 	                    width: -1,
 	                    actualWidth: -1,
-	                    detached: false,
+	                    detached: false
 	                };
 	            item.$data.time = {
 	                startDate: this.time.date(item.time.start),
-	                endDate: this.time.date(item.time.end),
+	                endDate: this.time.date(item.time.end)
 	            };
 	            item.$data.actualHeight = item.height;
 	            if (typeof item.top !== 'number')
@@ -11283,11 +11285,11 @@
 	                        top: 0,
 	                        topPercent: 0,
 	                        bottomPercent: 0,
-	                        viewTop: 0,
+	                        viewTop: 0
 	                    },
 	                    items: [],
 	                    actualHeight: 0,
-	                    outerHeight: 0,
+	                    outerHeight: 0
 	                };
 	            if (typeof row.height !== 'number') {
 	                row.height = defaultHeight;
@@ -11371,7 +11373,7 @@
 	        if (fixOverlapped) {
 	            const rowItems = this.getItems(row.$data.items);
 	            this.fixOverlappedItems(rowItems);
-	            row.$data.items = this.sortItemsByPositionTop(rowItems).map((item) => item.id);
+	            row.$data.items = this.sortItemsByPositionTop(rowItems).map(item => item.id);
 	        }
 	        for (const item of this.getItems(row.$data.items)) {
 	            actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);
@@ -11482,7 +11484,7 @@
 	            return [];
 	        const rows = this.state.get('config.list.rows');
 	        innerHeight += verticalScroll.offset || 0;
-	        let strictTopRow = rowsWithParentsExpanded.find((rowId) => rowId === topRow.id);
+	        let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
 	        let index = rowsWithParentsExpanded.indexOf(strictTopRow);
 	        if (index === undefined)
 	            return [];
