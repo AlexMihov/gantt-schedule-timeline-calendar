@@ -6399,6 +6399,8 @@ function Main(vido, props = {}) {
             return multi;
         const spacing = state.get('config.chart.spacing') || 0;
         for (const item of visibleItems) {
+            if (!item)
+                return;
             const row = rows[item.rowId];
             if (!row || !row.$data)
                 continue;
@@ -6849,7 +6851,7 @@ function ScrollBar(vido, props) {
             }
             if (time.allDates && time.allDates[time.level]) {
                 const dates = time.allDates[time.level];
-                const date = dates.find(date => date.leftGlobal === time.leftGlobal);
+                const date = dates.find((date) => date.leftGlobal === time.leftGlobal);
                 let dataIndex = dates.indexOf(date);
                 const lastPageCount = state.get('config.scroll.horizontal.lastPageCount');
                 if (dataIndex > dates.length - lastPageCount) {
@@ -6863,7 +6865,7 @@ function ScrollBar(vido, props) {
         maxPosPx: 0,
         innerSize: 0,
         sub: 0,
-        scrollArea: 0
+        scrollArea: 0,
     };
     function shouldUpdate(maxPosPx, innerSize, sub, scrollArea) {
         const result = cache.maxPosPx !== maxPosPx ||
@@ -6884,7 +6886,7 @@ function ScrollBar(vido, props) {
             `config.scroll.${props.type}`,
             '$data.innerHeight',
             '$data.list.rowsWithParentsExpanded;',
-            '$data.list.rowsHeight'
+            '$data.list.rowsHeight',
         ], function scrollThing() {
         const time = state.get('$data.chart.time');
         const scroll = state.get(`config.scroll.${props.type}`);
@@ -6957,7 +6959,7 @@ function ScrollBar(vido, props) {
         update();
     }));
     let oldPos = 0;
-    onDestroy(state.subscribe(`config.scroll.${props.type}.posPx`, position => {
+    onDestroy(state.subscribe(`config.scroll.${props.type}.posPx`, (position) => {
         if (position !== oldPos) {
             styleMapInner.style[offsetProp] = position + 'px';
             oldPos = position;
@@ -6986,7 +6988,7 @@ function ScrollBar(vido, props) {
             this.pointerDown = this.pointerDown.bind(this);
             this.pointerUp = this.pointerUp.bind(this);
             const pointerMove = this.pointerMove.bind(this);
-            this.pointerMove = schedule(ev => pointerMove(ev));
+            this.pointerMove = schedule((ev) => pointerMove(ev));
             //this.pointerMove = pointerMove;
             this.unsub = state.subscribe(`config.scroll.${props.type}`, this.dataChanged.bind(this));
             this.destroy = this.destroy.bind(this);
@@ -7256,20 +7258,20 @@ class BindElementAction {
             data.state.update('$data.elements.list-columns', elements);
     }
     destroy(element, data) {
-        data.state.update('$data.elements.list-columns', elements => {
-            return elements.filter(el => el !== element);
+        data.state.update('$data.elements.list-columns', (elements) => {
+            return elements.filter((el) => el !== element);
         });
     }
 }
 function ListColumn(vido, props) {
     const { api, state, onDestroy, onChange, Actions, update, createComponent, reuseComponents, html, StyleMap } = vido;
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ListColumn', value => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ListColumn', (value) => (wrapper = value)));
     const componentsSub = [];
     let ListColumnRowComponent;
-    componentsSub.push(state.subscribe('config.components.ListColumnRow', value => (ListColumnRowComponent = value)));
+    componentsSub.push(state.subscribe('config.components.ListColumnRow', (value) => (ListColumnRowComponent = value)));
     let ListColumnHeaderComponent;
-    componentsSub.push(state.subscribe('config.components.ListColumnHeader', value => (ListColumnHeaderComponent = value)));
+    componentsSub.push(state.subscribe('config.components.ListColumnHeader', (value) => (ListColumnHeaderComponent = value)));
     const actionProps = Object.assign(Object.assign({}, props), { api, state });
     const componentName = 'list-column';
     const rowsComponentName = componentName + '-rows';
@@ -7296,7 +7298,7 @@ function ListColumn(vido, props) {
         '$data.chart.dimensions.width',
         '$data.innerHeight',
         '$data.list.width',
-        '$data.list.visibleRowsHeight'
+        '$data.list.visibleRowsHeight',
     ], calculateStyle, { bulk: true }));
     const ListColumnHeader = createComponent(ListColumnHeaderComponent, props);
     onDestroy(ListColumnHeader.destroy);
@@ -7305,9 +7307,9 @@ function ListColumn(vido, props) {
     function visibleRowsChange() {
         const val = state.get('$data.list.visibleRows') || [];
         const rows = api.getRows(val);
-        reuseComponents(visibleRows, rows, row => row && { column: props.column, row, width }, ListColumnRowComponent, false);
+        reuseComponents(visibleRows, rows, (row) => row && { column: props.column, row, width }, ListColumnRowComponent, false);
     }
-    onChange(changedProps => {
+    onChange((changedProps) => {
         props = changedProps;
         className = api.getClass(componentName, props.column.id);
         classNameOffset = api.getClass(rowsOffsetName, props.column.id);
@@ -7325,25 +7327,25 @@ function ListColumn(vido, props) {
         '$data.list.visibleRowsHeight',
         'config.chart.items.*.height',
         'config.chart.items.*.rowId',
-        'config.chart.items.*.time'
+        'config.chart.items.*.time',
     ], visibleRowsChange));
-    onDestroy(state.subscribe('config.scroll.vertical.offset', offset => {
+    onDestroy(state.subscribe('config.scroll.vertical.offset', (offset) => {
         offsetStyleMap.style['transform'] = `translateY(-${offset || 0}px)`;
         update();
     }));
     onDestroy(() => {
-        visibleRows.forEach(row => row.destroy());
-        componentsSub.forEach(unsub => unsub());
+        visibleRows.forEach((row) => row.destroy());
+        componentsSub.forEach((unsub) => unsub());
     });
     componentActions.push(BindElementAction);
     const headerActions = Actions.create(componentActions, { column: props.column, state: state, api: api });
     const rowActions = Actions.create(rowsActions, { api, state });
-    return templateProps => wrapper(html `
+    return (templateProps) => wrapper(html `
         <div class=${className} data-actions=${headerActions} style=${widthStyleMap}>
           ${ListColumnHeader.html()}
           <div class=${classNameContainer} style=${containerStyleMap} data-actions=${rowActions}>
             <div class=${classNameOffset} style=${offsetStyleMap}>
-              ${slots.html('before', templateProps)}${visibleRows.map(row => row.html())}${slots.html('after', templateProps)}
+              ${slots.html('before', templateProps)}${visibleRows.map((row) => row.html())}${slots.html('after', templateProps)}
             </div>
           </div>
         </div>
@@ -8287,7 +8289,7 @@ class BindElementAction$3 {
             data.state.update('$data.elements.chart-timeline-grid', element);
     }
     destroy(element, data) {
-        data.state.update('$data.elements', elements => {
+        data.state.update('$data.elements', (elements) => {
             delete elements['chart-timeline-grid'];
             return elements;
         });
@@ -8299,11 +8301,11 @@ function ChartTimelineGrid(vido, props) {
     const componentActions = api.getActions(componentName);
     const actionProps = { api, state };
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineGrid', value => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineGrid', (value) => (wrapper = value)));
     const GridRowComponent = state.get('config.components.ChartTimelineGridRow');
     const className = api.getClass(componentName);
     let onCellCreate;
-    onDestroy(state.subscribe('config.chart.grid.cell.onCreate', onCreate => (onCellCreate = onCreate)));
+    onDestroy(state.subscribe('config.chart.grid.cell.onCreate', (onCreate) => (onCellCreate = onCreate)));
     const rowsComponents = [];
     const rowsWithCells = [];
     const formatCache = new Map();
@@ -8358,24 +8360,24 @@ function ChartTimelineGrid(vido, props) {
         '$ddata.chart.items.*.time',
         `$data.chart.time.levels`,
         '$data.innerHeight',
-        '$data.chart.dimensions.width'
+        '$data.chart.dimensions.width',
     ], generateCells, {
-        bulk: true
+        bulk: true,
     }));
     function generateRowsComponents(rowsWithCells) {
-        reuseComponents(rowsComponents, rowsWithCells || [], row => row, GridRowComponent, false);
+        reuseComponents(rowsComponents, rowsWithCells || [], (row) => row, GridRowComponent, false);
         update();
     }
     onDestroy(state.subscribe('$data.chart.grid.rowsWithCells;', generateRowsComponents));
     onDestroy(() => {
-        rowsComponents.forEach(row => row.destroy());
+        rowsComponents.forEach((row) => row.destroy());
     });
     componentActions.push(BindElementAction$3);
     const actions = Actions.create(componentActions, actionProps);
     const slots = api.generateSlots(componentName, vido, props);
-    return templateProps => wrapper(html `
+    return (templateProps) => wrapper(html `
         <div class=${className} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${rowsComponents.map(r => r.html())}${slots.html('after', templateProps)}
+          ${slots.html('before', templateProps)}${rowsComponents.map((r) => r.html())}${slots.html('after', templateProps)}
         </div>
       `, { props, vido, templateProps });
 }
@@ -8605,11 +8607,11 @@ function ChartTimelineItems(vido, props = {}) {
     const { api, state, onDestroy, Actions, update, html, reuseComponents, StyleMap } = vido;
     const componentName = 'chart-timeline-items';
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineItems', value => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineItems', (value) => (wrapper = value)));
     let componentActions;
-    onDestroy(state.subscribe(`config.actions.${componentName}`, actions => (componentActions = actions)));
+    onDestroy(state.subscribe(`config.actions.${componentName}`, (actions) => (componentActions = actions)));
     let ItemsRowComponent;
-    onDestroy(state.subscribe('config.components.ChartTimelineItemsRow', value => (ItemsRowComponent = value)));
+    onDestroy(state.subscribe('config.components.ChartTimelineItemsRow', (value) => (ItemsRowComponent = value)));
     const className = api.getClass(componentName);
     const styleMap = new StyleMap({}, true);
     function calculateStyle() {
@@ -8625,18 +8627,18 @@ function ChartTimelineItems(vido, props = {}) {
     function createRowComponents() {
         const visibleRowsId = state.get('$data.list.visibleRows') || [];
         const visibleRows = api.getRows(visibleRowsId);
-        reuseComponents(rowsComponents, visibleRows, row => ({ row }), ItemsRowComponent, false);
+        reuseComponents(rowsComponents, visibleRows, (row) => ({ row }), ItemsRowComponent, false);
         update();
     }
     onDestroy(state.subscribeAll(['$data.list.visibleRows;', 'config.components.ChartTimelineItemsRow', 'config.chart.items.*.rowId'], createRowComponents));
     onDestroy(() => {
-        rowsComponents.forEach(row => row.destroy());
+        rowsComponents.forEach((row) => row.destroy());
     });
     const actions = Actions.create(componentActions, { api, state });
     const slots = api.generateSlots(componentName, vido, props);
-    return templateProps => wrapper(html `
+    return (templateProps) => wrapper(html `
         <div class=${className} style=${styleMap} data-actions=${actions}>
-          ${slots.html('before', templateProps)}${rowsComponents.map(r => r.html())}${slots.html('after', templateProps)}
+          ${slots.html('before', templateProps)}${rowsComponents.map((r) => r.html())}${slots.html('after', templateProps)}
         </div>
       `, { props, vido, templateProps });
 }
@@ -8671,8 +8673,8 @@ class BindElementAction$6 {
             data.state.update('$data.elements.chart-timeline-items-rows', rows, { only: null });
     }
     destroy(element, data) {
-        data.state.update('$data.elements.chart-timeline-items-rows', rows => {
-            return rows.filter(el => el !== element);
+        data.state.update('$data.elements.chart-timeline-items-rows', (rows) => {
+            return rows.filter((el) => el !== element);
         });
     }
 }
@@ -8680,9 +8682,9 @@ function ChartTimelineItemsRow(vido, props) {
     const { api, state, onDestroy, Detach, Actions, update, html, onChange, reuseComponents, StyleMap } = vido;
     const actionProps = Object.assign(Object.assign({}, props), { api, state });
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRow', value => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRow', (value) => (wrapper = value)));
     let ItemComponent;
-    onDestroy(state.subscribe('config.components.ChartTimelineItemsRowItem', value => (ItemComponent = value)));
+    onDestroy(state.subscribe('config.components.ChartTimelineItemsRowItem', (value) => (ItemComponent = value)));
     let classNameCurrent = '';
     const itemComponents = [], styleMap = new StyleMap({ width: '', height: '' }, true);
     let shouldDetach = false;
@@ -8706,7 +8708,7 @@ function ChartTimelineItemsRow(vido, props) {
             return update();
         }
         const items = api.getItems(itemsId);
-        reuseComponents(itemComponents, items, item => ({ row, item }), ItemComponent, false);
+        reuseComponents(itemComponents, items, (item) => ({ row, item }), ItemComponent, false);
         updateDom();
         update();
     }
@@ -8736,14 +8738,14 @@ function ChartTimelineItemsRow(vido, props) {
     });
     onDestroy(state.subscribe('$data.chart.dimensions.width', () => updateRow(props.row)));
     onDestroy(() => {
-        itemComponents.forEach(item => item.destroy());
+        itemComponents.forEach((item) => item.destroy());
     });
     const componentActions = api.getActions(componentName);
     componentActions.push(BindElementAction$6);
     const actions = Actions.create(componentActions, actionProps);
-    return templateProps => wrapper(html `
+    return (templateProps) => wrapper(html `
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${itemComponents.map(i => i.html())}${slots.html('after', templateProps)}
+          ${slots.html('before', templateProps)}${itemComponents.map((i) => i.html())}${slots.html('after', templateProps)}
         </div>
       `, { props, vido, templateProps });
 }
@@ -8776,15 +8778,15 @@ class BindElementAction$7 {
             data.state.update('$data.elements.chart-timeline-items-row-items', items, { only: null });
     }
     destroy(element, data) {
-        data.state.update('$data.elements.chart-timeline-items-row-items', items => {
-            return items.filter(el => el !== element);
+        data.state.update('$data.elements.chart-timeline-items-row-items', (items) => {
+            return items.filter((el) => el !== element);
         });
     }
 }
 function ChartTimelineItemsRowItem(vido, props) {
     const { api, state, onDestroy, Detach, Actions, update, html, svg, onChange, unsafeHTML, StyleMap } = vido;
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', (value) => (wrapper = value)));
     let itemLeftPx = 0, itemWidthPx = 0, leave = false, classNameCurrent = '';
     const styleMap = new StyleMap({ width: '', height: '', left: '', top: '' }), leftCutStyleMap = new StyleMap({}), rightCutStyleMap = new StyleMap({}), actionProps = {
         item: props.item,
@@ -8792,7 +8794,7 @@ function ChartTimelineItemsRowItem(vido, props) {
         left: itemLeftPx,
         width: itemWidthPx,
         api,
-        state
+        state,
     };
     const componentName = 'chart-timeline-items-row-item';
     let className, labelClassName;
@@ -8951,7 +8953,7 @@ function ChartTimelineItemsRowItem(vido, props) {
             return null;
         return props.item.isHTML ? getHtml() : getText();
     }
-    return templateProps => wrapper(html `
+    return (templateProps) => wrapper(html `
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>
           ${cutterLeft()}${slots.html('before', templateProps)}
           <div class=${labelClassName} title=${getTitle()}>
@@ -11067,7 +11069,7 @@ function mergeActions(userConfig, defaultConfig, merge) {
     const defaultConfigActions = merge({}, defaultConfig.actions);
     const userActions = merge({}, userConfig.actions);
     let allActionNames = [...Object.keys(defaultConfigActions), ...Object.keys(userActions)];
-    allActionNames = allActionNames.filter(i => allActionNames.includes(i));
+    allActionNames = allActionNames.filter((i) => allActionNames.includes(i));
     const actions = {};
     for (const actionName of allActionNames) {
         actions[actionName] = [];
@@ -11119,7 +11121,7 @@ const publicApi = {
         this.state.update('config.chart.time.period', period);
         return this.state.get('config.chart.time.zoom');
     },
-    dayjs: dayjs_min
+    dayjs: dayjs_min,
 };
 class Api {
     constructor(state) {
@@ -11209,7 +11211,7 @@ class Api {
             const linkedItem = items[linkedItemId];
             if (!linkedItem)
                 throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
-            linkedItem.linkedWith = allLinkedIds.filter(linkedItemId => linkedItemId !== linkedItem.id);
+            linkedItem.linkedWith = allLinkedIds.filter((linkedItemId) => linkedItemId !== linkedItem.id);
         }
     }
     prepareItems(items) {
@@ -11236,15 +11238,15 @@ class Api {
                         actualRight: 0,
                         top: item.top || 0,
                         actualTop: item.top || 0,
-                        viewTop: 0
+                        viewTop: 0,
                     },
                     width: -1,
                     actualWidth: -1,
-                    detached: false
+                    detached: false,
                 };
             item.$data.time = {
                 startDate: this.time.date(item.time.start),
-                endDate: this.time.date(item.time.end)
+                endDate: this.time.date(item.time.end),
             };
             item.$data.actualHeight = item.height;
             if (typeof item.top !== 'number')
@@ -11275,11 +11277,11 @@ class Api {
                         top: 0,
                         topPercent: 0,
                         bottomPercent: 0,
-                        viewTop: 0
+                        viewTop: 0,
                     },
                     items: [],
                     actualHeight: 0,
-                    outerHeight: 0
+                    outerHeight: 0,
                 };
             if (typeof row.height !== 'number') {
                 row.height = defaultHeight;
@@ -11363,7 +11365,7 @@ class Api {
         if (fixOverlapped) {
             const rowItems = this.getItems(row.$data.items);
             this.fixOverlappedItems(rowItems);
-            row.$data.items = this.sortItemsByPositionTop(rowItems).map(item => item.id);
+            row.$data.items = this.sortItemsByPositionTop(rowItems).map((item) => item.id);
         }
         for (const item of this.getItems(row.$data.items)) {
             actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);
@@ -11474,7 +11476,7 @@ class Api {
             return [];
         const rows = this.state.get('config.list.rows');
         innerHeight += verticalScroll.offset || 0;
-        let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
+        let strictTopRow = rowsWithParentsExpanded.find((rowId) => rowId === topRow.id);
         let index = rowsWithParentsExpanded.indexOf(strictTopRow);
         if (index === undefined)
             return [];
@@ -11638,17 +11640,17 @@ function getDefaultData() {
             visibleRowsHeight: 0,
             rowsWithParentsExpanded: [],
             rowsHeight: 0,
-            width: 0
+            width: 0,
         },
         dimensions: {
             width: 0,
-            height: 0
+            height: 0,
         },
         chart: {
             dimensions: {
                 width: 0,
                 innerWidth: 0,
-                height: 0
+                height: 0,
             },
             visibleItems: [],
             time: {
@@ -11658,7 +11660,7 @@ function getDefaultData() {
                     zoomTo: 0,
                     format() {
                         return '';
-                    }
+                    },
                 },
                 level: 0,
                 levels: [],
@@ -11680,10 +11682,10 @@ function getDefaultData() {
                 to: 0,
                 fromDate: null,
                 toDate: null,
-                additionalSpaceAdded: false
-            }
+                additionalSpaceAdded: false,
+            },
         },
-        elements: {}
+        elements: {},
     };
 }
 function GSTC(options) {
@@ -11694,10 +11696,10 @@ function GSTC(options) {
         // @ts-ignore
         window.state = state;
     }
-    state.update('', oldValue => {
+    state.update('', (oldValue) => {
         return {
             config: oldValue.config,
-            $data
+            $data,
         };
     });
     const vido = Vido(state, api);
