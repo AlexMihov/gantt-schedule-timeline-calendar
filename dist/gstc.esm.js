@@ -8673,8 +8673,8 @@ class BindElementAction$6 {
             data.state.update('$data.elements.chart-timeline-items-rows', rows, { only: null });
     }
     destroy(element, data) {
-        data.state.update('$data.elements.chart-timeline-items-rows', (rows) => {
-            return rows.filter((el) => el !== element);
+        data.state.update('$data.elements.chart-timeline-items-rows', rows => {
+            return rows.filter(el => el !== element);
         });
     }
 }
@@ -8682,9 +8682,9 @@ function ChartTimelineItemsRow(vido, props) {
     const { api, state, onDestroy, Detach, Actions, update, html, onChange, reuseComponents, StyleMap } = vido;
     const actionProps = Object.assign(Object.assign({}, props), { api, state });
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRow', (value) => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRow', value => (wrapper = value)));
     let ItemComponent;
-    onDestroy(state.subscribe('config.components.ChartTimelineItemsRowItem', (value) => (ItemComponent = value)));
+    onDestroy(state.subscribe('config.components.ChartTimelineItemsRowItem', value => (ItemComponent = value)));
     let classNameCurrent = '';
     const itemComponents = [], styleMap = new StyleMap({ width: '', height: '' }, true);
     let shouldDetach = false;
@@ -8701,14 +8701,19 @@ function ChartTimelineItemsRow(vido, props) {
         styleMap.style['--row-height'] = props.row.$data.outerHeight + 'px';
     }
     function updateRow(row) {
-        const itemsId = props.row.$data.items;
+        if (!row || !row.$data) {
+            shouldDetach = true;
+            reuseComponents(itemComponents, [], () => null, ItemComponent, false);
+            return update();
+        }
+        const itemsId = row.$data.items;
         if (itemsId === undefined) {
             shouldDetach = true;
             reuseComponents(itemComponents, [], () => null, ItemComponent, false);
             return update();
         }
         const items = api.getItems(itemsId);
-        reuseComponents(itemComponents, items, (item) => ({ row, item }), ItemComponent, false);
+        reuseComponents(itemComponents, items, item => ({ row, item }), ItemComponent, false);
         updateDom();
         update();
     }
@@ -8716,7 +8721,7 @@ function ChartTimelineItemsRow(vido, props) {
     let className = api.getClass(componentName);
     const slots = api.generateSlots(componentName, vido, props);
     onChange(function onPropsChange(changedProps, options) {
-        if (options.leave || changedProps.row === undefined) {
+        if (options.leave || !changedProps || changedProps.row === undefined) {
             shouldDetach = true;
             reuseComponents(itemComponents, [], () => null, ItemComponent, false);
             slots.change(changedProps, options);
@@ -8738,14 +8743,14 @@ function ChartTimelineItemsRow(vido, props) {
     });
     onDestroy(state.subscribe('$data.chart.dimensions.width', () => updateRow(props.row)));
     onDestroy(() => {
-        itemComponents.forEach((item) => item.destroy());
+        itemComponents.forEach(item => item.destroy());
     });
     const componentActions = api.getActions(componentName);
     componentActions.push(BindElementAction$6);
     const actions = Actions.create(componentActions, actionProps);
-    return (templateProps) => wrapper(html `
+    return templateProps => wrapper(html `
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${itemComponents.map((i) => i.html())}${slots.html('after', templateProps)}
+          ${slots.html('before', templateProps)}${itemComponents.map(i => i.html())}${slots.html('after', templateProps)}
         </div>
       `, { props, vido, templateProps });
 }
