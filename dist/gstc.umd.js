@@ -6406,7 +6406,7 @@
 	        const spacing = state.get('config.chart.spacing') || 0;
 	        for (const item of visibleItems) {
 	            if (!item)
-	                return;
+	                return multi;
 	            const row = rows[item.rowId];
 	            if (!row || !row.$data)
 	                continue;
