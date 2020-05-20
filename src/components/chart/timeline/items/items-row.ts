@@ -30,8 +30,8 @@ class BindElementAction {
     if (shouldUpdate) data.state.update('$data.elements.chart-timeline-items-rows', rows, { only: null });
   }
   public destroy(element, data) {
-    data.state.update('$data.elements.chart-timeline-items-rows', rows => {
-      return rows.filter(el => el !== element);
+    data.state.update('$data.elements.chart-timeline-items-rows', (rows) => {
+      return rows.filter((el) => el !== element);
     });
   }
 }
@@ -44,10 +44,10 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
   const { api, state, onDestroy, Detach, Actions, update, html, onChange, reuseComponents, StyleMap } = vido;
   const actionProps = { ...props, api, state };
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRow', value => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRow', (value) => (wrapper = value)));
 
   let ItemComponent;
-  onDestroy(state.subscribe('config.components.ChartTimelineItemsRowItem', value => (ItemComponent = value)));
+  onDestroy(state.subscribe('config.components.ChartTimelineItemsRowItem', (value) => (ItemComponent = value)));
 
   let classNameCurrent = '';
 
@@ -77,7 +77,7 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
       return update();
     }
     const items: Item[] = api.getItems(itemsId);
-    reuseComponents(itemComponents, items, item => ({ row, item }), ItemComponent, false);
+    reuseComponents(itemComponents, items, (item) => ({ row, item }), ItemComponent, false);
     updateDom();
     update();
   }
@@ -111,7 +111,7 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
   onDestroy(state.subscribe('$data.chart.dimensions.width', () => updateRow(props.row)));
 
   onDestroy(() => {
-    itemComponents.forEach(item => item.destroy());
+    itemComponents.forEach((item) => item.destroy());
   });
 
   const componentActions = api.getActions(componentName);
@@ -119,11 +119,11 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
 
   const actions = Actions.create(componentActions, actionProps);
 
-  return templateProps =>
+  return (templateProps) =>
     wrapper(
       html`
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${itemComponents.map(i => i.html())}${slots.html(
+          ${slots.html('before', templateProps)}${itemComponents.map((i) => i.html())}${slots.html(
             'after',
             templateProps
           )}

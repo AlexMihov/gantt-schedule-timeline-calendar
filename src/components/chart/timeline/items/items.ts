@@ -14,12 +14,12 @@ export default function ChartTimelineItems(vido: Vido, props = {}) {
   const { api, state, onDestroy, Actions, update, html, reuseComponents, StyleMap } = vido;
   const componentName = 'chart-timeline-items';
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.ChartTimelineItems', value => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.ChartTimelineItems', (value) => (wrapper = value)));
   let componentActions;
-  onDestroy(state.subscribe(`config.actions.${componentName}`, actions => (componentActions = actions)));
+  onDestroy(state.subscribe(`config.actions.${componentName}`, (actions) => (componentActions = actions)));
 
   let ItemsRowComponent;
-  onDestroy(state.subscribe('config.components.ChartTimelineItemsRow', value => (ItemsRowComponent = value)));
+  onDestroy(state.subscribe('config.components.ChartTimelineItemsRow', (value) => (ItemsRowComponent = value)));
 
   const className = api.getClass(componentName);
 
@@ -43,7 +43,7 @@ export default function ChartTimelineItems(vido: Vido, props = {}) {
   function createRowComponents() {
     const visibleRowsId = state.get('$data.list.visibleRows') || [];
     const visibleRows = api.getRows(visibleRowsId);
-    reuseComponents(rowsComponents, visibleRows, row => ({ row }), ItemsRowComponent, false);
+    reuseComponents(rowsComponents, visibleRows, (row) => ({ row }), ItemsRowComponent, false);
     update();
   }
   onDestroy(
@@ -53,18 +53,18 @@ export default function ChartTimelineItems(vido: Vido, props = {}) {
     )
   );
   onDestroy(() => {
-    rowsComponents.forEach(row => row.destroy());
+    rowsComponents.forEach((row) => row.destroy());
   });
 
   const actions = Actions.create(componentActions, { api, state });
 
   const slots = api.generateSlots(componentName, vido, props);
 
-  return templateProps =>
+  return (templateProps) =>
     wrapper(
       html`
         <div class=${className} style=${styleMap} data-actions=${actions}>
-          ${slots.html('before', templateProps)}${rowsComponents.map(r => r.html())}${slots.html(
+          ${slots.html('before', templateProps)}${rowsComponents.map((r) => r.html())}${slots.html(
             'after',
             templateProps
           )}

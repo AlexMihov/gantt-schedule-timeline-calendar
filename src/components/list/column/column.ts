@@ -28,8 +28,8 @@ class BindElementAction {
     if (shouldUpdate) data.state.update('$data.elements.list-columns', elements);
   }
   public destroy(element, data) {
-    data.state.update('$data.elements.list-columns', elements => {
-      return elements.filter(el => el !== element);
+    data.state.update('$data.elements.list-columns', (elements) => {
+      return elements.filter((el) => el !== element);
     });
   }
 }
@@ -42,14 +42,14 @@ export default function ListColumn(vido: Vido, props: Props) {
   const { api, state, onDestroy, onChange, Actions, update, createComponent, reuseComponents, html, StyleMap } = vido;
 
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.ListColumn', value => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.ListColumn', (value) => (wrapper = value)));
 
   const componentsSub = [];
   let ListColumnRowComponent;
-  componentsSub.push(state.subscribe('config.components.ListColumnRow', value => (ListColumnRowComponent = value)));
+  componentsSub.push(state.subscribe('config.components.ListColumnRow', (value) => (ListColumnRowComponent = value)));
   let ListColumnHeaderComponent;
   componentsSub.push(
-    state.subscribe('config.components.ListColumnHeader', value => (ListColumnHeaderComponent = value))
+    state.subscribe('config.components.ListColumnHeader', (value) => (ListColumnHeaderComponent = value))
   );
 
   const actionProps = { ...props, api, state };
@@ -83,7 +83,7 @@ export default function ListColumn(vido: Vido, props: Props) {
         '$data.chart.dimensions.width',
         '$data.innerHeight',
         '$data.list.width',
-        '$data.list.visibleRowsHeight'
+        '$data.list.visibleRowsHeight',
       ],
       calculateStyle,
       { bulk: true }
@@ -102,13 +102,13 @@ export default function ListColumn(vido: Vido, props: Props) {
     reuseComponents(
       visibleRows,
       rows,
-      row => row && { column: props.column, row, width },
+      (row) => row && { column: props.column, row, width },
       ListColumnRowComponent,
       false
     );
   }
 
-  onChange(changedProps => {
+  onChange((changedProps) => {
     props = changedProps;
     className = api.getClass(componentName, props.column.id);
     classNameOffset = api.getClass(rowsOffsetName, props.column.id);
@@ -129,36 +129,36 @@ export default function ListColumn(vido: Vido, props: Props) {
         '$data.list.visibleRowsHeight',
         'config.chart.items.*.height',
         'config.chart.items.*.rowId',
-        'config.chart.items.*.time'
+        'config.chart.items.*.time',
       ],
       visibleRowsChange
     )
   );
 
   onDestroy(
-    state.subscribe('config.scroll.vertical.offset', offset => {
+    state.subscribe('config.scroll.vertical.offset', (offset) => {
       offsetStyleMap.style['transform'] = `translateY(-${offset || 0}px)`;
       update();
     })
   );
 
   onDestroy(() => {
-    visibleRows.forEach(row => row.destroy());
-    componentsSub.forEach(unsub => unsub());
+    visibleRows.forEach((row) => row.destroy());
+    componentsSub.forEach((unsub) => unsub());
   });
 
   componentActions.push(BindElementAction);
   const headerActions = Actions.create(componentActions, { column: props.column, state: state, api: api });
   const rowActions = Actions.create(rowsActions, { api, state });
 
-  return templateProps =>
+  return (templateProps) =>
     wrapper(
       html`
         <div class=${className} data-actions=${headerActions} style=${widthStyleMap}>
           ${ListColumnHeader.html()}
           <div class=${classNameContainer} style=${containerStyleMap} data-actions=${rowActions}>
             <div class=${classNameOffset} style=${offsetStyleMap}>
-              ${slots.html('before', templateProps)}${visibleRows.map(row => row.html())}${slots.html(
+              ${slots.html('before', templateProps)}${visibleRows.map((row) => row.html())}${slots.html(
                 'after',
                 templateProps
               )}

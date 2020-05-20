@@ -76,7 +76,9 @@ function CellSlot(vido, props) {
   });
   return () =>
     html`<div class="cell-slot cell-slot-${props.row.id}" style="color: #ccc;font-size: 10px;">
-      SLOT ${props.row.id}<br />${api.getItem(props.row.$data.items[0]).random}<br />${props.time.leftGlobalDate.format('DD')}
+      SLOT ${props.row.id}<br />${api.getItem(props.row.$data.items[0]).random}<br />${props.time.leftGlobalDate.format(
+        'DD'
+      )}
     </div>`;
 }
 

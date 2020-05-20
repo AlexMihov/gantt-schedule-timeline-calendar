@@ -640,17 +640,17 @@ function getDefaultData(): Data {
       visibleRowsHeight: 0,
       rowsWithParentsExpanded: [],
       rowsHeight: 0,
-      width: 0
+      width: 0,
     },
     dimensions: {
       width: 0,
-      height: 0
+      height: 0,
     },
     chart: {
       dimensions: {
         width: 0,
         innerWidth: 0,
-        height: 0
+        height: 0,
       },
       visibleItems: [],
       time: {
@@ -660,7 +660,7 @@ function getDefaultData(): Data {
           zoomTo: 0,
           format() {
             return '';
-          }
+          },
         },
         level: 0,
         levels: [],
@@ -682,10 +682,10 @@ function getDefaultData(): Data {
         to: 0,
         fromDate: null,
         toDate: null,
-        additionalSpaceAdded: false
-      }
+        additionalSpaceAdded: false,
+      },
     },
-    elements: {}
+    elements: {},
   };
 }
 
@@ -697,10 +697,10 @@ function GSTC(options: GSTCOptions): GSTCResult {
     // @ts-ignore
     window.state = state;
   }
-  state.update('', oldValue => {
+  state.update('', (oldValue) => {
     return {
       config: oldValue.config,
-      $data
+      $data,
     };
   });
 

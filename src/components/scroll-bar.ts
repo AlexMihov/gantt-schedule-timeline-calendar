@@ -74,7 +74,7 @@ export default function ScrollBar(vido: Vido, props: Props) {
         }
         if (time.allDates && time.allDates[time.level]) {
           const dates = time.allDates[time.level];
-          const date = dates.find(date => date.leftGlobal === time.leftGlobal);
+          const date = dates.find((date) => date.leftGlobal === time.leftGlobal);
           let dataIndex = dates.indexOf(date);
           const lastPageCount = state.get('config.scroll.horizontal.lastPageCount');
           if (dataIndex > dates.length - lastPageCount) {
@@ -90,7 +90,7 @@ export default function ScrollBar(vido: Vido, props: Props) {
     maxPosPx: 0,
     innerSize: 0,
     sub: 0,
-    scrollArea: 0
+    scrollArea: 0,
   };
   function shouldUpdate(maxPosPx, innerSize, sub, scrollArea) {
     const result =
@@ -115,7 +115,7 @@ export default function ScrollBar(vido: Vido, props: Props) {
             `config.scroll.${props.type}`,
             '$data.innerHeight',
             '$data.list.rowsWithParentsExpanded;',
-            '$data.list.rowsHeight'
+            '$data.list.rowsHeight',
           ],
       function scrollThing() {
         const time: DataChartTime = state.get('$data.chart.time');
@@ -187,7 +187,7 @@ export default function ScrollBar(vido: Vido, props: Props) {
 
   let oldPos = 0;
   onDestroy(
-    state.subscribe(`config.scroll.${props.type}.posPx`, position => {
+    state.subscribe(`config.scroll.${props.type}.posPx`, (position) => {
       if (position !== oldPos) {
         styleMapInner.style[offsetProp] = position + 'px';
         oldPos = position;
@@ -224,7 +224,7 @@ export default function ScrollBar(vido: Vido, props: Props) {
       this.pointerDown = this.pointerDown.bind(this);
       this.pointerUp = this.pointerUp.bind(this);
       const pointerMove = this.pointerMove.bind(this);
-      this.pointerMove = schedule(ev => pointerMove(ev));
+      this.pointerMove = schedule((ev) => pointerMove(ev));
       //this.pointerMove = pointerMove;
       this.unsub = state.subscribe(`config.scroll.${props.type}`, this.dataChanged.bind(this));
       this.destroy = this.destroy.bind(this);

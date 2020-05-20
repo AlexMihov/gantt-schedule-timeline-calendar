@@ -10,7 +10,7 @@ describe('Reload', () => {
 
   beforeEach(async () => {
     await page.evaluate(() => {
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         function loaded() {
           resolve();
           console.log('loaded'); // eslint-disable-line
@@ -24,10 +24,10 @@ describe('Reload', () => {
 
   it('should display things', async () => {
     await expect(page).toMatchElement('.gstc__list-column-header-resizer-container--label', {
-      text: 'Label'
+      text: 'Label',
     });
     await expect(page).toMatchElement('.gstc__list-column-row-content--1-label', {
-      text: 'row id: 1'
+      text: 'row id: 1',
     });
     await expect(page).toMatchElement('.gstc__chart-timeline-grid-row--13');
     await expect(page).toMatchElement('.gstc__chart-calendar-date--level-1');
@@ -41,7 +41,7 @@ describe('Reload', () => {
     await expect(page).not.toMatchElement('.gstc__list-column-row-content--2-label');
     await page.click('.gstc__list-column-row-expander--1');
     await expect(page).toMatchElement('.gstc__list-column-row-content--2-label', {
-      text: 'row id: 2'
+      text: 'row id: 2',
     });
     await expect(page).toMatchElement('.cell-slot-2');
     await page.click('.gstc__list-column-row-expander--1');
@@ -113,20 +113,10 @@ describe('Reload', () => {
     });
     expect(dayjs(time1).format('YYYY-MM-DD')).toEqual(dayjs().format('YYYY-MM-DD'));
     const time2 = await page.evaluate(() => {
-      gstc.api.scrollToTime(
-        gstc.api.time
-          .date()
-          .add(7, 'day')
-          .valueOf(),
-        false
-      );
+      gstc.api.scrollToTime(gstc.api.time.date().add(7, 'day').valueOf(), false);
       return state.get('$data.chart.time.leftGlobal');
     });
-    expect(dayjs(time2).format('YYYY-MM-DD')).toEqual(
-      dayjs()
-        .add(7, 'day')
-        .format('YYYY-MM-DD')
-    );
+    expect(dayjs(time2).format('YYYY-MM-DD')).toEqual(dayjs().add(7, 'day').format('YYYY-MM-DD'));
   });
 
   it('should scroll to item (vertically & horizontally)', async () => {
@@ -136,7 +126,7 @@ describe('Reload', () => {
       gstc.api.scrollToTime(gstc.api.time.date(item.time.start).valueOf(), false);
     });
     await expect(page).toMatchElement('.gstc__chart-timeline-items-row-item-label--1-1', {
-      text: 'item id 1'
+      text: 'item id 1',
     });
   });
 
