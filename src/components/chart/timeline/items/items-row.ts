@@ -8,7 +8,7 @@
  * @link      https://github.com/neuronetio/gantt-schedule-timeline-calendar
  */
 
-import { Row, Vido } from '../../../../gstc';
+import { Row, Vido, Item } from '../../../../gstc';
 
 /**
  * Bind element action
@@ -30,8 +30,8 @@ class BindElementAction {
     if (shouldUpdate) data.state.update('$data.elements.chart-timeline-items-rows', rows, { only: null });
   }
   public destroy(element, data) {
-    data.state.update('$data.elements.chart-timeline-items-rows', (rows) => {
-      return rows.filter((el) => el !== element);
+    data.state.update('$data.elements.chart-timeline-items-rows', rows => {
+      return rows.filter(el => el !== element);
     });
   }
 }
@@ -44,13 +44,11 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
   const { api, state, onDestroy, Detach, Actions, update, html, onChange, reuseComponents, StyleMap } = vido;
   const actionProps = { ...props, api, state };
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRow', (value) => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRow', value => (wrapper = value)));
 
   let ItemComponent;
-  onDestroy(state.subscribe('config.components.ChartTimelineItemsRowItem', (value) => (ItemComponent = value)));
+  onDestroy(state.subscribe('config.components.ChartTimelineItemsRowItem', value => (ItemComponent = value)));
 
-  let itemsPath = `config.list.rows.${props.row.id}.$data.items`;
-  let rowSub, itemsSub;
   let classNameCurrent = '';
 
   const itemComponents = [],
@@ -59,7 +57,7 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
   let shouldDetach = false;
   const detach = new Detach(() => shouldDetach);
 
-  const updateDom = () => {
+  function updateDom() {
     const chart = state.get('$data.chart');
     shouldDetach = false;
     styleMap.style.width = chart.dimensions.width + 'px';
@@ -69,46 +67,19 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
     }
     styleMap.style.height = props.row.$data.outerHeight + 'px';
     styleMap.style['--row-height'] = props.row.$data.outerHeight + 'px';
-  };
+  }
 
   function updateRow(row) {
-    itemsPath = `config.list.rows.${row.id}.$data.items`;
-    if (typeof rowSub === 'function') {
-      rowSub();
+    const itemsId: string[] = props.row.$data.items;
+    if (itemsId === undefined) {
+      shouldDetach = true;
+      reuseComponents(itemComponents, [], () => null, ItemComponent, false);
+      return update();
     }
-    if (typeof itemsSub === 'function') {
-      itemsSub();
-    }
-    rowSub = state.subscribe('$data.chart.dimensions', (value) => {
-      if (value === undefined) {
-        shouldDetach = true;
-        return update();
-      }
-      updateDom();
-      update();
-    });
-    itemsSub = state.subscribeAll(
-      [itemsPath, 'config.chart.items'],
-      () => {
-        const value = state.get(itemsPath);
-        if (value === undefined) {
-          shouldDetach = true;
-          reuseComponents(itemComponents, [], () => null, ItemComponent, false);
-          return update();
-        }
-        const items = state.get('config.chart.items');
-        reuseComponents(
-          itemComponents,
-          value,
-          (item) => ({ row, item: item ? items[item.id] : item }),
-          ItemComponent,
-          false
-        );
-        updateDom();
-        update();
-      }
-      //{ ignore: ['config.chart.items.*.selected', 'config.chart.items.*.$data.detached'] }
-    );
+    const items: Item[] = api.getItems(itemsId);
+    reuseComponents(itemComponents, items, item => ({ row, item }), ItemComponent, false);
+    updateDom();
+    update();
   }
 
   const componentName = 'chart-timeline-items-row';
@@ -137,10 +108,10 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
     slots.change(changedProps, options);
   });
 
+  onDestroy(state.subscribe('$data.chart.dimensions.width', () => updateRow(props.row)));
+
   onDestroy(() => {
-    itemsSub();
-    rowSub();
-    itemComponents.forEach((item) => item.destroy());
+    itemComponents.forEach(item => item.destroy());
   });
 
   const componentActions = api.getActions(componentName);
@@ -148,11 +119,11 @@ export default function ChartTimelineItemsRow(vido: Vido, props: Props) {
 
   const actions = Actions.create(componentActions, actionProps);
 
-  return (templateProps) =>
+  return templateProps =>
     wrapper(
       html`
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${itemComponents.map((i) => i.html())}${slots.html(
+          ${slots.html('before', templateProps)}${itemComponents.map(i => i.html())}${slots.html(
             'after',
             templateProps
           )}

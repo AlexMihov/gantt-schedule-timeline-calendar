@@ -56,13 +56,13 @@ describe('Basic', () => {
       const { left, top } = document.querySelector('.gstc__scroll-bar-inner--vertical').getBoundingClientRect();
       return { left, top };
     });
-    const topRow1 = await page.evaluate(() => state.get('$data.list.visibleRows.0.id'));
+    const topRow1 = await page.evaluate(() => state.get('$data.list.visibleRows.0'));
     expect(topRow1).toEqual('0');
     await page.mouse.move(left + 5, top + 5); // 5 because of rounded corners
     await page.mouse.down();
     await page.mouse.move(left + 5, top + 100);
     await page.mouse.up();
-    const topRow2 = await page.evaluate(() => state.get('$data.list.visibleRows.0.id'));
+    const topRow2 = await page.evaluate(() => state.get('$data.list.visibleRows.0'));
     expect(topRow2).toEqual('23');
   });
 

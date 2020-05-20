@@ -28,8 +28,8 @@ class BindElementAction {
     if (shouldUpdate) data.state.update('$data.elements.chart-timeline-items-row-items', items, { only: null });
   }
   public destroy(element, data) {
-    data.state.update('$data.elements.chart-timeline-items-row-items', (items) => {
-      return items.filter((el) => el !== element);
+    data.state.update('$data.elements.chart-timeline-items-row-items', items => {
+      return items.filter(el => el !== element);
     });
   }
 }
@@ -43,7 +43,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
   const { api, state, onDestroy, Detach, Actions, update, html, svg, onChange, unsafeHTML, StyleMap } = vido;
 
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', (value) => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
 
   let itemLeftPx = 0,
     itemWidthPx = 0,
@@ -58,7 +58,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
       left: itemLeftPx,
       width: itemWidthPx,
       api,
-      state,
+      state
     };
 
   const componentName = 'chart-timeline-items-row-item';
@@ -71,8 +71,12 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
   function updateItem(time: DataChartTime = state.get('$data.chart.time')) {
     if (leave || time.levels.length === 0 || !time.levels[time.level] || time.levels[time.level].length === 0) {
       shouldDetach = true;
-      props.item.$data.detached = shouldDetach;
+      if (props.item) props.item.$data.detached = shouldDetach;
       //if (props.item) state.update(`config.chart.items.${props.item.id}.$data.detached`, true);
+      return update();
+    }
+    if (!props.item) {
+      shouldDetach = true;
       return update();
     }
     itemLeftPx = props.item.$data.position.actualLeft;
@@ -160,7 +164,9 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
     if (options.leave || changedProps.row === undefined || changedProps.item === undefined) {
       leave = true;
       shouldDetach = true;
-      props.item.$data.detached = shouldDetach;
+      if (props.item) {
+        props.item.$data.detached = shouldDetach;
+      }
       //if (props.item) state.update(`config.chart.items.${props.item.id}.$data.detached`, true);
       //props = changedProps;
       slots.change(changedProps, options);
@@ -201,16 +207,22 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
   }
 
   function getTitle() {
+    if (!props.item) return null;
     return props.item.isHTML || typeof props.item.label === 'function' ? '' : props.item.label;
   }
 
-  return (templateProps) =>
+  function getContent() {
+    if (!props.item) return null;
+    return props.item.isHTML ? getHtml() : getText();
+  }
+
+  return templateProps =>
     wrapper(
       html`
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>
           ${cutterLeft()}${slots.html('before', templateProps)}
           <div class=${labelClassName} title=${getTitle()}>
-            ${slots.html('inside', templateProps)}${props.item.isHTML ? getHtml() : getText()}
+            ${slots.html('inside', templateProps)}${getContent()}
           </div>
           ${slots.html('after', templateProps)}${cutterRight()}
         </div>

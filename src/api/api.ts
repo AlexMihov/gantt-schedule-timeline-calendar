@@ -26,7 +26,7 @@ import {
   DefaultItem,
   DataChartTimeLevelDate,
   ScrollTypeVertical,
-  Rows,
+  Rows
 } from '../gstc';
 import { generateSlots } from './slots';
 import { lithtml } from '@neuronet.io/vido/src/vido';
@@ -56,7 +56,7 @@ function mergeActions(userConfig: Config, defaultConfig: Config, merge) {
   const defaultConfigActions = merge({}, defaultConfig.actions);
   const userActions = merge({}, userConfig.actions);
   let allActionNames = [...Object.keys(defaultConfigActions), ...Object.keys(userActions)];
-  allActionNames = allActionNames.filter((i) => allActionNames.includes(i));
+  allActionNames = allActionNames.filter(i => allActionNames.includes(i));
   const actions = {};
   for (const actionName of allActionNames) {
     actions[actionName] = [];
@@ -109,7 +109,7 @@ export const publicApi = {
     this.state.update('config.chart.time.period', period);
     return this.state.get('config.chart.time.zoom');
   },
-  dayjs,
+  dayjs
 };
 
 export interface WheelResult {
@@ -189,12 +189,40 @@ export class Api {
     return allLinked;
   }
 
+  getRow(rowId: string): Row {
+    return this.state.get(`config.list.rows.${rowId}`) as Row;
+  }
+
+  getRows(rowsId: string[]): Row[] {
+    if (!rowsId.length) return [];
+    const configRows: Rows = this.state.get('config.list.rows');
+    const rows = [];
+    for (const rowId of rowsId) {
+      rows.push(configRows[rowId]);
+    }
+    return rows;
+  }
+
+  getItem(itemId: string): Item {
+    return this.state.get(`config.chart.items.${itemId}`) as Item;
+  }
+
+  getItems(itemsId: string[]): Item[] {
+    if (!itemsId.length) return [];
+    const items = [];
+    const configItems: Items = this.state.get('config.chart.items');
+    for (const itemId of itemsId) {
+      items.push(configItems[itemId]);
+    }
+    return items;
+  }
+
   prepareLinkedItems(item: Item, items: Items) {
     const allLinkedIds = this.getAllLinkedItemsIds(item, items);
     for (const linkedItemId of allLinkedIds) {
       const linkedItem = items[linkedItemId];
       if (!linkedItem) throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
-      linkedItem.linkedWith = allLinkedIds.filter((linkedItemId) => linkedItemId !== linkedItem.id);
+      linkedItem.linkedWith = allLinkedIds.filter(linkedItemId => linkedItemId !== linkedItem.id);
     }
   }
 
@@ -221,15 +249,15 @@ export class Api {
             actualRight: 0,
             top: item.top || 0,
             actualTop: item.top || 0,
-            viewTop: 0,
+            viewTop: 0
           },
           width: -1,
           actualWidth: -1,
-          detached: false,
+          detached: false
         };
       item.$data.time = {
         startDate: this.time.date(item.time.start),
-        endDate: this.time.date(item.time.end),
+        endDate: this.time.date(item.time.end)
       };
       item.$data.actualHeight = item.height;
       if (typeof item.top !== 'number') item.top = 0;
@@ -256,11 +284,11 @@ export class Api {
             top: 0,
             topPercent: 0,
             bottomPercent: 0,
-            viewTop: 0,
+            viewTop: 0
           },
           items: [],
           actualHeight: 0,
-          outerHeight: 0,
+          outerHeight: 0
         };
       if (typeof row.height !== 'number') {
         row.height = defaultHeight;
@@ -332,12 +360,14 @@ export class Api {
   }
 
   recalculateRowHeight(row: Row, fixOverlapped = false): number {
+    if (!row.$data) return 0;
     let actualHeight = 0;
     if (fixOverlapped) {
-      this.fixOverlappedItems(row.$data.items);
-      row.$data.items = this.sortItemsByPositionTop(row.$data.items);
+      const rowItems = this.getItems(row.$data.items);
+      this.fixOverlappedItems(rowItems);
+      row.$data.items = this.sortItemsByPositionTop(rowItems).map(item => item.id);
     }
-    for (const item of row.$data.items) {
+    for (const item of this.getItems(row.$data.items)) {
       actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);
     }
     if (actualHeight < row.height) actualHeight = row.height;
@@ -346,9 +376,11 @@ export class Api {
     return row.$data.outerHeight;
   }
 
-  recalculateRowsHeightsAndFixOverlappingItems(rows: Row[]): number {
+  recalculateRowsHeightsAndFixOverlappingItems(rowsId: string[]): number {
     let top = 0;
-    for (const row of rows) {
+    const rows: Rows = this.state.get('config.list.rows');
+    for (const rowId of rowsId) {
+      const row = rows[rowId];
       this.recalculateRowHeight(row, true);
       row.$data.position.top = top;
       top += row.$data.outerHeight;
@@ -356,9 +388,11 @@ export class Api {
     return top;
   }
 
-  recalculateRowsPercents(rows: Row[], verticalAreaHeight: number): Row[] {
+  recalculateRowsPercents(rowsId: string[], verticalAreaHeight: number) {
     let top = 0;
-    for (const row of rows) {
+    const rows: Rows = this.state.get('config.list.rows');
+    for (const rowId of rowsId) {
+      const row = rows[rowId];
       if (verticalAreaHeight <= 0) {
         row.$data.position.topPercent = 0;
         row.$data.position.bottomPercent = 0;
@@ -368,10 +402,9 @@ export class Api {
       }
       top += row.$data.outerHeight;
     }
-    return rows;
   }
 
-  generateParents(rows, parentName = 'parentId') {
+  generateParents(rows: Rows | Items, parentName = 'parentId') {
     const parents = {};
     for (const rowId in rows) {
       const row = rows[rowId];
@@ -394,7 +427,7 @@ export class Api {
     if (node.id !== '') {
       parents = [...parents, node.id];
     }
-    node.$data.children = Object.values(children);
+    node.$data.children = Object.values(children).map((child: Item | Row) => child.id);
     for (const childrenId in children) {
       const child = children[childrenId];
       this.fastTree(rowParents, child, parents);
@@ -403,10 +436,15 @@ export class Api {
   }
 
   makeTreeMap(rows: Rows, items: Items) {
-    const itemParents = this.generateParents(items, 'rowId');
+    const itemParents: Items = this.generateParents(items, 'rowId');
     for (const rowId in rows) {
       if (!rows[rowId].$data) return;
-      rows[rowId].$data.items = itemParents[rowId] !== undefined ? Object.values(itemParents[rowId]) : [];
+      rows[rowId].$data.items.length = 0;
+      if (itemParents[rowId] !== undefined) {
+        for (const parent of Object.values(itemParents[rowId])) {
+          rows[rowId].$data.items.push(parent.id);
+        }
+      }
     }
     const rowParents = this.generateParents(rows);
     const tree = { id: '', $data: { children: [], parents: [], items: [] } };
@@ -423,12 +461,12 @@ export class Api {
           continue next;
         }
       }
-      rowsWithParentsExpanded.push(rows[rowId]);
+      rowsWithParentsExpanded.push(rowId);
     }
     return rowsWithParentsExpanded;
   }
 
-  getVisibleRows(rowsWithParentsExpanded: Row[]): Row[] {
+  getVisibleRows(rowsWithParentsExpanded: string[]): string[] {
     if (rowsWithParentsExpanded.length === 0) return [];
     const visibleRows = [];
     const verticalScroll = this.state.get('config.scroll.vertical');
@@ -436,17 +474,19 @@ export class Api {
     if (!topRow) topRow = rowsWithParentsExpanded[0];
     let innerHeight = this.state.get('$data.innerHeight');
     if (!innerHeight) return [];
+    const rows: Rows = this.state.get('config.list.rows');
     innerHeight += verticalScroll.offset || 0;
-    let strictTopRow = rowsWithParentsExpanded.find((row) => row.id === topRow.id);
+    let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
     let index = rowsWithParentsExpanded.indexOf(strictTopRow);
     if (index === undefined) return [];
     let currentRowsOffset = 0;
     for (let len = rowsWithParentsExpanded.length; index <= len; index++) {
-      const row = rowsWithParentsExpanded[index];
+      const rowId = rowsWithParentsExpanded[index];
+      const row = rows[rowId];
       if (row === undefined) continue;
       if (currentRowsOffset <= innerHeight) {
         row.$data.position.viewTop = currentRowsOffset;
-        visibleRows.push(row);
+        visibleRows.push(row.id);
       }
       currentRowsOffset += row.$data.outerHeight;
       if (currentRowsOffset >= innerHeight) {
@@ -544,7 +584,8 @@ export class Api {
     if (dataIndex === undefined) {
       dataIndex = 0;
     }
-    const rows: Row[] = this.state.get('$data.list.rowsWithParentsExpanded');
+    const rowsId: string[] = this.state.get('$data.list.rowsWithParentsExpanded');
+    const rows = this.getRows(rowsId);
     if (!rows[dataIndex] && dataIndex !== 0) dataIndex = 0;
     if (!rows[dataIndex]) return;
     this.state.update('config.scroll.vertical', (scrollVertical: ScrollTypeVertical) => {

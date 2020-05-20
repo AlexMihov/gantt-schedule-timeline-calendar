@@ -121,6 +121,10 @@ declare module "api/api" {
         getActions(name: string): any;
         isItemInViewport(item: Item, leftGlobal: number, rightGlobal: number): boolean;
         getAllLinkedItemsIds(item: Item, items: Items, allLinked?: string[]): string[];
+        getRow(rowId: string): Row;
+        getRows(rowsId: string[]): Row[];
+        getItem(itemId: string): Item;
+        getItems(itemsId: string[]): Item[];
         prepareLinkedItems(item: Item, items: Items): void;
         prepareItems(items: Items): Items;
         fillEmptyRowValues(rows: Rows): Rows;
@@ -130,13 +134,13 @@ declare module "api/api" {
         fixOverlappedItems(rowItems: Item[]): void;
         sortItemsByPositionTop(rowItems: Item[]): Item[];
         recalculateRowHeight(row: Row, fixOverlapped?: boolean): number;
-        recalculateRowsHeightsAndFixOverlappingItems(rows: Row[]): number;
-        recalculateRowsPercents(rows: Row[], verticalAreaHeight: number): Row[];
-        generateParents(rows: any, parentName?: string): {};
+        recalculateRowsHeightsAndFixOverlappingItems(rowsId: string[]): number;
+        recalculateRowsPercents(rowsId: string[], verticalAreaHeight: number): void;
+        generateParents(rows: Rows | Items, parentName?: string): {};
         fastTree(rowParents: any, node: any, parents?: any[]): any;
         makeTreeMap(rows: Rows, items: Items): any;
         getRowsWithParentsExpanded(rows: Rows): any[];
-        getVisibleRows(rowsWithParentsExpanded: Row[]): Row[];
+        getVisibleRows(rowsWithParentsExpanded: string[]): string[];
         normalizeMouseWheelEvent(event: MouseWheelEvent): WheelResult;
         scrollToTime(toTime: number, centered?: boolean, time?: DataChartTime): number;
         setScrollLeft(dataIndex: number | undefined, time?: DataChartTime, multi?: any, recalculateTimesLastReason?: string): any;
@@ -167,7 +171,7 @@ declare module "gstc" {
         position: RowDataPosition;
         parents: string[];
         children: string[];
-        items: Item[];
+        items: string[];
     }
     export interface RowStyleObject {
         current?: CSSProps;
@@ -622,9 +626,9 @@ declare module "gstc" {
     }
     export interface DataList {
         width: number;
-        visibleRows: Row[];
+        visibleRows: string[];
         visibleRowsHeight: number;
-        rowsWithParentsExpanded: Row[];
+        rowsWithParentsExpanded: string[];
         rowsHeight: number;
     }
     export interface Dimensions {

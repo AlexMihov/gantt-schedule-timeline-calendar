@@ -17,7 +17,7 @@ export interface RowData {
     position: RowDataPosition;
     parents: string[];
     children: string[];
-    items: Item[];
+    items: string[];
 }
 export interface RowStyleObject {
     current?: CSSProps;
@@ -472,9 +472,9 @@ export interface TreeMap {
 }
 export interface DataList {
     width: number;
-    visibleRows: Row[];
+    visibleRows: string[];
     visibleRowsHeight: number;
-    rowsWithParentsExpanded: Row[];
+    rowsWithParentsExpanded: string[];
     rowsHeight: number;
 }
 export interface Dimensions {
