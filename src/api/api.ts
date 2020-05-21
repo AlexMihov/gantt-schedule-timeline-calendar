@@ -479,13 +479,16 @@ export class Api {
     const visibleRows = [];
     const verticalScroll = this.state.get('config.scroll.vertical');
     let topRow = verticalScroll.data;
+    if (this.debug) console.log('getVisibleRows #2', { topRow }); // eslint-disable-line no-console
     if (!topRow) topRow = rowsWithParentsExpanded[0];
     let innerHeight = this.state.get('$data.innerHeight');
+    if (this.debug) console.log('getVisibleRows #3', { innerHeight }); // eslint-disable-line no-console
     if (!innerHeight) return [];
     const rows: Rows = this.state.get('config.list.rows');
     innerHeight += verticalScroll.offset || 0;
     let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
     let index = rowsWithParentsExpanded.indexOf(strictTopRow);
+    if (this.debug) console.log('getVisibleRows #4', { index }); // eslint-disable-line no-console
     if (index === undefined) return [];
     let currentRowsOffset = 0;
     for (let len = rowsWithParentsExpanded.length; index <= len; index++) {
@@ -501,7 +504,7 @@ export class Api {
         break;
       }
     }
-    if (this.debug) console.log('getVisibleRows', { visibleRows, innerHeight, topRow, index }); // eslint-disable-line no-console
+    if (this.debug) console.log('getVisibleRows #5 final', { visibleRows, innerHeight, topRow, index }); // eslint-disable-line no-console
     return visibleRows;
   }
 
