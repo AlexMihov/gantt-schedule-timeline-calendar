@@ -230,6 +230,7 @@ export class Api {
     const defaultItemHeight = this.state.get('config.chart.item.height');
     for (const itemId in items) {
       const item = items[itemId];
+      if (item.$data) return items; // do not iterate whole items if $data is present
       this.prepareLinkedItems(item, items);
       item.time.start = +item.time.start;
       item.time.end = +item.time.end;
@@ -276,6 +277,7 @@ export class Api {
     let top = 0;
     for (const rowId in rows) {
       const row = rows[rowId];
+      if (row.$data) return rows; // do not iterate whole tree when $data is present
       if (!row.$data)
         row.$data = {
           parents: [],

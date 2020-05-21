@@ -6045,21 +6045,15 @@
 	        update();
 	    }
 	    onDestroy(state.subscribe('$data.list.columns.resizer.active', resizerActiveChange));
-	    let emptyValuesDone = false;
 	    function generateTree(bulk = null, eventInfo = null) {
 	        if (eventInfo && eventInfo.type === 'subscribe')
 	            return;
-	        if (bulk === 'reload')
-	            emptyValuesDone = false;
 	        if (debug)
-	            console.log('Generating tree.', { emptyValuesDone }); // eslint-disable-line no-console
+	            console.log('Generating tree.'); // eslint-disable-line no-console
 	        const rows = state.get('config.list.rows');
-	        if (!emptyValuesDone)
-	            api.fillEmptyRowValues(rows);
+	        api.fillEmptyRowValues(rows);
 	        const items = state.get('config.chart.items');
-	        if (!emptyValuesDone)
-	            api.prepareItems(items);
-	        emptyValuesDone = true;
+	        api.prepareItems(items);
 	        state.update('$data.treeMap', api.makeTreeMap(rows, items));
 	        update();
 	    }
@@ -11277,6 +11271,8 @@
 	        const defaultItemHeight = this.state.get('config.chart.item.height');
 	        for (const itemId in items) {
 	            const item = items[itemId];
+	            if (item.$data)
+	                return items; // do not iterate whole items if $data is present
 	            this.prepareLinkedItems(item, items);
 	            item.time.start = +item.time.start;
 	            item.time.end = +item.time.end;
@@ -11328,6 +11324,8 @@
 	        let top = 0;
 	        for (const rowId in rows) {
 	            const row = rows[rowId];
+	            if (row.$data)
+	                return rows; // do not iterate whole tree when $data is present
 	            if (!row.$data)
 	                row.$data = {
 	                    parents: [],

@@ -128,16 +128,13 @@ export default function Main(vido: Vido, props = {}) {
   }
   onDestroy(state.subscribe('$data.list.columns.resizer.active', resizerActiveChange));
 
-  let emptyValuesDone = false;
   function generateTree(bulk = null, eventInfo = null) {
     if (eventInfo && eventInfo.type === 'subscribe') return;
-    if (bulk === 'reload') emptyValuesDone = false;
-    if (debug) console.log('Generating tree.', { emptyValuesDone }); // eslint-disable-line no-console
+    if (debug) console.log('Generating tree.'); // eslint-disable-line no-console
     const rows = state.get('config.list.rows');
-    if (!emptyValuesDone) api.fillEmptyRowValues(rows);
+    api.fillEmptyRowValues(rows);
     const items = state.get('config.chart.items');
-    if (!emptyValuesDone) api.prepareItems(items);
-    emptyValuesDone = true;
+    api.prepareItems(items);
     state.update('$data.treeMap', api.makeTreeMap(rows, items));
     update();
   }
