@@ -8382,7 +8382,7 @@
 	                    format = formatCache.get(time.leftGlobal);
 	                }
 	                else {
-	                    format = api.time.date(time.leftGlobal).format('YYYY-MM-DD HH:mm');
+	                    format = api.time.date(time.leftGlobal).format('YYYY-MM-DDTHH:mm');
 	                    formatCache.set(time.leftGlobal, format);
 	                }
 	                const id = row.id + ':' + format;
@@ -8587,7 +8587,7 @@
 	    const slots = api.generateSlots(componentName, vido, props);
 	    let className;
 	    function updateClassName(time) {
-	        className = api.getClass(componentName, `${props.row.id}-${time.leftGlobalDate.format('YYYY-MM-DDTHH:mm')}`);
+	        className = api.getClass(componentName, `${props.row.id}-${props.time.formatted}`);
 	        if (time.current) {
 	            className += ' current';
 	        }
@@ -8654,11 +8654,11 @@
 	    const { api, state, onDestroy, Actions, update, html, reuseComponents, StyleMap } = vido;
 	    const componentName = 'chart-timeline-items';
 	    let wrapper;
-	    onDestroy(state.subscribe('config.wrappers.ChartTimelineItems', (value) => (wrapper = value)));
+	    onDestroy(state.subscribe('config.wrappers.ChartTimelineItems', value => (wrapper = value)));
 	    let componentActions;
-	    onDestroy(state.subscribe(`config.actions.${componentName}`, (actions) => (componentActions = actions)));
+	    onDestroy(state.subscribe(`config.actions.${componentName}`, actions => (componentActions = actions)));
 	    let ItemsRowComponent;
-	    onDestroy(state.subscribe('config.components.ChartTimelineItemsRow', (value) => (ItemsRowComponent = value)));
+	    onDestroy(state.subscribe('config.components.ChartTimelineItemsRow', value => (ItemsRowComponent = value)));
 	    const className = api.getClass(componentName);
 	    const styleMap = new StyleMap({}, true);
 	    function calculateStyle() {
@@ -8674,18 +8674,18 @@
 	    function createRowComponents() {
 	        const visibleRowsId = state.get('$data.list.visibleRows') || [];
 	        const visibleRows = api.getRows(visibleRowsId);
-	        reuseComponents(rowsComponents, visibleRows, (row) => ({ row }), ItemsRowComponent, false);
+	        reuseComponents(rowsComponents, visibleRows, row => ({ row }), ItemsRowComponent, false);
 	        update();
 	    }
 	    onDestroy(state.subscribeAll(['$data.list.visibleRows;', 'config.components.ChartTimelineItemsRow', 'config.chart.items.*.rowId'], createRowComponents));
 	    onDestroy(() => {
-	        rowsComponents.forEach((row) => row.destroy());
+	        rowsComponents.forEach(row => row.destroy());
 	    });
 	    const actions = Actions.create(componentActions, { api, state });
 	    const slots = api.generateSlots(componentName, vido, props);
-	    return (templateProps) => wrapper(html `
+	    return templateProps => wrapper(html `
         <div class=${className} style=${styleMap} data-actions=${actions}>
-          ${slots.html('before', templateProps)}${rowsComponents.map((r) => r.html())}${slots.html('after', templateProps)}
+          ${slots.html('before', templateProps)}${rowsComponents.map(r => r.html())}${slots.html('after', templateProps)}
         </div>
       `, { props, vido, templateProps });
 	}
@@ -8839,6 +8839,7 @@
 	    const { api, state, onDestroy, Detach, Actions, update, html, svg, onChange, unsafeHTML, StyleMap } = vido;
 	    let wrapper;
 	    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
+	    let itemId = props.item.id;
 	    let itemLeftPx = 0, itemWidthPx = 0, leave = false, classNameCurrent = '';
 	    const styleMap = new StyleMap({ width: '', height: '', left: '', top: '' }), leftCutStyleMap = new StyleMap({}), rightCutStyleMap = new StyleMap({}), actionProps = {
 	        item: props.item,
@@ -8950,6 +8951,7 @@
     </div>
   `;
 	    const slots = api.generateSlots(componentName, vido, props);
+	    let itemSub;
 	    onChange(function onPropsChange(changedProps, options) {
 	        if (options.leave || changedProps.row === undefined || changedProps.item === undefined) {
 	            leave = true;
@@ -8969,12 +8971,20 @@
 	            leave = false;
 	        }
 	        props = changedProps;
+	        itemId = props.item.id;
+	        if (itemSub)
+	            itemSub();
+	        itemSub = state.subscribe(`config.chart.items.${itemId}`, () => updateItem());
 	        className = api.getClass(componentName, props.row.id + '-' + props.item.id);
 	        labelClassName = api.getClass(componentName + '-label', props.row.id + '-' + props.item.id);
 	        actionProps.item = props.item;
 	        actionProps.row = props.row;
 	        updateItem();
 	        slots.change(changedProps, options);
+	    });
+	    onDestroy(() => {
+	        if (itemSub)
+	            itemSub();
 	    });
 	    const componentActions = api.getActions(componentName);
 	    onDestroy(state.subscribe('$data.chart.time', updateItem));
@@ -11253,7 +11263,7 @@
 	        return rows;
 	    }
 	    getAllRows() {
-	        return Object.assign({}, this.state.get('config.list.rows'));
+	        return this.state.get('config.list.rows');
 	    }
 	    getItem(itemId) {
 	        return this.state.get(`config.chart.items.${itemId}`);
@@ -11270,7 +11280,7 @@
 	        return items;
 	    }
 	    getAllItems() {
-	        return Object.assign({}, this.state.get('config.chart.items'));
+	        return this.state.get('config.chart.items');
 	    }
 	    prepareLinkedItems(item, items) {
 	        const allLinkedIds = this.getAllLinkedItemsIds(item, items);
@@ -11428,11 +11438,6 @@
 	            index++;
 	        }
 	    }
-	    sortItemsByPositionTop(rowItems) {
-	        return rowItems.sort((itemA, itemB) => {
-	            return itemA.$data.position.top - itemB.$data.position.top;
-	        });
-	    }
 	    recalculateRowHeight(row, fixOverlapped = false) {
 	        if (!row.$data)
 	            return 0;
@@ -11440,7 +11445,7 @@
 	        if (fixOverlapped) {
 	            const rowItems = this.getItems(row.$data.items);
 	            this.fixOverlappedItems(rowItems);
-	            row.$data.items = this.sortItemsByPositionTop(rowItems).map(item => item.id);
+	            row.$data.items = rowItems.map(item => item.id);
 	        }
 	        for (const item of this.getItems(row.$data.items)) {
 	            actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);

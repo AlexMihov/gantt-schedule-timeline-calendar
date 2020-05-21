@@ -205,7 +205,7 @@ export class Api {
   }
 
   getAllRows(): Rows {
-    return { ...this.state.get('config.list.rows') };
+    return this.state.get('config.list.rows');
   }
 
   getItem(itemId: string): Item {
@@ -223,7 +223,7 @@ export class Api {
   }
 
   getAllItems(): Items {
-    return { ...this.state.get('config.chart.items') };
+    return this.state.get('config.chart.items');
   }
 
   prepareLinkedItems(item: Item, items: Items) {
@@ -368,19 +368,13 @@ export class Api {
     }
   }
 
-  sortItemsByPositionTop(rowItems: Item[]): Item[] {
-    return rowItems.sort((itemA, itemB) => {
-      return itemA.$data.position.top - itemB.$data.position.top;
-    });
-  }
-
   recalculateRowHeight(row: Row, fixOverlapped = false): number {
     if (!row.$data) return 0;
     let actualHeight = 0;
     if (fixOverlapped) {
       const rowItems = this.getItems(row.$data.items);
       this.fixOverlappedItems(rowItems);
-      row.$data.items = this.sortItemsByPositionTop(rowItems).map(item => item.id);
+      row.$data.items = rowItems.map(item => item.id);
     }
     for (const item of this.getItems(row.$data.items)) {
       actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);

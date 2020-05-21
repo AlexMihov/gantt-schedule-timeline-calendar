@@ -1,4 +1,9 @@
 import GSTC from '../../dist/gstc.esm.js';
+import { Plugin as TimelinePointer } from '../../dist/timeline-pointer.plugin.esm.js';
+import { Plugin as Selection } from '../../dist/selection.plugin.esm.js';
+import { Plugin as ItemMovement } from '../../dist/item-movement.plugin.esm.js';
+import { Plugin as ItemResizing } from '../../dist/item-resizing.plugin.esm.js';
+import { Plugin as CalendarScroll } from '../../dist/calendar-scroll.plugin.esm.js';
 
 const iterations = 100;
 
@@ -63,6 +68,13 @@ const columns = {
 };
 
 const config = {
+  plugins: [
+    TimelinePointer(),
+    Selection(),
+    ItemMovement(),
+    ItemResizing(),
+    CalendarScroll()
+  ],
   list: {
     rows,
     columns,

@@ -134,7 +134,6 @@ declare module "api/api" {
         itemsOverlaps(item1: Item, item2: Item): boolean;
         itemOverlapsWithOthers(item: Item, items: Item[]): Item;
         fixOverlappedItems(rowItems: Item[]): void;
-        sortItemsByPositionTop(rowItems: Item[]): Item[];
         recalculateRowHeight(row: Row, fixOverlapped?: boolean): number;
         recalculateRowsHeightsAndFixOverlappingItems(rowsId: string[]): number;
         recalculateRowsPercents(rowsId: string[], verticalAreaHeight: number): void;

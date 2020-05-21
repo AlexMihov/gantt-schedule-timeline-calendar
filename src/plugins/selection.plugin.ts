@@ -337,7 +337,8 @@ class SelectionPlugin {
   }
 
   private getItemsUnderSelectionArea(areaLocal: Area): { selected: Item[]; automaticallySelected: Item[] } {
-    const visibleItems: Item[] = this.state.get('$data.chart.visibleItems');
+    const visibleItemsId: string[] = this.state.get('$data.chart.visibleItems');
+    const visibleItems: Item[] = this.api.getItems(visibleItemsId);
     const move = this.poitnerData.events.move;
     const multi = move && this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
     let selected = multi ? [...this.data.selected[ITEM]] : [];

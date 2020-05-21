@@ -45,6 +45,8 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
   let wrapper;
   onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
 
+  let itemId = props.item.id;
+
   let itemLeftPx = 0,
     itemWidthPx = 0,
     leave = false,
@@ -160,6 +162,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
 
   const slots = api.generateSlots(componentName, vido, props);
 
+  let itemSub;
   onChange(function onPropsChange(changedProps, options) {
     if (options.leave || changedProps.row === undefined || changedProps.item === undefined) {
       leave = true;
@@ -178,12 +181,18 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
       leave = false;
     }
     props = changedProps;
+    itemId = props.item.id;
+    if (itemSub) itemSub();
+    itemSub = state.subscribe(`config.chart.items.${itemId}`, () => updateItem());
     className = api.getClass(componentName, props.row.id + '-' + props.item.id);
     labelClassName = api.getClass(componentName + '-label', props.row.id + '-' + props.item.id);
     actionProps.item = props.item;
     actionProps.row = props.row;
     updateItem();
     slots.change(changedProps, options);
+  });
+  onDestroy(() => {
+    if (itemSub) itemSub();
   });
 
   const componentActions = api.getActions(componentName);

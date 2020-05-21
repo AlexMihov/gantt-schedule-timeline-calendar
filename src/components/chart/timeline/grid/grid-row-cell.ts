@@ -73,7 +73,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
 
   let className;
   function updateClassName(time: ChartTimeDate) {
-    className = api.getClass(componentName, `${props.row.id}-${time.leftGlobalDate.format('YYYY-MM-DDTHH:mm')}`);
+    className = api.getClass(componentName, `${props.row.id}-${props.time.formatted}`);
     if (time.current) {
       className += ' current';
     }

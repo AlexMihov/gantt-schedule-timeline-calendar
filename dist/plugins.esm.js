@@ -2265,7 +2265,8 @@ class SelectionPlugin {
             (itemData.position.actualLeft >= area.x && itemData.position.actualRight <= areaRight));
     }
     getItemsUnderSelectionArea(areaLocal) {
-        const visibleItems = this.state.get('$data.chart.visibleItems');
+        const visibleItemsId = this.state.get('$data.chart.visibleItems');
+        const visibleItems = this.api.getItems(visibleItemsId);
         const move = this.poitnerData.events.move;
         const multi = move && this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
         let selected = multi ? [...this.data.selected[ITEM]] : [];
