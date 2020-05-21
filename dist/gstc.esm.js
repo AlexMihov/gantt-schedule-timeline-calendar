@@ -8834,6 +8834,8 @@ function ChartTimelineItemsRowItem(vido, props) {
     let wrapper;
     onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
     let itemId = props.item.id;
+    let debug;
+    onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
     let itemLeftPx = 0, itemWidthPx = 0, leave = false, classNameCurrent = '';
     const styleMap = new StyleMap({ width: '', height: '', left: '', top: '' }), leftCutStyleMap = new StyleMap({}), rightCutStyleMap = new StyleMap({}), actionProps = {
         item: props.item,
@@ -8861,6 +8863,8 @@ function ChartTimelineItemsRowItem(vido, props) {
             shouldDetach = true;
             return update();
         }
+        if (debug)
+            console.log('Item change before', { id: props.item.id, item: props.item }); // eslint-disable-line no-console
         itemLeftPx = props.item.$data.position.actualLeft;
         itemWidthPx = props.item.$data.actualWidth;
         if (props.item.time.end <= time.leftGlobal || props.item.time.start >= time.rightGlobal || itemWidthPx <= 0) {
@@ -8927,6 +8931,8 @@ function ChartTimelineItemsRowItem(vido, props) {
             styleMap.setStyle(Object.assign(Object.assign({}, styleMap.style), currentStyle));
         actionProps.left = itemLeftPx;
         actionProps.width = itemWidthPx;
+        if (debug)
+            console.log('Item change after', { id: props.item.id, itemLeftPx, itemWidthPx, item: props.item }); // eslint-disable-line no-console
         update();
     }
     const cutterClassName = api.getClass(componentName + '-cut');
