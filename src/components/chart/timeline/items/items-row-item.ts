@@ -162,8 +162,8 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
 
   const slots = api.generateSlots(componentName, vido, props);
 
-  let itemSub;
-  onChange(function onPropsChange(changedProps, options) {
+  let itemSub = state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, {})); // eslint-disable-line @typescript-eslint/no-use-before-define
+  function onPropsChange(changedProps, options) {
     if (options.leave || changedProps.row === undefined || changedProps.item === undefined) {
       leave = true;
       shouldDetach = true;
@@ -181,16 +181,20 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
       leave = false;
     }
     props = changedProps;
-    itemId = props.item.id;
-    if (itemSub) itemSub();
-    itemSub = state.subscribe(`config.chart.items.${itemId}`, () => updateItem());
+    if (props.item.id !== itemId) {
+      itemId = props.item.id;
+      if (itemSub) itemSub();
+      itemSub = state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, options));
+    }
     className = api.getClass(componentName, props.row.id + '-' + props.item.id);
     labelClassName = api.getClass(componentName + '-label', props.row.id + '-' + props.item.id);
     actionProps.item = props.item;
     actionProps.row = props.row;
     updateItem();
     slots.change(changedProps, options);
-  });
+    update();
+  }
+  onChange(onPropsChange);
   onDestroy(() => {
     if (itemSub) itemSub();
   });

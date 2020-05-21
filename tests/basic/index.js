@@ -43,6 +43,8 @@ for (let i = 0; i < iterations; i++) {
     rowId,
   };
 }
+items['0'].linkedWith = ['1'];
+items['1'].time = {...items['0'].time};
 
 const columns = {
   data: {
