@@ -444,6 +444,7 @@ export interface Locale {
     ordinal?: (n: number) => string;
 }
 export interface Config {
+    debug?: boolean;
     plugins?: Plugin[];
     plugin?: unknown;
     innerHeight?: number;

@@ -5962,16 +5962,22 @@
 	function Main(vido, props = {}) {
 	    const { api, state, onDestroy, Actions, update, createComponent, html, StyleMap } = vido;
 	    const componentName = api.name;
+	    let debug;
+	    onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
 	    // Initialize plugins
 	    const pluginsDestroy = [];
 	    function destroyPlugins() {
-	        pluginsDestroy.forEach((destroy) => destroy());
+	        pluginsDestroy.forEach(destroy => destroy());
 	        pluginsDestroy.length = 0;
 	    }
-	    onDestroy(state.subscribe('config.plugins', (plugins) => {
+	    onDestroy(state.subscribe('config.plugins', plugins => {
 	        // plugins was changed but it could be whole config that was changed
 	        // - we need to destroy actual plugins and mount them again
+	        if (debug)
+	            console.log('Plugins changed. Destroying plugins...'); // eslint-disable-line no-console
 	        destroyPlugins();
+	        if (debug)
+	            console.log('Plugins destroyed. Initializing plugins...'); // eslint-disable-line no-console
 	        if (typeof plugins !== 'undefined' && Array.isArray(plugins)) {
 	            for (const initializePlugin of plugins) {
 	                const destroyPlugin = initializePlugin(vido);
@@ -5983,13 +5989,15 @@
 	                }
 	            }
 	        }
+	        if (debug)
+	            console.log('Plugins intialized.'); // eslint-disable-line no-console
 	    }));
 	    onDestroy(destroyPlugins);
 	    const componentSubs = [];
 	    let ListComponent;
-	    componentSubs.push(state.subscribe('config.components.List', (value) => (ListComponent = value)));
+	    componentSubs.push(state.subscribe('config.components.List', value => (ListComponent = value)));
 	    let ChartComponent;
-	    componentSubs.push(state.subscribe('config.components.Chart', (value) => (ChartComponent = value)));
+	    componentSubs.push(state.subscribe('config.components.Chart', value => (ChartComponent = value)));
 	    const List = createComponent(ListComponent);
 	    onDestroy(() => {
 	        if (List)
@@ -6001,12 +6009,12 @@
 	            Chart.destroy();
 	    });
 	    onDestroy(() => {
-	        componentSubs.forEach((unsub) => unsub());
+	        componentSubs.forEach(unsub => unsub());
 	    });
 	    let wrapper;
-	    onDestroy(state.subscribe('config.wrappers.Main', (value) => (wrapper = value)));
+	    onDestroy(state.subscribe('config.wrappers.Main', value => (wrapper = value)));
 	    let componentActions;
-	    onDestroy(state.subscribe('config.actions.main', (actions) => (componentActions = actions)));
+	    onDestroy(state.subscribe('config.actions.main', actions => (componentActions = actions)));
 	    const styleMap = new StyleMap({});
 	    let rowsHeight = 0;
 	    let resizerActive = false;
@@ -6014,6 +6022,8 @@
 	    let timeLoadedEventFired = false;
 	    let className = api.getClass(componentName);
 	    function heightChange() {
+	        if (debug)
+	            console.log('Height change.', ['config.innerHeight', 'config.headerHeight', 'config.scroll.horizontal.size']); // eslint-disable-line no-console
 	        const config = state.get('config');
 	        const scrollBarHeight = state.get('config.scroll.horizontal.size');
 	        const finalInnerHeight = config.innerHeight - scrollBarHeight;
@@ -6041,6 +6051,8 @@
 	            return;
 	        if (bulk === 'reload')
 	            emptyValuesDone = false;
+	        if (debug)
+	            console.log('Generating tree.', { emptyValuesDone }); // eslint-disable-line no-console
 	        const rows = state.get('config.list.rows');
 	        if (!emptyValuesDone)
 	            api.fillEmptyRowValues(rows);
@@ -6058,6 +6070,8 @@
 	        const rowsWithParentsExpanded = api.getRowsWithParentsExpanded(configRows);
 	        rowsHeight = api.recalculateRowsHeightsAndFixOverlappingItems(rowsWithParentsExpanded);
 	        const verticalArea = state.get('config.scroll.vertical.area');
+	        if (debug)
+	            console.log('Rows with parent expanded and rows height.', { rowsWithParentsExpanded, rowsHeight }); // eslint-disable-line no-console
 	        api.recalculateRowsPercents(rowsWithParentsExpanded, verticalArea);
 	        state
 	            .multi()
@@ -6081,6 +6095,8 @@
 	            }
 	            lastPageCount++;
 	        }
+	        if (debug)
+	            console.log('Last page height.', { lastPageCount, lastPageSize, rows }); // eslint-disable-line no-console
 	        state
 	            .multi()
 	            .update('config.scroll.vertical.lastPageSize', lastPageSize, { force: true })
@@ -6096,6 +6112,8 @@
 	        lastRowsHeight = rowsHeight;
 	        const innerHeight = state.get('$data.innerHeight');
 	        const lastPageHeight = getLastPageRowsHeight(innerHeight, rowsWithParentsExpanded);
+	        if (debug)
+	            console.log('Calculate height related things.', { rowsWithParentsExpanded, lastRowsHeight, innerHeight }); // eslint-disable-line no-console
 	        state
 	            .multi()
 	            .update('config.scroll.vertical.area', rowsHeight, { force: true })
@@ -6110,6 +6128,8 @@
 	        for (const rowId of visibleRows) {
 	            height += api.recalculateRowHeight(rows[rowId]);
 	        }
+	        if (debug)
+	            console.log('Calculate visible rows height.', { height, rows, visibleRows }); // eslint-disable-line no-console
 	        state.update('$data.list.visibleRowsHeight', height + scrollOffset);
 	    }
 	    function generateVisibleRowsAndItems() {
@@ -6122,7 +6142,11 @@
 	        else if (visibleRowsId.length) {
 	            shouldUpdate = visibleRowsId.join(',') !== currentVisibleRowsId.join(',');
 	        }
+	        if (debug)
+	            console.log('Generating visible rows and items #1.', { visibleRowsId, shouldUpdate }); // eslint-disable-line no-console
 	        if (shouldUpdate) {
+	            if (debug)
+	                console.log('Saving visible rows and items #2.', { visibleRowsId, shouldUpdate }); // eslint-disable-line no-console
 	            state.update('$data.list.visibleRows', visibleRowsId);
 	        }
 	        const visibleItemsId = [];
@@ -6134,7 +6158,11 @@
 	            }
 	        }
 	        const currentVisibleItems = state.get('$data.chart.visibleItems') || [];
+	        if (debug)
+	            console.log('Generating visible rows and items #3.', { visibleItemsId, visibleRowsId, shouldUpdate, rows }); // eslint-disable-line no-console
 	        if (visibleItemsId.join(',') !== currentVisibleItems.join(',')) {
+	            if (debug)
+	                console.log('Generate visible rows and items #4.', { visibleItemsId, currentVisibleItems }); // eslint-disable-line no-console
 	            state.update('$data.chart.visibleItems', visibleItemsId);
 	        }
 	        update();
@@ -6142,6 +6170,8 @@
 	    let rowsAndItems = 0;
 	    onDestroy(state.subscribeAll(['config.chart.items;', 'config.list.rows;'], (bulk, eventInfo) => {
 	        ++rowsAndItems;
+	        if (debug)
+	            console.log('Reload fired [items or rows changed].', {}); // eslint-disable-line no-console
 	        generateTree('reload');
 	        generateVisibleRowsAndItems();
 	        prepareExpandedCalculateRowHeightsAndFixOverlapped();
@@ -6165,6 +6195,8 @@
 	        }
 	    }));
 	    onDestroy(state.subscribeAll(['config.list.rows.*.parentId', 'config.chart.items.*.rowId'], () => {
+	        if (debug)
+	            console.log('rows.parentId or items.rowId changed.', {}); // eslint-disable-line no-console
 	        generateTree();
 	        generateVisibleRowsAndItems();
 	        calculateHeightRelatedThings();
@@ -6175,16 +6207,16 @@
 	        'config.chart.items.*.height',
 	        'config.chart.items.*.rowId',
 	        'config.list.rows.*.$data.outerHeight',
-	        'config.scroll.vertical.area',
+	        'config.scroll.vertical.area'
 	    ], prepareExpandedCalculateRowHeightsAndFixOverlapped, { bulk: true }));
 	    onDestroy(state.subscribeAll(['$data.innerHeight', '$data.list.rowsHeight'], calculateHeightRelatedThings));
 	    onDestroy(state.subscribeAll([
 	        'config.chart.items.*.time',
 	        'config.chart.items.*.$data.position',
 	        '$data.list.visibleRows',
-	        'config.scroll.vertical.offset',
+	        'config.scroll.vertical.offset'
 	    ], calculateVisibleRowsHeights, {
-	        bulk: true,
+	        bulk: true
 	    }));
 	    onDestroy(state.subscribeAll(['$data.list.rowsWithParentsExpanded', 'config.scroll.vertical.dataIndex', 'config.chart.items.*.rowId'], generateVisibleRowsAndItems, { bulk: true /*, ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected']*/ }));
 	    function getLastPageDatesWidth(chartWidth, allDates) {
@@ -6221,7 +6253,7 @@
 	            period,
 	            time,
 	            callOnDate: false,
-	            callOnLevelDates: true,
+	            callOnLevelDates: true
 	        });
 	        const className = api.getClass('chart-calendar-date');
 	        for (const date of dates) {
@@ -6230,7 +6262,7 @@
 	                timeEnd: date.rightGlobalDate,
 	                vido,
 	                className,
-	                props: { date },
+	                props: { date }
 	            });
 	        }
 	        return dates;
@@ -6273,7 +6305,7 @@
 	        if (!time.zoom)
 	            return time;
 	        for (const level of levels) {
-	            const formatting = level.formats.find((format) => +time.zoom <= +format.zoomTo);
+	            const formatting = level.formats.find(format => +time.zoom <= +format.zoomTo);
 	            if (formatting && level.main) {
 	                time.period = formatting.period;
 	            }
@@ -6299,12 +6331,12 @@
 	        time.allDates = new Array(levels.length);
 	        // first of all we need to generate main dates because plugins may use it (HideWeekends for example)
 	        const mainLevel = levels[time.level];
-	        const formatting = mainLevel.formats.find((format) => +time.zoom <= +format.zoomTo);
+	        const formatting = mainLevel.formats.find(format => +time.zoom <= +format.zoomTo);
 	        time.allDates[time.level] = generatePeriodDates(formatting, time, mainLevel, time.level);
 	        let levelIndex = 0;
 	        for (const level of levels) {
 	            if (!level.main) {
-	                const formatting = level.formats.find((format) => +time.zoom <= +format.zoomTo);
+	                const formatting = level.formats.find(format => +time.zoom <= +format.zoomTo);
 	                time.allDates[levelIndex] = generatePeriodDates(formatting, time, level, levelIndex);
 	            }
 	            levelIndex++;
@@ -6314,7 +6346,7 @@
 	    function getPeriodDates(allLevelDates, time) {
 	        if (!allLevelDates.length)
 	            return [];
-	        const filtered = allLevelDates.filter((date) => {
+	        const filtered = allLevelDates.filter(date => {
 	            return ((date.leftGlobal >= time.leftGlobal && date.leftGlobal <= time.rightGlobal) ||
 	                (date.rightGlobal >= time.leftGlobal && date.rightGlobal <= time.rightGlobal) ||
 	                (date.leftGlobal <= time.leftGlobal && date.rightGlobal >= time.rightGlobal) ||
@@ -6332,7 +6364,7 @@
 	            date.currentView = {
 	                leftPx,
 	                rightPx: date.rightPx,
-	                width: date.width,
+	                width: date.width
 	            };
 	            if (firstLeftDiff < 0) {
 	                date.currentView.width = date.width + firstLeftDiff;
@@ -6352,14 +6384,14 @@
 	        time.levels = [];
 	        let levelIndex = 0;
 	        for (const level of levels) {
-	            const format = level.formats.find((format) => +time.zoom <= +format.zoomTo);
+	            const format = level.formats.find(format => +time.zoom <= +format.zoomTo);
 	            if (level.main) {
 	                time.format = format;
 	                time.level = levelIndex;
 	            }
 	            if (format) {
 	                let dates = getPeriodDates(time.allDates[levelIndex], time);
-	                time.onCurrentViewLevelDates.forEach((onCurrentViewLevelDates) => {
+	                time.onCurrentViewLevelDates.forEach(onCurrentViewLevelDates => {
 	                    dates = onCurrentViewLevelDates({ dates, format, time, level, levelIndex });
 	                });
 	                time.levels.push(dates);
@@ -6394,6 +6426,8 @@
 	        return rightGlobal;
 	    }
 	    function updateVisibleItems(time = state.get('$data.chart.time'), multi = state.multi()) {
+	        if (debug)
+	            console.log('Updating visible items.', {}); // eslint-disable-line no-console
 	        const visibleItemsId = state.get('$data.chart.visibleItems');
 	        const visibleItems = api.getItems(visibleItemsId);
 	        if (!visibleItems)
@@ -6434,9 +6468,11 @@
 	                $data.position.viewTop = viewTop;
 	                return $data;
 	            }, {
-	                data: 'updateVisibleItems',
+	                data: 'updateVisibleItems'
 	            });
 	        }
+	        if (debug)
+	            console.log('Visible items updated.', { visibleItemsId, visibleItems }); // eslint-disable-line no-console
 	        return multi;
 	    }
 	    onDestroy(state.subscribeAll(['$data.list.visibleRows;', '$data.chart.visibleItems;', 'config.scroll.vertical', 'config.chart.items'], (bulk, eventInfo) => {
@@ -6445,6 +6481,8 @@
 	        updateVisibleItems().done();
 	    }, { bulk: true, ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected'] }));
 	    function recalculateTimes(reason) {
+	        if (debug)
+	            console.log('Recalculating times.', {}); // eslint-disable-line no-console
 	        const chartWidth = state.get('$data.chart.dimensions.width');
 	        if (!chartWidth) {
 	            return;
@@ -6458,7 +6496,7 @@
 	        }
 	        time.fromDate = api.time.date(time.from);
 	        time.toDate = api.time.date(time.to);
-	        const mainLevel = calendar.levels.find((level) => level.main);
+	        const mainLevel = calendar.levels.find(level => level.main);
 	        if (!mainLevel) {
 	            throw new Error('Main calendar level not found (config.chart.calendar.levels).');
 	        }
@@ -6466,7 +6504,7 @@
 	        time.level = mainLevelIndex;
 	        if (!time.calculatedZoomMode) {
 	            if (time.period !== oldTime.period) {
-	                let periodFormat = mainLevel.formats.find((format) => format.period === time.period && format.default);
+	                let periodFormat = mainLevel.formats.find(format => format.period === time.period && format.default);
 	                if (periodFormat) {
 	                    time.zoom = periodFormat.zoomTo;
 	                }
@@ -6602,6 +6640,8 @@
 	        multi = updateVisibleItems(time, multi);
 	        multi = multi.update('$data.chart.time.recalculateTimesLastReason', reason.name);
 	        multi.done();
+	        if (debug)
+	            console.log('Time recalculated.', { time }); // eslint-disable-line no-console
 	        update(() => {
 	            if (!timeLoadedEventFired) {
 	                setTimeout(triggerLoadedEvent, 0);
@@ -6615,7 +6655,7 @@
 	        scrollDataIndex: 0,
 	        chartWidth: 0,
 	        from: 0,
-	        to: 0,
+	        to: 0
 	    };
 	    function recalculationIsNeeded() {
 	        const configTime = state.get('config.chart.time');
@@ -6656,7 +6696,7 @@
 	        '$data.chart.time',
 	        'config.chart.calendar.levels',
 	        'config.scroll.horizontal.dataIndex',
-	        '$data.chart.dimensions.width',
+	        '$data.chart.dimensions.width'
 	    ], () => {
 	        let reason = recalculationIsNeeded();
 	        if (reason.name)
@@ -6686,7 +6726,7 @@
 	            'jsrun.pro',
 	            'jsrun.top',
 	            'jsfiddle.net',
-	            'jsbin.com',
+	            'jsbin.com'
 	        ];
 	        let loc = location.host;
 	        const locParts = loc.split('.');
@@ -6720,8 +6760,8 @@
 	                mode: 'cors',
 	                credentials: 'omit',
 	                redirect: 'follow',
-	                body: JSON.stringify({ location: { href: location.href, host: location.host } }),
-	            }).catch((e) => { });
+	                body: JSON.stringify({ location: { href: location.href, host: location.host } })
+	            }).catch(e => { });
 	            localStorage.setItem('gstcus', 'true');
 	        }
 	    }
@@ -6761,7 +6801,7 @@
 	        ro.disconnect();
 	    });
 	    let horizontalScrollMultiplier, verticalScrollMultiplier;
-	    onDestroy(state.subscribe('config.scroll', (scroll) => {
+	    onDestroy(state.subscribe('config.scroll', scroll => {
 	        horizontalScrollMultiplier = scroll.horizontal.multiplier;
 	        verticalScrollMultiplier = scroll.vertical.multiplier;
 	    }));
@@ -6790,7 +6830,7 @@
 	    const mainActions = Actions.create(componentActions, actionProps);
 	    const slots = api.generateSlots('main', vido, props);
 	    onDestroy(slots.destroy);
-	    return (templateProps) => wrapper(html `
+	    return templateProps => wrapper(html `
         <div
           data-info-url="https://github.com/neuronetio/gantt-schedule-timeline-calendar"
           class=${className}
@@ -9004,16 +9044,16 @@
 	    'chart-timeline-grid-row-cell',
 	    'chart-timeline-items',
 	    'chart-timeline-items-row',
-	    'chart-timeline-items-row-item',
+	    'chart-timeline-items-row-item'
 	];
 	function generateEmptyActions() {
 	    const actions = {};
-	    actionNames.forEach((name) => (actions[name] = []));
+	    actionNames.forEach(name => (actions[name] = []));
 	    return actions;
 	}
 	function generateEmptySlots() {
 	    const slots = {};
-	    actionNames.forEach((name) => {
+	    actionNames.forEach(name => {
 	        slots[name] = { before: [], inside: [], after: [] };
 	    });
 	    return slots;
@@ -9021,6 +9061,7 @@
 	// default configuration
 	function defaultConfig() {
 	    return {
+	        debug: false,
 	        plugins: [],
 	        plugin: {},
 	        innerHeight: 428,
@@ -9045,7 +9086,7 @@
 	            ChartTimelineGridRowCell,
 	            ChartTimelineItems,
 	            ChartTimelineItemsRow,
-	            ChartTimelineItemsRowItem,
+	            ChartTimelineItemsRowItem
 	        },
 	        wrappers: {
 	            Main(input) {
@@ -9107,7 +9148,7 @@
 	            },
 	            ChartTimelineItemsRowItem(input) {
 	                return input;
-	            },
+	            }
 	        },
 	        slots: generateEmptySlots(),
 	        list: {
@@ -9116,39 +9157,39 @@
 	                height: 40,
 	                gap: {
 	                    top: 0,
-	                    bottom: 0,
-	                },
+	                    bottom: 0
+	                }
 	            },
 	            columns: {
 	                percent: 100,
 	                resizer: {
 	                    width: 10,
 	                    inRealTime: true,
-	                    dots: 6,
+	                    dots: 6
 	                },
 	                minWidth: 50,
-	                data: {},
+	                data: {}
 	            },
 	            expander: {
 	                padding: 18,
 	                size: 20,
 	                icon: {
 	                    width: 16,
-	                    height: 16,
+	                    height: 16
 	                },
 	                icons: {
 	                    child: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><ellipse ry="4" rx="4" id="svg_1" cy="12" cx="12" fill="#000000B0"/></svg>',
 	                    open: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/><path fill="none" d="M0 0h24v24H0V0z"/></svg>',
-	                    closed: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/><path fill="none" d="M0 0h24v24H0V0z"/></svg>',
-	                },
+	                    closed: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/><path fill="none" d="M0 0h24v24H0V0z"/></svg>'
+	                }
 	            },
 	            toggle: {
 	                display: true,
 	                icons: {
 	                    open: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path stroke="null" d="m16.406954,16.012672l4.00393,-4.012673l-4.00393,-4.012673l1.232651,-1.232651l5.245324,5.245324l-5.245324,5.245324l-1.232651,-1.232651z"/><path stroke="null" d="m-0.343497,12.97734zm1.620144,0l11.341011,0l0,-1.954681l-11.341011,0l0,1.954681zm0,3.909362l11.341011,0l0,-1.954681l-11.341011,0l0,1.954681zm0,-9.773404l0,1.95468l11.341011,0l0,-1.95468l-11.341011,0z"/></svg>',
-	                    close: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path transform="rotate(-180 4.392796516418457,12) " stroke="null" d="m1.153809,16.012672l4.00393,-4.012673l-4.00393,-4.012673l1.232651,-1.232651l5.245324,5.245324l-5.245324,5.245324l-1.232651,-1.232651z"/><path stroke="null" d="m9.773297,12.97734zm1.620144,0l11.341011,0l0,-1.954681l-11.341011,0l0,1.954681zm0,3.909362l11.341011,0l0,-1.954681l-11.341011,0l0,1.954681zm0,-9.773404l0,1.95468l11.341011,0l0,-1.95468l-11.341011,0z"/></svg>',
-	                },
-	            },
+	                    close: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path transform="rotate(-180 4.392796516418457,12) " stroke="null" d="m1.153809,16.012672l4.00393,-4.012673l-4.00393,-4.012673l1.232651,-1.232651l5.245324,5.245324l-5.245324,5.245324l-1.232651,-1.232651z"/><path stroke="null" d="m9.773297,12.97734zm1.620144,0l11.341011,0l0,-1.954681l-11.341011,0l0,1.954681zm0,3.909362l11.341011,0l0,-1.954681l-11.341011,0l0,1.954681zm0,-9.773404l0,1.95468l11.341011,0l0,-1.95468l-11.341011,0z"/></svg>'
+	                }
+	            }
 	        },
 	        scroll: {
 	            bodyClassName: 'gstc-scrolling',
@@ -9161,7 +9202,7 @@
 	                area: 0,
 	                multiplier: 3,
 	                offset: 0,
-	                smooth: false,
+	                smooth: false
 	            },
 	            vertical: {
 	                size: 20,
@@ -9172,8 +9213,8 @@
 	                area: 0,
 	                multiplier: 3,
 	                offset: 0,
-	                smooth: false,
-	            },
+	                smooth: false
+	            }
 	        },
 	        chart: {
 	            time: {
@@ -9190,7 +9231,7 @@
 	                onCurrentViewLevelDates: [],
 	                onDate: [],
 	                allDates: [],
-	                additionalSpaceAdded: false,
+	                additionalSpaceAdded: false
 	            },
 	            calendar: {
 	                expand: true,
@@ -9203,35 +9244,35 @@
 	                                className: 'gstc-date-medium gstc-date-left',
 	                                format({ timeStart }) {
 	                                    return timeStart.format('DD MMMM YYYY (dddd)');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 23,
 	                                period: 'month',
 	                                format({ timeStart }) {
 	                                    return timeStart.format('MMMM YYYY');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 24,
 	                                period: 'month',
 	                                format({ timeStart }) {
 	                                    return timeStart.format("MMMM 'YY");
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 25,
 	                                period: 'month',
 	                                format({ timeStart }) {
 	                                    return timeStart.format('MMM YYYY');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 27,
 	                                period: 'year',
 	                                format({ timeStart }) {
 	                                    return timeStart.format('YYYY');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 100,
@@ -9239,9 +9280,9 @@
 	                                default: true,
 	                                format() {
 	                                    return null;
-	                                },
-	                            },
-	                        ],
+	                                }
+	                            }
+	                        ]
 	                    },
 	                    {
 	                        main: true,
@@ -9251,7 +9292,7 @@
 	                                period: 'hour',
 	                                format({ timeStart }) {
 	                                    return timeStart.format('HH:mm');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 17,
@@ -9259,7 +9300,7 @@
 	                                default: true,
 	                                format({ timeStart }) {
 	                                    return timeStart.format('HH');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 19,
@@ -9267,7 +9308,7 @@
 	                                className: 'gstc-date-medium',
 	                                format({ timeStart, className, vido }) {
 	                                    return vido.html `<span class="${className}-content gstc-date-bold">${timeStart.format('DD')}</span> <span class="${className}-content gstc-date-thin">${timeStart.format('dddd')}</span>`;
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 20,
@@ -9275,14 +9316,14 @@
 	                                default: true,
 	                                format({ timeStart, vido, className }) {
 	                                    return vido.html `<div class="${className}-content gstc-date-top">${timeStart.format('DD')}</div><div class="${className}-content gstc-date-small">${timeStart.format('dddd')}</div>`;
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 21,
 	                                period: 'day',
 	                                format({ timeStart, vido, className }) {
 	                                    return vido.html `<div class="${className}-content gstc-date-top">${timeStart.format('DD')}</div><div class="${className}-content gstc-date-small">${timeStart.format('ddd')}</div>`;
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 22,
@@ -9290,7 +9331,7 @@
 	                                className: 'gstc-date-vertical',
 	                                format({ timeStart, className, vido }) {
 	                                    return vido.html `<div class="${className}-content gstc-date-top">${timeStart.format('DD')}</div><div class="${className}-content gstc-date-extra-small">${timeStart.format('ddd')}</div>`;
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 23,
@@ -9298,7 +9339,7 @@
 	                                default: true,
 	                                format({ timeStart, timeEnd, className, vido }) {
 	                                    return vido.html `<div class="${className}-content gstc-date-top">${timeStart.format('DD')} - ${timeEnd.format('DD')}</div><div class="${className}-content gstc-date-small gstc-date-thin">${timeStart.format('ddd')} - ${timeEnd.format('dd')}</div>`;
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 25,
@@ -9306,7 +9347,7 @@
 	                                className: 'gstc-date-vertical',
 	                                format({ timeStart, timeEnd, className, vido }) {
 	                                    return vido.html `<div class="${className}-content gstc-date-top gstc-date-small gstc-date-normal">${timeStart.format('DD')}</div><div class="gstc-dash gstc-date-small">-</div><div class="${className}-content gstc-date-small gstc-date-normal">${timeEnd.format('DD')}</div>`;
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 26,
@@ -9315,7 +9356,7 @@
 	                                className: 'gstc-date-month-level-1',
 	                                format({ timeStart, vido, className }) {
 	                                    return vido.html `<div class="${className}-content gstc-date-top">${timeStart.format('MMM')}</div><div class="${className}-content gstc-date-small gstc-date-bottom">${timeStart.format('MM')}</div>`;
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 27,
@@ -9323,7 +9364,7 @@
 	                                className: 'gstc-date-vertical',
 	                                format({ timeStart, className, vido }) {
 	                                    return vido.html `<div class="${className}-content gstc-date-top">${timeStart.format('MM')}</div><div class="${className}-content gstc-date-extra-small">${timeStart.format('MMM')}</div>`;
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 28,
@@ -9332,7 +9373,7 @@
 	                                className: 'gstc-date-big',
 	                                format({ timeStart }) {
 	                                    return timeStart.format('YYYY');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 29,
@@ -9340,7 +9381,7 @@
 	                                className: 'gstc-date-medium',
 	                                format({ timeStart }) {
 	                                    return timeStart.format('YYYY');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 30,
@@ -9348,7 +9389,7 @@
 	                                className: 'gstc-date-medium',
 	                                format({ timeStart }) {
 	                                    return timeStart.format('YY');
-	                                },
+	                                }
 	                            },
 	                            {
 	                                zoomTo: 100,
@@ -9356,28 +9397,28 @@
 	                                default: true,
 	                                format() {
 	                                    return null;
-	                                },
-	                            },
-	                        ],
-	                    },
-	                ],
+	                                }
+	                            }
+	                        ]
+	                    }
+	                ]
 	            },
 	            grid: {
 	                cell: {
-	                    onCreate: [],
-	                },
+	                    onCreate: []
+	                }
 	            },
 	            item: {
 	                gap: {
 	                    top: 4,
-	                    bottom: 4,
+	                    bottom: 4
 	                },
 	                top: 0,
 	                height: 40 - 8,
-	                minWidth: 10,
+	                minWidth: 10
 	            },
 	            items: {},
-	            spacing: 1,
+	            spacing: 1
 	        },
 	        classNames: {},
 	        actions: generateEmptyActions(),
@@ -9402,7 +9443,7 @@
 	                M: 'a month',
 	                MM: '%d months',
 	                y: 'a year',
-	                yy: '%d years',
+	                yy: '%d years'
 	            },
 	            formats: {
 	                LT: 'HH:mm',
@@ -9410,19 +9451,19 @@
 	                L: 'DD/MM/YYYY',
 	                LL: 'D MMMM YYYY',
 	                LLL: 'D MMMM YYYY HH:mm',
-	                LLLL: 'dddd, D MMMM YYYY HH:mm',
+	                LLLL: 'dddd, D MMMM YYYY HH:mm'
 	            },
 	            ordinal: (n) => {
 	                const s = ['th', 'st', 'nd', 'rd'];
 	                const v = n % 100;
 	                return `[${n}${s[(v - 20) % 10] || s[v] || s[0]}]`;
-	            },
+	            }
 	        },
 	        utcMode: false,
 	        usageStatistics: true,
 	        merge(target, source) {
 	            return helpers.mergeDeep({}, target, source);
-	        },
+	        }
 	    };
 	}
 
@@ -11658,17 +11699,17 @@
 	            visibleRowsHeight: 0,
 	            rowsWithParentsExpanded: [],
 	            rowsHeight: 0,
-	            width: 0,
+	            width: 0
 	        },
 	        dimensions: {
 	            width: 0,
-	            height: 0,
+	            height: 0
 	        },
 	        chart: {
 	            dimensions: {
 	                width: 0,
 	                innerWidth: 0,
-	                height: 0,
+	                height: 0
 	            },
 	            visibleItems: [],
 	            time: {
@@ -11678,7 +11719,7 @@
 	                    zoomTo: 0,
 	                    format() {
 	                        return '';
-	                    },
+	                    }
 	                },
 	                level: 0,
 	                levels: [],
@@ -11700,10 +11741,10 @@
 	                to: 0,
 	                fromDate: null,
 	                toDate: null,
-	                additionalSpaceAdded: false,
-	            },
+	                additionalSpaceAdded: false
+	            }
 	        },
-	        elements: {},
+	        elements: {}
 	    };
 	}
 	function GSTC(options) {
@@ -11714,10 +11755,10 @@
 	        // @ts-ignore
 	        window.state = state;
 	    }
-	    state.update('', (oldValue) => {
+	    state.update('', oldValue => {
 	        return {
 	            config: oldValue.config,
-	            $data,
+	            $data
 	        };
 	    });
 	    const vido = Vido(state, api);

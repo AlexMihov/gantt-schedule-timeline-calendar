@@ -27,7 +27,7 @@ import {
   Vido,
   Reason,
   Scroll,
-  Row,
+  Row
 } from '../gstc';
 
 import { Component, ComponentInstance } from '@neuronet.io/vido/src/vido';
@@ -36,17 +36,22 @@ export default function Main(vido: Vido, props = {}) {
   const { api, state, onDestroy, Actions, update, createComponent, html, StyleMap } = vido;
   const componentName = api.name;
 
+  let debug;
+  onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
+
   // Initialize plugins
   const pluginsDestroy = [];
   function destroyPlugins() {
-    pluginsDestroy.forEach((destroy) => destroy());
+    pluginsDestroy.forEach(destroy => destroy());
     pluginsDestroy.length = 0;
   }
   onDestroy(
-    state.subscribe('config.plugins', (plugins) => {
+    state.subscribe('config.plugins', plugins => {
       // plugins was changed but it could be whole config that was changed
       // - we need to destroy actual plugins and mount them again
+      if (debug) console.log('Plugins changed. Destroying plugins...'); // eslint-disable-line no-console
       destroyPlugins();
+      if (debug) console.log('Plugins destroyed. Initializing plugins...'); // eslint-disable-line no-console
       if (typeof plugins !== 'undefined' && Array.isArray(plugins)) {
         for (const initializePlugin of plugins) {
           const destroyPlugin = initializePlugin(vido);
@@ -57,15 +62,16 @@ export default function Main(vido: Vido, props = {}) {
           }
         }
       }
+      if (debug) console.log('Plugins intialized.'); // eslint-disable-line no-console
     })
   );
   onDestroy(destroyPlugins);
 
   const componentSubs = [];
   let ListComponent: Component;
-  componentSubs.push(state.subscribe('config.components.List', (value) => (ListComponent = value)));
+  componentSubs.push(state.subscribe('config.components.List', value => (ListComponent = value)));
   let ChartComponent: Component;
-  componentSubs.push(state.subscribe('config.components.Chart', (value) => (ChartComponent = value)));
+  componentSubs.push(state.subscribe('config.components.Chart', value => (ChartComponent = value)));
 
   const List: ComponentInstance = createComponent(ListComponent);
   onDestroy(() => {
@@ -77,14 +83,14 @@ export default function Main(vido: Vido, props = {}) {
   });
 
   onDestroy(() => {
-    componentSubs.forEach((unsub) => unsub());
+    componentSubs.forEach(unsub => unsub());
   });
 
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.Main', (value) => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.Main', value => (wrapper = value)));
 
   let componentActions;
-  onDestroy(state.subscribe('config.actions.main', (actions) => (componentActions = actions)));
+  onDestroy(state.subscribe('config.actions.main', actions => (componentActions = actions)));
 
   const styleMap = new StyleMap({});
   let rowsHeight = 0;
@@ -95,6 +101,8 @@ export default function Main(vido: Vido, props = {}) {
   let className = api.getClass(componentName);
 
   function heightChange() {
+    if (debug)
+      console.log('Height change.', ['config.innerHeight', 'config.headerHeight', 'config.scroll.horizontal.size']); // eslint-disable-line no-console
     const config = state.get('config');
     const scrollBarHeight = state.get('config.scroll.horizontal.size');
     const finalInnerHeight = config.innerHeight - scrollBarHeight;
@@ -124,6 +132,7 @@ export default function Main(vido: Vido, props = {}) {
   function generateTree(bulk = null, eventInfo = null) {
     if (eventInfo && eventInfo.type === 'subscribe') return;
     if (bulk === 'reload') emptyValuesDone = false;
+    if (debug) console.log('Generating tree.', { emptyValuesDone }); // eslint-disable-line no-console
     const rows = state.get('config.list.rows');
     if (!emptyValuesDone) api.fillEmptyRowValues(rows);
     const items = state.get('config.chart.items');
@@ -139,6 +148,7 @@ export default function Main(vido: Vido, props = {}) {
     const rowsWithParentsExpanded: string[] = api.getRowsWithParentsExpanded(configRows);
     rowsHeight = api.recalculateRowsHeightsAndFixOverlappingItems(rowsWithParentsExpanded);
     const verticalArea: number = state.get('config.scroll.vertical.area');
+    if (debug) console.log('Rows with parent expanded and rows height.', { rowsWithParentsExpanded, rowsHeight }); // eslint-disable-line no-console
     api.recalculateRowsPercents(rowsWithParentsExpanded, verticalArea);
     state
       .multi()
@@ -162,6 +172,7 @@ export default function Main(vido: Vido, props = {}) {
       }
       lastPageCount++;
     }
+    if (debug) console.log('Last page height.', { lastPageCount, lastPageSize, rows }); // eslint-disable-line no-console
     state
       .multi()
       .update('config.scroll.vertical.lastPageSize', lastPageSize, { force: true })
@@ -177,6 +188,8 @@ export default function Main(vido: Vido, props = {}) {
     lastRowsHeight = rowsHeight;
     const innerHeight = state.get('$data.innerHeight');
     const lastPageHeight = getLastPageRowsHeight(innerHeight, rowsWithParentsExpanded);
+    if (debug)
+      console.log('Calculate height related things.', { rowsWithParentsExpanded, lastRowsHeight, innerHeight }); // eslint-disable-line no-console
     state
       .multi()
       .update('config.scroll.vertical.area', rowsHeight, { force: true })
@@ -192,6 +205,7 @@ export default function Main(vido: Vido, props = {}) {
     for (const rowId of visibleRows) {
       height += api.recalculateRowHeight(rows[rowId]);
     }
+    if (debug) console.log('Calculate visible rows height.', { height, rows, visibleRows }); // eslint-disable-line no-console
     state.update('$data.list.visibleRowsHeight', height + scrollOffset);
   }
 
@@ -204,7 +218,9 @@ export default function Main(vido: Vido, props = {}) {
     } else if (visibleRowsId.length) {
       shouldUpdate = visibleRowsId.join(',') !== currentVisibleRowsId.join(',');
     }
+    if (debug) console.log('Generating visible rows and items #1.', { visibleRowsId, shouldUpdate }); // eslint-disable-line no-console
     if (shouldUpdate) {
+      if (debug) console.log('Saving visible rows and items #2.', { visibleRowsId, shouldUpdate }); // eslint-disable-line no-console
       state.update('$data.list.visibleRows', visibleRowsId);
     }
     const visibleItemsId = [];
@@ -216,7 +232,10 @@ export default function Main(vido: Vido, props = {}) {
       }
     }
     const currentVisibleItems: string[] = state.get('$data.chart.visibleItems') || [];
+    if (debug)
+      console.log('Generating visible rows and items #3.', { visibleItemsId, visibleRowsId, shouldUpdate, rows }); // eslint-disable-line no-console
     if (visibleItemsId.join(',') !== currentVisibleItems.join(',')) {
+      if (debug) console.log('Generate visible rows and items #4.', { visibleItemsId, currentVisibleItems }); // eslint-disable-line no-console
       state.update('$data.chart.visibleItems', visibleItemsId);
     }
     update();
@@ -226,6 +245,7 @@ export default function Main(vido: Vido, props = {}) {
   onDestroy(
     state.subscribeAll(['config.chart.items;', 'config.list.rows;'], (bulk, eventInfo) => {
       ++rowsAndItems;
+      if (debug) console.log('Reload fired [items or rows changed].', {}); // eslint-disable-line no-console
       generateTree('reload');
       generateVisibleRowsAndItems();
       prepareExpandedCalculateRowHeightsAndFixOverlapped();
@@ -254,6 +274,7 @@ export default function Main(vido: Vido, props = {}) {
     state.subscribeAll(
       ['config.list.rows.*.parentId', 'config.chart.items.*.rowId'],
       () => {
+        if (debug) console.log('rows.parentId or items.rowId changed.', {}); // eslint-disable-line no-console
         generateTree();
         generateVisibleRowsAndItems();
         calculateHeightRelatedThings();
@@ -270,7 +291,7 @@ export default function Main(vido: Vido, props = {}) {
         'config.chart.items.*.height',
         'config.chart.items.*.rowId',
         'config.list.rows.*.$data.outerHeight',
-        'config.scroll.vertical.area',
+        'config.scroll.vertical.area'
       ],
       prepareExpandedCalculateRowHeightsAndFixOverlapped,
       { bulk: true }
@@ -285,11 +306,11 @@ export default function Main(vido: Vido, props = {}) {
         'config.chart.items.*.time',
         'config.chart.items.*.$data.position',
         '$data.list.visibleRows',
-        'config.scroll.vertical.offset',
+        'config.scroll.vertical.offset'
       ],
       calculateVisibleRowsHeights,
       {
-        bulk: true,
+        bulk: true
       }
     )
   );
@@ -341,7 +362,7 @@ export default function Main(vido: Vido, props = {}) {
       period,
       time,
       callOnDate: false,
-      callOnLevelDates: true,
+      callOnLevelDates: true
     });
     const className = api.getClass('chart-calendar-date');
     for (const date of dates) {
@@ -350,7 +371,7 @@ export default function Main(vido: Vido, props = {}) {
         timeEnd: date.rightGlobalDate,
         vido,
         className,
-        props: { date },
+        props: { date }
       });
     }
     return dates;
@@ -393,7 +414,7 @@ export default function Main(vido: Vido, props = {}) {
   function guessPeriod(time: DataChartTime, levels: ChartCalendarLevel[]) {
     if (!time.zoom) return time;
     for (const level of levels) {
-      const formatting = level.formats.find((format) => +time.zoom <= +format.zoomTo);
+      const formatting = level.formats.find(format => +time.zoom <= +format.zoomTo);
       if (formatting && level.main) {
         time.period = formatting.period;
       }
@@ -421,13 +442,13 @@ export default function Main(vido: Vido, props = {}) {
 
     // first of all we need to generate main dates because plugins may use it (HideWeekends for example)
     const mainLevel = levels[time.level];
-    const formatting = mainLevel.formats.find((format) => +time.zoom <= +format.zoomTo);
+    const formatting = mainLevel.formats.find(format => +time.zoom <= +format.zoomTo);
     time.allDates[time.level] = generatePeriodDates(formatting, time, mainLevel, time.level);
 
     let levelIndex = 0;
     for (const level of levels) {
       if (!level.main) {
-        const formatting = level.formats.find((format) => +time.zoom <= +format.zoomTo);
+        const formatting = level.formats.find(format => +time.zoom <= +format.zoomTo);
         time.allDates[levelIndex] = generatePeriodDates(formatting, time, level, levelIndex);
       }
       levelIndex++;
@@ -437,7 +458,7 @@ export default function Main(vido: Vido, props = {}) {
 
   function getPeriodDates(allLevelDates: ChartTimeDates, time: DataChartTime): ChartTimeDate[] {
     if (!allLevelDates.length) return [];
-    const filtered = allLevelDates.filter((date) => {
+    const filtered = allLevelDates.filter(date => {
       return (
         (date.leftGlobal >= time.leftGlobal && date.leftGlobal <= time.rightGlobal) ||
         (date.rightGlobal >= time.leftGlobal && date.rightGlobal <= time.rightGlobal) ||
@@ -457,7 +478,7 @@ export default function Main(vido: Vido, props = {}) {
       date.currentView = {
         leftPx,
         rightPx: date.rightPx,
-        width: date.width,
+        width: date.width
       };
       if (firstLeftDiff < 0) {
         date.currentView.width = date.width + firstLeftDiff;
@@ -478,14 +499,14 @@ export default function Main(vido: Vido, props = {}) {
     time.levels = [];
     let levelIndex = 0;
     for (const level of levels) {
-      const format = level.formats.find((format) => +time.zoom <= +format.zoomTo);
+      const format = level.formats.find(format => +time.zoom <= +format.zoomTo);
       if (level.main) {
         time.format = format;
         time.level = levelIndex;
       }
       if (format) {
         let dates = getPeriodDates(time.allDates[levelIndex], time);
-        time.onCurrentViewLevelDates.forEach((onCurrentViewLevelDates) => {
+        time.onCurrentViewLevelDates.forEach(onCurrentViewLevelDates => {
           dates = onCurrentViewLevelDates({ dates, format, time, level, levelIndex });
         });
         time.levels.push(dates);
@@ -525,6 +546,7 @@ export default function Main(vido: Vido, props = {}) {
   }
 
   function updateVisibleItems(time: DataChartTime = state.get('$data.chart.time'), multi = state.multi()) {
+    if (debug) console.log('Updating visible items.', {}); // eslint-disable-line no-console
     const visibleItemsId: string[] = state.get('$data.chart.visibleItems');
     const visibleItems: Item[] = api.getItems(visibleItemsId);
     if (!visibleItems) return multi;
@@ -551,7 +573,7 @@ export default function Main(vido: Vido, props = {}) {
       }
       multi = multi.update(
         `config.chart.items.${item.id}.$data`,
-        function ($data: ItemData) {
+        function($data: ItemData) {
           if (!$data) return;
           $data.position.left = left;
           $data.position.actualLeft = api.time.limitOffsetPxToView(left, time);
@@ -564,10 +586,11 @@ export default function Main(vido: Vido, props = {}) {
           return $data;
         },
         {
-          data: 'updateVisibleItems',
+          data: 'updateVisibleItems'
         }
       );
     }
+    if (debug) console.log('Visible items updated.', { visibleItemsId, visibleItems }); // eslint-disable-line no-console
     return multi;
   }
 
@@ -583,6 +606,7 @@ export default function Main(vido: Vido, props = {}) {
   );
 
   function recalculateTimes(reason: Reason) {
+    if (debug) console.log('Recalculating times.', {}); // eslint-disable-line no-console
     const chartWidth: number = state.get('$data.chart.dimensions.width');
     if (!chartWidth) {
       return;
@@ -597,7 +621,7 @@ export default function Main(vido: Vido, props = {}) {
     time.fromDate = api.time.date(time.from);
     time.toDate = api.time.date(time.to);
 
-    const mainLevel = calendar.levels.find((level) => level.main);
+    const mainLevel = calendar.levels.find(level => level.main);
     if (!mainLevel) {
       throw new Error('Main calendar level not found (config.chart.calendar.levels).');
     }
@@ -606,7 +630,7 @@ export default function Main(vido: Vido, props = {}) {
 
     if (!time.calculatedZoomMode) {
       if (time.period !== oldTime.period) {
-        let periodFormat = mainLevel.formats.find((format) => format.period === time.period && format.default);
+        let periodFormat = mainLevel.formats.find(format => format.period === time.period && format.default);
         if (periodFormat) {
           time.zoom = periodFormat.zoomTo;
         }
@@ -751,6 +775,7 @@ export default function Main(vido: Vido, props = {}) {
     multi = updateVisibleItems(time, multi);
     multi = multi.update('$data.chart.time.recalculateTimesLastReason', reason.name);
     multi.done();
+    if (debug) console.log('Time recalculated.', { time }); // eslint-disable-line no-console
     update(() => {
       if (!timeLoadedEventFired) {
         setTimeout(triggerLoadedEvent, 0);
@@ -765,7 +790,7 @@ export default function Main(vido: Vido, props = {}) {
     scrollDataIndex: 0,
     chartWidth: 0,
     from: 0,
-    to: 0,
+    to: 0
   };
   function recalculationIsNeeded() {
     const configTime = state.get('config.chart.time');
@@ -806,7 +831,7 @@ export default function Main(vido: Vido, props = {}) {
         '$data.chart.time',
         'config.chart.calendar.levels',
         'config.scroll.horizontal.dataIndex',
-        '$data.chart.dimensions.width',
+        '$data.chart.dimensions.width'
       ],
       () => {
         let reason = recalculationIsNeeded();
@@ -841,7 +866,7 @@ export default function Main(vido: Vido, props = {}) {
       'jsrun.pro',
       'jsrun.top',
       'jsfiddle.net',
-      'jsbin.com',
+      'jsbin.com'
     ];
     let loc = location.host;
     const locParts = loc.split('.');
@@ -873,8 +898,8 @@ export default function Main(vido: Vido, props = {}) {
         mode: 'cors',
         credentials: 'omit',
         redirect: 'follow',
-        body: JSON.stringify({ location: { href: location.href, host: location.host } }),
-      }).catch((e) => {});
+        body: JSON.stringify({ location: { href: location.href, host: location.host } })
+      }).catch(e => {});
       localStorage.setItem('gstcus', 'true');
     }
   } catch (e) {}
@@ -917,7 +942,7 @@ export default function Main(vido: Vido, props = {}) {
 
   let horizontalScrollMultiplier, verticalScrollMultiplier;
   onDestroy(
-    state.subscribe('config.scroll', (scroll) => {
+    state.subscribe('config.scroll', scroll => {
       horizontalScrollMultiplier = scroll.horizontal.multiplier;
       verticalScrollMultiplier = scroll.vertical.multiplier;
     })
@@ -949,7 +974,7 @@ export default function Main(vido: Vido, props = {}) {
   const slots = api.generateSlots('main', vido, props);
   onDestroy(slots.destroy);
 
-  return (templateProps) =>
+  return templateProps =>
     wrapper(
       html`
         <div
