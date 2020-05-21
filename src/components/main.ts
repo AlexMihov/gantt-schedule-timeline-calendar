@@ -140,7 +140,7 @@ export default function Main(vido: Vido, props = {}) {
   }
 
   function prepareExpandedCalculateRowHeightsAndFixOverlapped() {
-    const configRows: Rows = state.get('config.list.rows');
+    const configRows: Rows = api.getAllRows();
     if (!configRows) return;
     const rowsWithParentsExpanded: string[] = api.getRowsWithParentsExpanded(configRows);
     rowsHeight = api.recalculateRowsHeightsAndFixOverlappingItems(rowsWithParentsExpanded);
@@ -159,7 +159,7 @@ export default function Main(vido: Vido, props = {}) {
     if (rowsWithParentsExpanded.length === 0) return 0;
     let lastPageSize = 0;
     let lastPageCount = 0;
-    const rows: Rows = state.get('config.list.rows');
+    const rows: Rows = api.getAllRows();
     for (let i = rowsWithParentsExpanded.length - 1; i >= 0; i--) {
       const row = rows[rowsWithParentsExpanded[i]];
       lastPageSize += row.$data.outerHeight;
@@ -198,7 +198,7 @@ export default function Main(vido: Vido, props = {}) {
     const scrollOffset = state.get('config.scroll.vertical.offset') || 0;
     const visibleRows: string[] = state.get('$data.list.visibleRows');
     let height = 0;
-    const rows: Rows = state.get('config.list.rows');
+    const rows: Rows = api.getAllRows();
     for (const rowId of visibleRows) {
       height += api.recalculateRowHeight(rows[rowId]);
     }
@@ -221,7 +221,7 @@ export default function Main(vido: Vido, props = {}) {
       state.update('$data.list.visibleRows', visibleRowsId);
     }
     const visibleItemsId = [];
-    const rows: Rows = state.get('config.list.rows');
+    const rows: Rows = api.getAllRows();
     for (const rowId of visibleRowsId) {
       const row = rows[rowId];
       for (const itemId of row.$data.items) {
@@ -547,7 +547,7 @@ export default function Main(vido: Vido, props = {}) {
     const visibleItemsId: string[] = state.get('$data.chart.visibleItems');
     const visibleItems: Item[] = api.getItems(visibleItemsId);
     if (!visibleItems) return multi;
-    const rows: Rows = state.get('config.list.rows');
+    const rows: Rows = api.getAllRows();
     if (!rows) return multi;
     if (!time.levels || !time.levels[time.level]) return multi;
     const spacing = state.get('config.chart.spacing') || 0;

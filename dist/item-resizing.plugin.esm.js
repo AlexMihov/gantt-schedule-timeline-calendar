@@ -1242,7 +1242,7 @@ function generateEmptyData(options = {}) {
         },
         onEnd({ items }) {
             return items.after;
-        },
+        }
     };
     const snapToTime = {
         start({ startTime, time }) {
@@ -1250,18 +1250,18 @@ function generateEmptyData(options = {}) {
         },
         end({ endTime, time }) {
             return endTime.endOf(time.period);
-        },
+        }
     };
     const handle = {
         width: 18,
         horizontalMargin: 0,
         verticalMargin: 0,
         outside: false,
-        onlyWhenSelected: true,
+        onlyWhenSelected: true
     };
     const result = Object.assign({ enabled: true, debug: false, state: '', content: null, bodyClass: 'gstc-item-resizing', bodyClassLeft: 'gstc-items-resizing-left', bodyClassRight: 'gstc-items-resizing-right', initialPosition: { x: 0, y: 0 }, currentPosition: { x: 0, y: 0 }, movement: {
             px: 0,
-            time: 0,
+            time: 0
         }, initialItems: [], targetData: null, leftIsMoving: false, rightIsMoving: false, handle: Object.assign({}, handle), events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
     if (options.snapToTime)
         result.snapToTime = Object.assign(Object.assign({}, snapToTime), options.snapToTime);
@@ -1297,7 +1297,7 @@ class ItemResizing {
         this.destroy = this.destroy.bind(this);
         this.updateData();
         document.body.classList.add(this.data.bodyClass);
-        this.unsubs.push(this.state.subscribe('config.plugin.ItemResizing', (data) => {
+        this.unsubs.push(this.state.subscribe('config.plugin.ItemResizing', data => {
             if (!data.enabled) {
                 document.body.classList.remove(this.data.bodyClass);
             }
@@ -1318,7 +1318,7 @@ class ItemResizing {
         });
     }
     destroy() {
-        this.unsubs.forEach((unsub) => unsub());
+        this.unsubs.forEach(unsub => unsub());
         document.removeEventListener('pointermove', this.onLeftPointerMove);
         document.removeEventListener('pointerup', this.onLeftPointerUp);
         document.removeEventListener('pointermove', this.onRightPointerMove);
@@ -1337,7 +1337,7 @@ class ItemResizing {
         this.spacing = this.state.get('config.chart.spacing');
     }
     getSelectedItems() {
-        return this.state.get(`config.plugin.Selection.selected.${ITEM}`).map((item) => this.merge({}, item));
+        return this.state.get(`config.plugin.Selection.selected.${ITEM}`).map(item => this.merge({}, item));
     }
     getRightStyleMap(item) {
         const rightStyleMap = new this.vido.StyleMap({});
@@ -1368,7 +1368,7 @@ class ItemResizing {
         return leftStyleMap;
     }
     getEventArgument(afterItems) {
-        const configItems = this.state.get('config.chart.items');
+        const configItems = this.api.getAllItems();
         const before = [];
         for (const item of afterItems) {
             before.push(this.merge({}, configItems[item.id]));
@@ -1378,15 +1378,15 @@ class ItemResizing {
                 initial: this.data.initialItems,
                 before,
                 after: afterItems,
-                targetData: this.data.targetData,
+                targetData: this.data.targetData
             },
             vido: this.vido,
             state: this.state,
-            time: this.state.get('$data.chart.time'),
+            time: this.state.get('$data.chart.time')
         };
     }
     dispatchEvent(type, items) {
-        items = items.map((item) => this.merge({}, item));
+        items = items.map(item => this.merge({}, item));
         const modified = this.data.events[type](this.getEventArgument(items));
         let multi = this.state.multi();
         for (const item of modified) {
@@ -1398,7 +1398,7 @@ class ItemResizing {
     }
     getItemsForDiff() {
         const modified = this.getSelectedItems()[0];
-        const original = this.data.initialItems.find((initial) => initial.id === modified.id);
+        const original = this.data.initialItems.find(initial => initial.id === modified.id);
         return { modified, original };
     }
     onPointerDown(ev) {
@@ -1409,7 +1409,7 @@ class ItemResizing {
         this.data.targetData = this.merge({}, ev.target.vido);
         this.data.initialPosition = {
             x: ev.screenX,
-            y: ev.screenY,
+            y: ev.screenY
         };
         this.data.currentPosition = Object.assign({}, this.data.initialPosition);
         if (this.data.state === '' || this.data.state === 'end') {
@@ -1468,7 +1468,7 @@ class ItemResizing {
                 item,
                 time,
                 movement,
-                vido: this.vido,
+                vido: this.vido
             });
             item.time.start = finalLeftGlobalDate.valueOf();
             item.$data.time.startDate = finalLeftGlobalDate;
@@ -1499,7 +1499,7 @@ class ItemResizing {
                 item,
                 time,
                 movement,
-                vido: this.vido,
+                vido: this.vido
             });
             item.time.end = finalRightGlobalDate.valueOf();
             item.$data.time.endDate = finalRightGlobalDate;
@@ -1546,7 +1546,8 @@ class ItemResizing {
         const rightStyleMap = this.getRightStyleMap(item);
         const leftStyleMap = this.getLeftStyleMap(item); // eslint-disable-line no-unused-vars, @typescript-eslint/no-unused-vars
         const onRightPointerDown = {
-            handleEvent: (ev) => this.onRightPointerDown(ev),
+            handleEvent: ev => this.onRightPointerDown(ev)
+            //capture: true,
         };
         /*const leftHandle = this
           .html`<div class=${this.leftClassName} style=${leftStyleMap} @pointerdown=${onLeftPointerDown}>${this.data.content}</div>`;

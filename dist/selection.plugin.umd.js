@@ -105,7 +105,7 @@
           },
           canDeselect( /*type, currently, all*/) {
               return [];
-          },
+          }
       };
       options = Object.assign(Object.assign({}, defaultOptions), options);
       return options;
@@ -114,17 +114,17 @@
   function generateEmptyData(options) {
       return Object.assign({ enabled: true, showOverlay: true, isSelecting: false, pointerState: 'up', selectKey: '', multiKey: 'shift', multipleSelection: true, targetType: '', targetData: null, initialPosition: { x: 0, y: 0 }, currentPosition: { x: 0, y: 0 }, selectionAreaLocal: { x: 0, y: 0, width: 0, height: 0 }, selectionAreaGlobal: { x: 0, y: 0, width: 0, height: 0 }, selecting: {
               [ITEM]: [],
-              [CELL]: [],
+              [CELL]: []
           }, selected: {
               [ITEM]: [],
-              [CELL]: [],
+              [CELL]: []
           }, automaticallySelected: {
               [ITEM]: [],
-              [CELL]: [],
+              [CELL]: []
           }, events: {
               down: null,
               move: null,
-              up: null,
+              up: null
           } }, options);
   }
   class SelectionPlugin {
@@ -142,17 +142,17 @@
           this.wrapper = this.wrapper.bind(this);
           this.destroy = this.destroy.bind(this);
           this.setWrapper();
-          this.onDestroy.push(this.state.subscribe('config.plugin.TimelinePointer', (timelinePointerData) => {
+          this.onDestroy.push(this.state.subscribe('config.plugin.TimelinePointer', timelinePointerData => {
               this.poitnerData = timelinePointerData;
               this.onPointerData();
           }));
           this.updateData();
-          this.onDestroy.push(this.state.subscribe(pluginPath, (value) => {
+          this.onDestroy.push(this.state.subscribe(pluginPath, value => {
               this.data = value;
           }));
           // watch and update items that are inside selection
           this.onDestroy.push(this.state.subscribe('config.chart.items', (items) => {
-              this.data.selected[ITEM] = this.data.selected[ITEM].filter((item) => !!items[item.id]).map((item) => this.merge({}, items[item.id]));
+              this.data.selected[ITEM] = this.data.selected[ITEM].filter(item => !!items[item.id]).map(item => this.merge({}, items[item.id]));
           }, { ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected'] }));
           // TODO: watch and update cells that are inside selection
       }
@@ -166,7 +166,7 @@
       destroy() {
           this.state.update('config.wrappers.ChartTimelineItems', this.oldWrapper);
           this.oldWrapper = null;
-          this.onDestroy.forEach((unsub) => unsub());
+          this.onDestroy.forEach(unsub => unsub());
       }
       updateData() {
           this.state.update(pluginPath, Object.assign({}, this.data));
@@ -220,7 +220,7 @@
       }
       collectLinkedItems(item, current = []) {
           if (item.linkedWith && item.linkedWith.length) {
-              const items = this.state.get('config.chart.items');
+              const items = this.api.getAllItems();
               for (const linkedItemId of item.linkedWith) {
                   const linkedItem = items[linkedItemId];
                   if (!current.includes(linkedItem)) {
@@ -237,19 +237,19 @@
           const move = this.poitnerData.events.move;
           const multi = this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
           const linked = this.collectLinkedItems(item, [item]);
-          if (this.data.selected[ITEM].find((selectedItem) => selectedItem.id === item.id)) {
+          if (this.data.selected[ITEM].find(selectedItem => selectedItem.id === item.id)) {
               // if we want to start movement or something - just return currently selected
               selected = this.data.selected[ITEM];
-              if (automaticallySelected.find((auto) => auto.id === item.id)) {
+              if (automaticallySelected.find(auto => auto.id === item.id)) {
                   // item under the pointer was automaticallySelected so we must remove it from here
                   // - it is not automaticallySelected right now
                   // we need to replace current item with one that is linked but doesn't lay down
                   // in automaticallySelected currently - we need to switch them
                   // first of all we need to find out which item is linked with current but
                   // not inside automaticallySelected
-                  const actualAutoIds = automaticallySelected.map((sel) => sel.id);
-                  const replaceWith = selected.find((sel) => item.linkedWith.includes(sel.id) && !actualAutoIds.includes(sel.id));
-                  automaticallySelected = automaticallySelected.filter((currentItem) => currentItem.id !== item.id);
+                  const actualAutoIds = automaticallySelected.map(sel => sel.id);
+                  const replaceWith = selected.find(sel => item.linkedWith.includes(sel.id) && !actualAutoIds.includes(sel.id));
+                  automaticallySelected = automaticallySelected.filter(currentItem => currentItem.id !== item.id);
                   automaticallySelected.push(replaceWith);
               }
               else {
@@ -263,9 +263,9 @@
               else {
                   selected = linked;
               }
-              automaticallySelected = linked.filter((currentItem) => currentItem.id !== item.id);
+              automaticallySelected = linked.filter(currentItem => currentItem.id !== item.id);
           }
-          selected = selected.map((item) => {
+          selected = selected.map(item => {
               item.selected = true;
               return item;
           });
@@ -302,26 +302,26 @@
               const itemData = item.$data;
               if (this.isItemVerticallyInsideArea(itemData, areaLocal) &&
                   this.isItemHorizontallyInsideArea(itemData, areaLocal)) {
-                  if (!selected.find((selectedItem) => selectedItem.id === item.id))
+                  if (!selected.find(selectedItem => selectedItem.id === item.id))
                       selected.push(item);
                   const linked = this.collectLinkedItems(item, [item]);
                   for (let linkedItem of linked) {
                       linkedItem = this.merge({}, linkedItem);
-                      if (!selected.find((selectedItem) => selectedItem.id === linkedItem.id)) {
+                      if (!selected.find(selectedItem => selectedItem.id === linkedItem.id)) {
                           selected.push(linkedItem);
                           automaticallySelected.push(linkedItem);
                       }
                   }
               }
           }
-          selected = selected.map((item) => {
+          selected = selected.map(item => {
               item.selected = true;
               return item;
           });
           return { selected, automaticallySelected };
       }
       unmarkSelected() {
-          const items = this.state.get('config.chart.items');
+          const items = this.api.getAllItems();
           let multi = this.state.multi();
           for (const id in items) {
               const item = items[id];

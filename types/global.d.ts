@@ -123,8 +123,10 @@ declare module "api/api" {
         getAllLinkedItemsIds(item: Item, items: Items, allLinked?: string[]): string[];
         getRow(rowId: string): Row;
         getRows(rowsId: string[]): Row[];
+        getAllRows(): Rows;
         getItem(itemId: string): Item;
         getItems(itemsId: string[]): Item[];
+        getAllItems(): Items;
         prepareLinkedItems(item: Item, items: Items): void;
         prepareItems(items: Items): Items;
         fillEmptyRowValues(rows: Rows): Rows;

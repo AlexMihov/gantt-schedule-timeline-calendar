@@ -106,7 +106,7 @@ function generateEmptyData(options: Options = {}): PluginData {
     },
     onEnd({ items }) {
       return items.after;
-    },
+    }
   };
   const snapToTime = {
     start({ startTime, time }) {
@@ -114,14 +114,14 @@ function generateEmptyData(options: Options = {}): PluginData {
     },
     end({ endTime, time }) {
       return endTime.endOf(time.period);
-    },
+    }
   };
   const handle = {
     width: 18,
     horizontalMargin: 0,
     verticalMargin: 0,
     outside: false,
-    onlyWhenSelected: true,
+    onlyWhenSelected: true
   };
   const result: PluginData = {
     enabled: true,
@@ -135,7 +135,7 @@ function generateEmptyData(options: Options = {}): PluginData {
     currentPosition: { x: 0, y: 0 },
     movement: {
       px: 0,
-      time: 0,
+      time: 0
     },
     initialItems: [],
     targetData: null,
@@ -144,7 +144,7 @@ function generateEmptyData(options: Options = {}): PluginData {
     handle: { ...handle },
     events: { ...events },
     snapToTime: { ...snapToTime },
-    ...options,
+    ...options
   };
   if (options.snapToTime) result.snapToTime = { ...snapToTime, ...options.snapToTime };
   if (options.events) result.events = { ...events, ...options.events };
@@ -190,7 +190,7 @@ class ItemResizing {
     this.updateData();
     document.body.classList.add(this.data.bodyClass);
     this.unsubs.push(
-      this.state.subscribe('config.plugin.ItemResizing', (data) => {
+      this.state.subscribe('config.plugin.ItemResizing', data => {
         if (!data.enabled) {
           document.body.classList.remove(this.data.bodyClass);
         } else if (data.enabled) {
@@ -211,7 +211,7 @@ class ItemResizing {
   }
 
   public destroy() {
-    this.unsubs.forEach((unsub) => unsub());
+    this.unsubs.forEach(unsub => unsub());
     document.removeEventListener('pointermove', this.onLeftPointerMove);
     document.removeEventListener('pointerup', this.onLeftPointerUp);
     document.removeEventListener('pointermove', this.onRightPointerMove);
@@ -232,7 +232,7 @@ class ItemResizing {
   }
 
   private getSelectedItems(): Item[] {
-    return this.state.get(`config.plugin.Selection.selected.${ITEM}`).map((item) => this.merge({}, item) as Item);
+    return this.state.get(`config.plugin.Selection.selected.${ITEM}`).map(item => this.merge({}, item) as Item);
   }
 
   private getRightStyleMap(item: Item) {
@@ -264,7 +264,7 @@ class ItemResizing {
   }
 
   private getEventArgument(afterItems: Item[]): OnArg {
-    const configItems = this.state.get('config.chart.items');
+    const configItems = this.api.getAllItems();
     const before = [];
     for (const item of afterItems) {
       before.push(this.merge({}, configItems[item.id]) as Item);
@@ -274,16 +274,16 @@ class ItemResizing {
         initial: this.data.initialItems,
         before,
         after: afterItems,
-        targetData: this.data.targetData,
+        targetData: this.data.targetData
       },
       vido: this.vido,
       state: this.state,
-      time: this.state.get('$data.chart.time'),
+      time: this.state.get('$data.chart.time')
     };
   }
 
   private dispatchEvent(type: 'onStart' | 'onResize' | 'onEnd', items: Item[]) {
-    items = items.map((item) => this.merge({}, item) as Item);
+    items = items.map(item => this.merge({}, item) as Item);
     const modified = this.data.events[type](this.getEventArgument(items));
     let multi = this.state.multi();
     for (const item of modified) {
@@ -296,7 +296,7 @@ class ItemResizing {
 
   private getItemsForDiff(): { original: Item; modified: Item } {
     const modified = this.getSelectedItems()[0];
-    const original = this.data.initialItems.find((initial) => initial.id === modified.id);
+    const original = this.data.initialItems.find(initial => initial.id === modified.id);
     return { modified, original };
   }
 
@@ -308,7 +308,7 @@ class ItemResizing {
     this.data.targetData = this.merge({}, ev.target.vido) as Item;
     this.data.initialPosition = {
       x: ev.screenX,
-      y: ev.screenY,
+      y: ev.screenY
     };
     this.data.currentPosition = { ...this.data.initialPosition };
     if (this.data.state === '' || this.data.state === 'end') {
@@ -366,7 +366,7 @@ class ItemResizing {
         item,
         time,
         movement,
-        vido: this.vido,
+        vido: this.vido
       });
       item.time.start = finalLeftGlobalDate.valueOf();
       item.$data.time.startDate = finalLeftGlobalDate;
@@ -396,7 +396,7 @@ class ItemResizing {
         item,
         time,
         movement,
-        vido: this.vido,
+        vido: this.vido
       });
       item.time.end = finalRightGlobalDate.valueOf();
       item.$data.time.endDate = finalRightGlobalDate;
@@ -448,11 +448,11 @@ class ItemResizing {
     const leftStyleMap = this.getLeftStyleMap(item); // eslint-disable-line no-unused-vars, @typescript-eslint/no-unused-vars
     // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     const onLeftPointerDown = {
-      handleEvent: (ev) => this.onLeftPointerDown(ev),
+      handleEvent: ev => this.onLeftPointerDown(ev)
       //capture: true,
     };
     const onRightPointerDown = {
-      handleEvent: (ev) => this.onRightPointerDown(ev),
+      handleEvent: ev => this.onRightPointerDown(ev)
       //capture: true,
     };
     /*const leftHandle = this

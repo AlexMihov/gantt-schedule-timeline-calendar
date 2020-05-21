@@ -6052,7 +6052,7 @@ function Main(vido, props = {}) {
         update();
     }
     function prepareExpandedCalculateRowHeightsAndFixOverlapped() {
-        const configRows = state.get('config.list.rows');
+        const configRows = api.getAllRows();
         if (!configRows)
             return;
         const rowsWithParentsExpanded = api.getRowsWithParentsExpanded(configRows);
@@ -6073,7 +6073,7 @@ function Main(vido, props = {}) {
             return 0;
         let lastPageSize = 0;
         let lastPageCount = 0;
-        const rows = state.get('config.list.rows');
+        const rows = api.getAllRows();
         for (let i = rowsWithParentsExpanded.length - 1; i >= 0; i--) {
             const row = rows[rowsWithParentsExpanded[i]];
             lastPageSize += row.$data.outerHeight;
@@ -6112,7 +6112,7 @@ function Main(vido, props = {}) {
         const scrollOffset = state.get('config.scroll.vertical.offset') || 0;
         const visibleRows = state.get('$data.list.visibleRows');
         let height = 0;
-        const rows = state.get('config.list.rows');
+        const rows = api.getAllRows();
         for (const rowId of visibleRows) {
             height += api.recalculateRowHeight(rows[rowId]);
         }
@@ -6138,7 +6138,7 @@ function Main(vido, props = {}) {
             state.update('$data.list.visibleRows', visibleRowsId);
         }
         const visibleItemsId = [];
-        const rows = state.get('config.list.rows');
+        const rows = api.getAllRows();
         for (const rowId of visibleRowsId) {
             const row = rows[rowId];
             for (const itemId of row.$data.items) {
@@ -6420,7 +6420,7 @@ function Main(vido, props = {}) {
         const visibleItems = api.getItems(visibleItemsId);
         if (!visibleItems)
             return multi;
-        const rows = state.get('config.list.rows');
+        const rows = api.getAllRows();
         if (!rows)
             return multi;
         if (!time.levels || !time.levels[time.level])
@@ -8361,7 +8361,7 @@ function ChartTimelineGrid(vido, props) {
         styleMap.style.width = width + 'px';
         let top = 0;
         rowsWithCells.length = 0;
-        const rows = state.get('config.list.rows');
+        const rows = api.getAllRows();
         for (const rowId of visibleRowsId) {
             const row = rows[rowId];
             if (!row || !row.$data) {
@@ -8560,8 +8560,8 @@ class BindElementAction$5 {
             data.state.update('$data.elements.chart-timeline-grid-row-cells', cells, { only: null });
     }
     destroy(element, data) {
-        data.state.update('$data.elements.chart-timeline-grid-row-cells', (cells) => {
-            return cells.filter((el) => el !== element);
+        data.state.update('$data.elements.chart-timeline-grid-row-cells', cells => {
+            return cells.filter(el => el !== element);
         }, { only: [''] });
     }
 }
@@ -8574,7 +8574,7 @@ function ChartTimelineGridRowCell(vido, props) {
     const detach = new Detach(() => shouldDetach);
     const componentActions = api.getActions(componentName);
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineGridRowCell', (value) => {
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineGridRowCell', value => {
         wrapper = value;
         update();
     }));
@@ -8604,7 +8604,7 @@ function ChartTimelineGridRowCell(vido, props) {
         styleMap.setStyle({});
         styleMap.style.width = (((_a = props === null || props === void 0 ? void 0 : props.time) === null || _a === void 0 ? void 0 : _a.width) || 0) + 'px';
         styleMap.style.height = (((_c = (_b = props === null || props === void 0 ? void 0 : props.row) === null || _b === void 0 ? void 0 : _b.$data) === null || _c === void 0 ? void 0 : _c.outerHeight) || 0) + 'px';
-        const rows = state.get('config.list.rows');
+        const rows = api.getAllRows();
         for (const parentId of props.row.$data.parents) {
             const parent = rows[parentId];
             const childrenStyle = (_f = (_e = (_d = parent === null || parent === void 0 ? void 0 : parent.style) === null || _d === void 0 ? void 0 : _d.grid) === null || _e === void 0 ? void 0 : _e.cell) === null || _f === void 0 ? void 0 : _f.children;
@@ -8620,15 +8620,17 @@ function ChartTimelineGridRowCell(vido, props) {
     onChange(onPropsChange);
     componentActions.push(BindElementAction$5);
     const actions = Actions.create(componentActions, actionProps);
-    return (templateProps) => {
-        return wrapper(html `${slots.html('before', templateProps)}
+    return templateProps => {
+        return wrapper(html `
+        ${slots.html('before', templateProps)}
         <div detach=${detach} class=${className} data-actions=${actions} style=${styleMap}>
           ${slots.html('inside', templateProps)}
         </div>
-        ${slots.html('after', templateProps)}`, {
+        ${slots.html('after', templateProps)}
+      `, {
             props,
             vido,
-            templateProps,
+            templateProps
         });
     };
 }
@@ -8822,15 +8824,15 @@ class BindElementAction$7 {
             data.state.update('$data.elements.chart-timeline-items-row-items', items, { only: null });
     }
     destroy(element, data) {
-        data.state.update('$data.elements.chart-timeline-items-row-items', (items) => {
-            return items.filter((el) => el !== element);
+        data.state.update('$data.elements.chart-timeline-items-row-items', items => {
+            return items.filter(el => el !== element);
         });
     }
 }
 function ChartTimelineItemsRowItem(vido, props) {
     const { api, state, onDestroy, Detach, Actions, update, html, svg, onChange, unsafeHTML, StyleMap } = vido;
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', (value) => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
     let itemLeftPx = 0, itemWidthPx = 0, leave = false, classNameCurrent = '';
     const styleMap = new StyleMap({ width: '', height: '', left: '', top: '' }), leftCutStyleMap = new StyleMap({}), rightCutStyleMap = new StyleMap({}), actionProps = {
         item: props.item,
@@ -8838,7 +8840,7 @@ function ChartTimelineItemsRowItem(vido, props) {
         left: itemLeftPx,
         width: itemWidthPx,
         api,
-        state,
+        state
     };
     const componentName = 'chart-timeline-items-row-item';
     let className, labelClassName;
@@ -8909,7 +8911,7 @@ function ChartTimelineItemsRowItem(vido, props) {
             styleMap.style.top = oldTop;
             styleMap.style.height = oldHeight;
         }
-        const rows = state.get('config.list.rows');
+        const rows = api.getAllRows();
         for (const parentId of props.row.$data.parents) {
             const parent = rows[parentId];
             const childrenStyle = (_c = (_b = (_a = parent === null || parent === void 0 ? void 0 : parent.style) === null || _a === void 0 ? void 0 : _a.items) === null || _b === void 0 ? void 0 : _b.item) === null || _c === void 0 ? void 0 : _c.children;
@@ -8997,7 +8999,7 @@ function ChartTimelineItemsRowItem(vido, props) {
             return null;
         return props.item.isHTML ? getHtml() : getText();
     }
-    return (templateProps) => wrapper(html `
+    return templateProps => wrapper(html `
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>
           ${cutterLeft()}${slots.html('before', templateProps)}
           <div class=${labelClassName} title=${getTitle()}>
@@ -11236,13 +11238,16 @@ class Api {
     getRows(rowsId) {
         if (!rowsId.length)
             return [];
-        const configRows = this.state.get('config.list.rows');
+        const configRows = this.getAllRows();
         const rows = [];
         for (const rowId of rowsId) {
             if (configRows[rowId])
                 rows.push(configRows[rowId]);
         }
         return rows;
+    }
+    getAllRows() {
+        return Object.assign({}, this.state.get('config.list.rows'));
     }
     getItem(itemId) {
         return this.state.get(`config.chart.items.${itemId}`);
@@ -11251,12 +11256,15 @@ class Api {
         if (!itemsId.length)
             return [];
         const items = [];
-        const configItems = this.state.get('config.chart.items');
+        const configItems = this.getAllItems();
         for (const itemId of itemsId) {
             if (configItems[itemId])
                 items.push(configItems[itemId]);
         }
         return items;
+    }
+    getAllItems() {
+        return Object.assign({}, this.state.get('config.chart.items'));
     }
     prepareLinkedItems(item, items) {
         const allLinkedIds = this.getAllLinkedItemsIds(item, items);
@@ -11439,7 +11447,7 @@ class Api {
     }
     recalculateRowsHeightsAndFixOverlappingItems(rowsId) {
         let top = 0;
-        const rows = this.state.get('config.list.rows');
+        const rows = this.getAllRows();
         for (const rowId of rowsId) {
             const row = rows[rowId];
             this.recalculateRowHeight(row, true);
@@ -11450,7 +11458,7 @@ class Api {
     }
     recalculateRowsPercents(rowsId, verticalAreaHeight) {
         let top = 0;
-        const rows = this.state.get('config.list.rows');
+        const rows = this.getAllRows();
         for (const rowId of rowsId) {
             const row = rows[rowId];
             if (verticalAreaHeight <= 0) {
@@ -11541,7 +11549,7 @@ class Api {
             console.log('getVisibleRows #3', { innerHeight }); // eslint-disable-line no-console
         if (!innerHeight)
             return [];
-        const rows = this.state.get('config.list.rows');
+        const rows = this.getAllRows();
         innerHeight += verticalScroll.offset || 0;
         let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
         let index = rowsWithParentsExpanded.indexOf(strictTopRow);

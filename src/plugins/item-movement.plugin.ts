@@ -120,7 +120,7 @@ function prepareOptions(options: Options): Options {
     className: '',
     bodyClass: 'gstc-item-movement',
     bodyClassMoving: 'gstc-items-moving',
-    ...options,
+    ...options
   };
 }
 
@@ -136,7 +136,7 @@ function generateEmptyPluginData(options: Options): PluginData {
     },
     onEnd({ items }) {
       return items.after;
-    },
+    }
   };
   const snapToTime = {
     start({ startTime, time }) {
@@ -144,7 +144,7 @@ function generateEmptyPluginData(options: Options): PluginData {
     },
     end({ endTime, time }) {
       return endTime.endOf(time.period);
-    },
+    }
   };
   const result: PluginData = {
     debug: false,
@@ -157,23 +157,23 @@ function generateEmptyPluginData(options: Options): PluginData {
     position: { x: 0, y: 0 },
     movement: {
       px: { horizontal: 0, vertical: 0 },
-      time: 0,
+      time: 0
     },
     lastMovement: { x: 0, y: 0, time: 0 },
     events: { ...events },
     snapToTime: { ...snapToTime },
-    ...options,
+    ...options
   };
   if (options.snapToTime) {
     result.snapToTime = {
       ...snapToTime,
-      ...options.snapToTime,
+      ...options.snapToTime
     };
   }
   if (options.events) {
     result.events = {
       ...events,
-      ...options.events,
+      ...options.events
     };
   }
   return result;
@@ -197,7 +197,7 @@ class ItemMovement {
     this.merge = this.state.get('config.merge');
     this.destroy = this.destroy.bind(this);
     this.onDestroy.push(
-      this.state.subscribe(pluginPath, (data) => {
+      this.state.subscribe(pluginPath, data => {
         this.data = data;
         if (!data.enabled) {
           document.body.classList.remove(this.data.bodyClass);
@@ -212,7 +212,7 @@ class ItemMovement {
   }
 
   public destroy() {
-    this.onDestroy.forEach((unsub) => unsub());
+    this.onDestroy.forEach(unsub => unsub());
   }
 
   private updateData() {
@@ -244,7 +244,7 @@ class ItemMovement {
       item,
       time,
       movement: this.data.movement,
-      vido: this.vido,
+      vido: this.vido
     });
     const snapStartPxDiff = this.api.time.getDatesDiffPx(startTime, this.api.time.date(leftGlobal), time, true);
     this.setStartCumulationForItem(item, snapStartPxDiff);
@@ -263,7 +263,7 @@ class ItemMovement {
       item,
       time,
       movement: this.data.movement,
-      vido: this.vido,
+      vido: this.vido
     });
     return { startTime, endTime };
   }
@@ -279,7 +279,7 @@ class ItemMovement {
   }
 
   private getItemViewTop(item: Item): number {
-    const rows: Rows = this.state.get('config.list.rows');
+    const rows: Rows = this.api.getAllRows();
     const row = rows[item.rowId];
     return row.$data.position.viewTop + item.$data.position.actualTop;
   }
@@ -300,7 +300,7 @@ class ItemMovement {
   }
 
   private moveItemVertically(item: Item): Row {
-    const rows: Rows = this.state.get('config.list.rows');
+    const rows: Rows = this.api.getAllRows();
     const currentRow: Row = rows[item.rowId];
     const relativePosition = this.getItemRelativeVerticalPosition(item);
     const itemShouldBeAt = this.data.position.y + relativePosition;
@@ -318,18 +318,18 @@ class ItemMovement {
         initial: this.data.initialItems,
         before,
         after: afterItems,
-        targetData: this.merge({}, this.data.targetData) as Item,
+        targetData: this.merge({}, this.data.targetData) as Item
       },
       vido: this.vido,
       state: this.state,
-      time: this.state.get('$data.chart.time'),
+      time: this.state.get('$data.chart.time')
     };
   }
 
   private moveItems() {
     if (!this.data.enabled) return;
     const time: DataChartTime = this.state.get('$data.chart.time');
-    const moving = this.data.moving.map((item) => this.merge({}, item) as Item);
+    const moving = this.data.moving.map(item => this.merge({}, item) as Item);
     if (this.data.debug) console.log('moveItems', moving); // eslint-disable-line no-console
     for (let item of moving) {
       item.rowId = this.moveItemVertically(item).id;
@@ -355,11 +355,11 @@ class ItemMovement {
   }
 
   private dispatchEvent(type: 'onStart' | 'onMove' | 'onEnd', items: Item[]) {
-    items = items.map((item) => this.merge({}, item) as Item);
+    items = items.map(item => this.merge({}, item) as Item);
     const modified = this.data.events[type](this.getEventArgument(items));
     let multi = this.state.multi();
     for (const item of modified) {
-      multi = multi.update(`config.chart.items.${item.id}`, (currentItem) => {
+      multi = multi.update(`config.chart.items.${item.id}`, currentItem => {
         // items should be always references - we cannot make a copy of the object because it may lead us to troubles
         mergeDeep(currentItem, item);
         return currentItem;
@@ -370,18 +370,18 @@ class ItemMovement {
   }
 
   private onStart() {
-    this.data.initialItems = this.data.moving.map((item) => this.merge({}, item) as Item);
+    this.data.initialItems = this.data.moving.map(item => this.merge({}, item) as Item);
     this.clearCumulationsForItems();
     document.body.classList.add(this.data.bodyClassMoving);
     this.data.position = { ...this.selection.currentPosition };
     this.data.lastMovement.time = this.data.moving[0].time.start;
     this.saveItemsRelativeVerticalPosition();
-    const initial = this.data.initialItems.map((item) => this.merge({}, item) as Item);
+    const initial = this.data.initialItems.map(item => this.merge({}, item) as Item);
     this.dispatchEvent('onStart', initial);
   }
 
   private onEnd() {
-    const moving = this.data.moving.map((item) => this.merge({}, item) as Item);
+    const moving = this.data.moving.map(item => this.merge({}, item) as Item);
     this.dispatchEvent('onEnd', moving);
     document.body.classList.remove(this.data.bodyClassMoving);
     this.clearSelection();
@@ -423,7 +423,7 @@ class ItemMovement {
 
     if (this.data.state === 'end') this.onEnd(); // before this.selection.selected[ITEM] clear
 
-    this.data.moving = this.selection.selected[ITEM].map((item) => this.merge({}, item) as Item);
+    this.data.moving = this.selection.selected[ITEM].map(item => this.merge({}, item) as Item);
     if (this.data.debug) console.log('state', this.data.pointerState); // eslint-disable-line no-console
 
     if (this.data.state === 'start') this.onStart();

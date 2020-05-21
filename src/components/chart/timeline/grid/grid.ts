@@ -65,7 +65,7 @@ export default function ChartTimelineGrid(vido: Vido, props) {
     styleMap.style.width = width + 'px';
     let top = 0;
     rowsWithCells.length = 0;
-    const rows: Rows = state.get('config.list.rows');
+    const rows: Rows = api.getAllRows();
     for (const rowId of visibleRowsId) {
       const row = rows[rowId];
       if (!row || !row.$data) {

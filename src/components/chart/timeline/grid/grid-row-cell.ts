@@ -35,8 +35,8 @@ class BindElementAction {
   public destroy(element, data) {
     data.state.update(
       '$data.elements.chart-timeline-grid-row-cells',
-      (cells) => {
-        return cells.filter((el) => el !== element);
+      cells => {
+        return cells.filter(el => el !== element);
       },
       { only: [''] }
     );
@@ -54,7 +54,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
   const actionProps = {
     ...props,
     api,
-    state,
+    state
   };
 
   let shouldDetach = false;
@@ -63,7 +63,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
   const componentActions = api.getActions(componentName);
   let wrapper;
   onDestroy(
-    state.subscribe('config.wrappers.ChartTimelineGridRowCell', (value) => {
+    state.subscribe('config.wrappers.ChartTimelineGridRowCell', value => {
       wrapper = value;
       update();
     })
@@ -96,7 +96,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
     styleMap.setStyle({});
     styleMap.style.width = (props?.time?.width || 0) + 'px';
     styleMap.style.height = (props?.row?.$data?.outerHeight || 0) + 'px';
-    const rows: Rows = state.get('config.list.rows');
+    const rows: Rows = api.getAllRows();
     for (const parentId of props.row.$data.parents) {
       const parent = rows[parentId];
       const childrenStyle = parent?.style?.grid?.cell?.children;
@@ -112,17 +112,19 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
   componentActions.push(BindElementAction);
   const actions = Actions.create(componentActions, actionProps);
 
-  return (templateProps) => {
+  return templateProps => {
     return wrapper(
-      html`${slots.html('before', templateProps)}
+      html`
+        ${slots.html('before', templateProps)}
         <div detach=${detach} class=${className} data-actions=${actions} style=${styleMap}>
           ${slots.html('inside', templateProps)}
         </div>
-        ${slots.html('after', templateProps)}`,
+        ${slots.html('after', templateProps)}
+      `,
       {
         props,
         vido,
-        templateProps,
+        templateProps
       }
     );
   };

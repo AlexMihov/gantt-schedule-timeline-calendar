@@ -270,7 +270,7 @@ function generateEmptyPluginData(options) {
         },
         onEnd({ items }) {
             return items.after;
-        },
+        }
     };
     const snapToTime = {
         start({ startTime, time }) {
@@ -278,11 +278,11 @@ function generateEmptyPluginData(options) {
         },
         end({ endTime, time }) {
             return endTime.endOf(time.period);
-        },
+        }
     };
     const result = Object.assign({ debug: false, moving: [], targetData: null, initialItems: [], pointerState: 'up', pointerMoved: false, state: '', position: { x: 0, y: 0 }, movement: {
             px: { horizontal: 0, vertical: 0 },
-            time: 0,
+            time: 0
         }, lastMovement: { x: 0, y: 0, time: 0 }, events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
     if (options.snapToTime) {
         result.snapToTime = Object.assign(Object.assign({}, snapToTime), options.snapToTime);
@@ -302,7 +302,7 @@ class ItemMovement {
         this.state = vido.state;
         this.merge = this.state.get('config.merge');
         this.destroy = this.destroy.bind(this);
-        this.onDestroy.push(this.state.subscribe(pluginPath$1, (data) => {
+        this.onDestroy.push(this.state.subscribe(pluginPath$1, data => {
             this.data = data;
             if (!data.enabled) {
                 document.body.classList.remove(this.data.bodyClass);
@@ -317,7 +317,7 @@ class ItemMovement {
         this.onDestroy.push(this.state.subscribe('config.plugin.Selection', this.onSelectionChange));
     }
     destroy() {
-        this.onDestroy.forEach((unsub) => unsub());
+        this.onDestroy.forEach(unsub => unsub());
     }
     updateData() {
         this.state.update(pluginPath$1, Object.assign({}, this.data));
@@ -345,7 +345,7 @@ class ItemMovement {
             item,
             time,
             movement: this.data.movement,
-            vido: this.vido,
+            vido: this.vido
         });
         const snapStartPxDiff = this.api.time.getDatesDiffPx(startTime, this.api.time.date(leftGlobal), time, true);
         this.setStartCumulationForItem(item, snapStartPxDiff);
@@ -364,7 +364,7 @@ class ItemMovement {
             item,
             time,
             movement: this.data.movement,
-            vido: this.vido,
+            vido: this.vido
         });
         return { startTime, endTime };
     }
@@ -379,7 +379,7 @@ class ItemMovement {
         return currentRow;
     }
     getItemViewTop(item) {
-        const rows = this.state.get('config.list.rows');
+        const rows = this.api.getAllRows();
         const row = rows[item.rowId];
         return row.$data.position.viewTop + item.$data.position.actualTop;
     }
@@ -396,7 +396,7 @@ class ItemMovement {
         return this.relativeVerticalPosition[item.id];
     }
     moveItemVertically(item) {
-        const rows = this.state.get('config.list.rows');
+        const rows = this.api.getAllRows();
         const currentRow = rows[item.rowId];
         const relativePosition = this.getItemRelativeVerticalPosition(item);
         const itemShouldBeAt = this.data.position.y + relativePosition;
@@ -413,18 +413,18 @@ class ItemMovement {
                 initial: this.data.initialItems,
                 before,
                 after: afterItems,
-                targetData: this.merge({}, this.data.targetData),
+                targetData: this.merge({}, this.data.targetData)
             },
             vido: this.vido,
             state: this.state,
-            time: this.state.get('$data.chart.time'),
+            time: this.state.get('$data.chart.time')
         };
     }
     moveItems() {
         if (!this.data.enabled)
             return;
         const time = this.state.get('$data.chart.time');
-        const moving = this.data.moving.map((item) => this.merge({}, item));
+        const moving = this.data.moving.map(item => this.merge({}, item));
         if (this.data.debug)
             console.log('moveItems', moving); // eslint-disable-line no-console
         for (let item of moving) {
@@ -449,11 +449,11 @@ class ItemMovement {
         this.data.pointerMoved = false;
     }
     dispatchEvent(type, items) {
-        items = items.map((item) => this.merge({}, item));
+        items = items.map(item => this.merge({}, item));
         const modified = this.data.events[type](this.getEventArgument(items));
         let multi = this.state.multi();
         for (const item of modified) {
-            multi = multi.update(`config.chart.items.${item.id}`, (currentItem) => {
+            multi = multi.update(`config.chart.items.${item.id}`, currentItem => {
                 // items should be always references - we cannot make a copy of the object because it may lead us to troubles
                 mergeDeep(currentItem, item);
                 return currentItem;
@@ -463,17 +463,17 @@ class ItemMovement {
         this.data.moving = modified;
     }
     onStart() {
-        this.data.initialItems = this.data.moving.map((item) => this.merge({}, item));
+        this.data.initialItems = this.data.moving.map(item => this.merge({}, item));
         this.clearCumulationsForItems();
         document.body.classList.add(this.data.bodyClassMoving);
         this.data.position = Object.assign({}, this.selection.currentPosition);
         this.data.lastMovement.time = this.data.moving[0].time.start;
         this.saveItemsRelativeVerticalPosition();
-        const initial = this.data.initialItems.map((item) => this.merge({}, item));
+        const initial = this.data.initialItems.map(item => this.merge({}, item));
         this.dispatchEvent('onStart', initial);
     }
     onEnd() {
-        const moving = this.data.moving.map((item) => this.merge({}, item));
+        const moving = this.data.moving.map(item => this.merge({}, item));
         this.dispatchEvent('onEnd', moving);
         document.body.classList.remove(this.data.bodyClassMoving);
         this.clearSelection();
@@ -512,7 +512,7 @@ class ItemMovement {
         this.data.targetData = Object.assign({}, this.selection.targetData);
         if (this.data.state === 'end')
             this.onEnd(); // before this.selection.selected[ITEM] clear
-        this.data.moving = this.selection.selected[ITEM].map((item) => this.merge({}, item));
+        this.data.moving = this.selection.selected[ITEM].map(item => this.merge({}, item));
         if (this.data.debug)
             console.log('state', this.data.pointerState); // eslint-disable-line no-console
         if (this.data.state === 'start')
@@ -1722,7 +1722,7 @@ function generateEmptyData$1(options = {}) {
         },
         onEnd({ items }) {
             return items.after;
-        },
+        }
     };
     const snapToTime = {
         start({ startTime, time }) {
@@ -1730,18 +1730,18 @@ function generateEmptyData$1(options = {}) {
         },
         end({ endTime, time }) {
             return endTime.endOf(time.period);
-        },
+        }
     };
     const handle = {
         width: 18,
         horizontalMargin: 0,
         verticalMargin: 0,
         outside: false,
-        onlyWhenSelected: true,
+        onlyWhenSelected: true
     };
     const result = Object.assign({ enabled: true, debug: false, state: '', content: null, bodyClass: 'gstc-item-resizing', bodyClassLeft: 'gstc-items-resizing-left', bodyClassRight: 'gstc-items-resizing-right', initialPosition: { x: 0, y: 0 }, currentPosition: { x: 0, y: 0 }, movement: {
             px: 0,
-            time: 0,
+            time: 0
         }, initialItems: [], targetData: null, leftIsMoving: false, rightIsMoving: false, handle: Object.assign({}, handle), events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
     if (options.snapToTime)
         result.snapToTime = Object.assign(Object.assign({}, snapToTime), options.snapToTime);
@@ -1777,7 +1777,7 @@ class ItemResizing {
         this.destroy = this.destroy.bind(this);
         this.updateData();
         document.body.classList.add(this.data.bodyClass);
-        this.unsubs.push(this.state.subscribe('config.plugin.ItemResizing', (data) => {
+        this.unsubs.push(this.state.subscribe('config.plugin.ItemResizing', data => {
             if (!data.enabled) {
                 document.body.classList.remove(this.data.bodyClass);
             }
@@ -1798,7 +1798,7 @@ class ItemResizing {
         });
     }
     destroy() {
-        this.unsubs.forEach((unsub) => unsub());
+        this.unsubs.forEach(unsub => unsub());
         document.removeEventListener('pointermove', this.onLeftPointerMove);
         document.removeEventListener('pointerup', this.onLeftPointerUp);
         document.removeEventListener('pointermove', this.onRightPointerMove);
@@ -1817,7 +1817,7 @@ class ItemResizing {
         this.spacing = this.state.get('config.chart.spacing');
     }
     getSelectedItems() {
-        return this.state.get(`config.plugin.Selection.selected.${ITEM}`).map((item) => this.merge({}, item));
+        return this.state.get(`config.plugin.Selection.selected.${ITEM}`).map(item => this.merge({}, item));
     }
     getRightStyleMap(item) {
         const rightStyleMap = new this.vido.StyleMap({});
@@ -1848,7 +1848,7 @@ class ItemResizing {
         return leftStyleMap;
     }
     getEventArgument(afterItems) {
-        const configItems = this.state.get('config.chart.items');
+        const configItems = this.api.getAllItems();
         const before = [];
         for (const item of afterItems) {
             before.push(this.merge({}, configItems[item.id]));
@@ -1858,15 +1858,15 @@ class ItemResizing {
                 initial: this.data.initialItems,
                 before,
                 after: afterItems,
-                targetData: this.data.targetData,
+                targetData: this.data.targetData
             },
             vido: this.vido,
             state: this.state,
-            time: this.state.get('$data.chart.time'),
+            time: this.state.get('$data.chart.time')
         };
     }
     dispatchEvent(type, items) {
-        items = items.map((item) => this.merge({}, item));
+        items = items.map(item => this.merge({}, item));
         const modified = this.data.events[type](this.getEventArgument(items));
         let multi = this.state.multi();
         for (const item of modified) {
@@ -1878,7 +1878,7 @@ class ItemResizing {
     }
     getItemsForDiff() {
         const modified = this.getSelectedItems()[0];
-        const original = this.data.initialItems.find((initial) => initial.id === modified.id);
+        const original = this.data.initialItems.find(initial => initial.id === modified.id);
         return { modified, original };
     }
     onPointerDown(ev) {
@@ -1889,7 +1889,7 @@ class ItemResizing {
         this.data.targetData = this.merge({}, ev.target.vido);
         this.data.initialPosition = {
             x: ev.screenX,
-            y: ev.screenY,
+            y: ev.screenY
         };
         this.data.currentPosition = Object.assign({}, this.data.initialPosition);
         if (this.data.state === '' || this.data.state === 'end') {
@@ -1948,7 +1948,7 @@ class ItemResizing {
                 item,
                 time,
                 movement,
-                vido: this.vido,
+                vido: this.vido
             });
             item.time.start = finalLeftGlobalDate.valueOf();
             item.$data.time.startDate = finalLeftGlobalDate;
@@ -1979,7 +1979,7 @@ class ItemResizing {
                 item,
                 time,
                 movement,
-                vido: this.vido,
+                vido: this.vido
             });
             item.time.end = finalRightGlobalDate.valueOf();
             item.$data.time.endDate = finalRightGlobalDate;
@@ -2026,7 +2026,8 @@ class ItemResizing {
         const rightStyleMap = this.getRightStyleMap(item);
         const leftStyleMap = this.getLeftStyleMap(item); // eslint-disable-line no-unused-vars, @typescript-eslint/no-unused-vars
         const onRightPointerDown = {
-            handleEvent: (ev) => this.onRightPointerDown(ev),
+            handleEvent: ev => this.onRightPointerDown(ev)
+            //capture: true,
         };
         /*const leftHandle = this
           .html`<div class=${this.leftClassName} style=${leftStyleMap} @pointerdown=${onLeftPointerDown}>${this.data.content}</div>`;
@@ -2077,7 +2078,7 @@ function prepareOptions$1(options) {
         },
         canDeselect( /*type, currently, all*/) {
             return [];
-        },
+        }
     };
     options = Object.assign(Object.assign({}, defaultOptions), options);
     return options;
@@ -2086,17 +2087,17 @@ const pluginPath$3 = 'config.plugin.Selection';
 function generateEmptyData$2(options) {
     return Object.assign({ enabled: true, showOverlay: true, isSelecting: false, pointerState: 'up', selectKey: '', multiKey: 'shift', multipleSelection: true, targetType: '', targetData: null, initialPosition: { x: 0, y: 0 }, currentPosition: { x: 0, y: 0 }, selectionAreaLocal: { x: 0, y: 0, width: 0, height: 0 }, selectionAreaGlobal: { x: 0, y: 0, width: 0, height: 0 }, selecting: {
             [ITEM]: [],
-            [CELL]: [],
+            [CELL]: []
         }, selected: {
             [ITEM]: [],
-            [CELL]: [],
+            [CELL]: []
         }, automaticallySelected: {
             [ITEM]: [],
-            [CELL]: [],
+            [CELL]: []
         }, events: {
             down: null,
             move: null,
-            up: null,
+            up: null
         } }, options);
 }
 class SelectionPlugin {
@@ -2114,17 +2115,17 @@ class SelectionPlugin {
         this.wrapper = this.wrapper.bind(this);
         this.destroy = this.destroy.bind(this);
         this.setWrapper();
-        this.onDestroy.push(this.state.subscribe('config.plugin.TimelinePointer', (timelinePointerData) => {
+        this.onDestroy.push(this.state.subscribe('config.plugin.TimelinePointer', timelinePointerData => {
             this.poitnerData = timelinePointerData;
             this.onPointerData();
         }));
         this.updateData();
-        this.onDestroy.push(this.state.subscribe(pluginPath$3, (value) => {
+        this.onDestroy.push(this.state.subscribe(pluginPath$3, value => {
             this.data = value;
         }));
         // watch and update items that are inside selection
         this.onDestroy.push(this.state.subscribe('config.chart.items', (items) => {
-            this.data.selected[ITEM] = this.data.selected[ITEM].filter((item) => !!items[item.id]).map((item) => this.merge({}, items[item.id]));
+            this.data.selected[ITEM] = this.data.selected[ITEM].filter(item => !!items[item.id]).map(item => this.merge({}, items[item.id]));
         }, { ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected'] }));
         // TODO: watch and update cells that are inside selection
     }
@@ -2138,7 +2139,7 @@ class SelectionPlugin {
     destroy() {
         this.state.update('config.wrappers.ChartTimelineItems', this.oldWrapper);
         this.oldWrapper = null;
-        this.onDestroy.forEach((unsub) => unsub());
+        this.onDestroy.forEach(unsub => unsub());
     }
     updateData() {
         this.state.update(pluginPath$3, Object.assign({}, this.data));
@@ -2192,7 +2193,7 @@ class SelectionPlugin {
     }
     collectLinkedItems(item, current = []) {
         if (item.linkedWith && item.linkedWith.length) {
-            const items = this.state.get('config.chart.items');
+            const items = this.api.getAllItems();
             for (const linkedItemId of item.linkedWith) {
                 const linkedItem = items[linkedItemId];
                 if (!current.includes(linkedItem)) {
@@ -2209,19 +2210,19 @@ class SelectionPlugin {
         const move = this.poitnerData.events.move;
         const multi = this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
         const linked = this.collectLinkedItems(item, [item]);
-        if (this.data.selected[ITEM].find((selectedItem) => selectedItem.id === item.id)) {
+        if (this.data.selected[ITEM].find(selectedItem => selectedItem.id === item.id)) {
             // if we want to start movement or something - just return currently selected
             selected = this.data.selected[ITEM];
-            if (automaticallySelected.find((auto) => auto.id === item.id)) {
+            if (automaticallySelected.find(auto => auto.id === item.id)) {
                 // item under the pointer was automaticallySelected so we must remove it from here
                 // - it is not automaticallySelected right now
                 // we need to replace current item with one that is linked but doesn't lay down
                 // in automaticallySelected currently - we need to switch them
                 // first of all we need to find out which item is linked with current but
                 // not inside automaticallySelected
-                const actualAutoIds = automaticallySelected.map((sel) => sel.id);
-                const replaceWith = selected.find((sel) => item.linkedWith.includes(sel.id) && !actualAutoIds.includes(sel.id));
-                automaticallySelected = automaticallySelected.filter((currentItem) => currentItem.id !== item.id);
+                const actualAutoIds = automaticallySelected.map(sel => sel.id);
+                const replaceWith = selected.find(sel => item.linkedWith.includes(sel.id) && !actualAutoIds.includes(sel.id));
+                automaticallySelected = automaticallySelected.filter(currentItem => currentItem.id !== item.id);
                 automaticallySelected.push(replaceWith);
             }
             else {
@@ -2235,9 +2236,9 @@ class SelectionPlugin {
             else {
                 selected = linked;
             }
-            automaticallySelected = linked.filter((currentItem) => currentItem.id !== item.id);
+            automaticallySelected = linked.filter(currentItem => currentItem.id !== item.id);
         }
-        selected = selected.map((item) => {
+        selected = selected.map(item => {
             item.selected = true;
             return item;
         });
@@ -2274,26 +2275,26 @@ class SelectionPlugin {
             const itemData = item.$data;
             if (this.isItemVerticallyInsideArea(itemData, areaLocal) &&
                 this.isItemHorizontallyInsideArea(itemData, areaLocal)) {
-                if (!selected.find((selectedItem) => selectedItem.id === item.id))
+                if (!selected.find(selectedItem => selectedItem.id === item.id))
                     selected.push(item);
                 const linked = this.collectLinkedItems(item, [item]);
                 for (let linkedItem of linked) {
                     linkedItem = this.merge({}, linkedItem);
-                    if (!selected.find((selectedItem) => selectedItem.id === linkedItem.id)) {
+                    if (!selected.find(selectedItem => selectedItem.id === linkedItem.id)) {
                         selected.push(linkedItem);
                         automaticallySelected.push(linkedItem);
                     }
                 }
             }
         }
-        selected = selected.map((item) => {
+        selected = selected.map(item => {
             item.selected = true;
             return item;
         });
         return { selected, automaticallySelected };
     }
     unmarkSelected() {
-        const items = this.state.get('config.chart.items');
+        const items = this.api.getAllItems();
         let multi = this.state.multi();
         for (const id in items) {
             const item = items[id];

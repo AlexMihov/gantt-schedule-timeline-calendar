@@ -28,8 +28,8 @@ class BindElementAction {
     if (shouldUpdate) data.state.update('$data.elements.chart-timeline-items-row-items', items, { only: null });
   }
   public destroy(element, data) {
-    data.state.update('$data.elements.chart-timeline-items-row-items', (items) => {
-      return items.filter((el) => el !== element);
+    data.state.update('$data.elements.chart-timeline-items-row-items', items => {
+      return items.filter(el => el !== element);
     });
   }
 }
@@ -43,7 +43,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
   const { api, state, onDestroy, Detach, Actions, update, html, svg, onChange, unsafeHTML, StyleMap } = vido;
 
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', (value) => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
 
   let itemLeftPx = 0,
     itemWidthPx = 0,
@@ -58,7 +58,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
       left: itemLeftPx,
       width: itemWidthPx,
       api,
-      state,
+      state
     };
 
   const componentName = 'chart-timeline-items-row-item';
@@ -127,7 +127,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
       styleMap.style.top = oldTop;
       styleMap.style.height = oldHeight;
     }
-    const rows: Rows = state.get('config.list.rows');
+    const rows: Rows = api.getAllRows();
     for (const parentId of props.row.$data.parents) {
       const parent = rows[parentId];
       const childrenStyle = parent?.style?.items?.item?.children;
@@ -216,7 +216,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
     return props.item.isHTML ? getHtml() : getText();
   }
 
-  return (templateProps) =>
+  return templateProps =>
     wrapper(
       html`
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>

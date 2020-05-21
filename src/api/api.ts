@@ -196,12 +196,16 @@ export class Api {
 
   getRows(rowsId: string[]): Row[] {
     if (!rowsId.length) return [];
-    const configRows: Rows = this.state.get('config.list.rows');
+    const configRows: Rows = this.getAllRows();
     const rows = [];
     for (const rowId of rowsId) {
       if (configRows[rowId]) rows.push(configRows[rowId]);
     }
     return rows;
+  }
+
+  getAllRows(): Rows {
+    return { ...this.state.get('config.list.rows') };
   }
 
   getItem(itemId: string): Item {
@@ -211,11 +215,15 @@ export class Api {
   getItems(itemsId: string[]): Item[] {
     if (!itemsId.length) return [];
     const items = [];
-    const configItems: Items = this.state.get('config.chart.items');
+    const configItems: Items = this.getAllItems();
     for (const itemId of itemsId) {
       if (configItems[itemId]) items.push(configItems[itemId]);
     }
     return items;
+  }
+
+  getAllItems(): Items {
+    return { ...this.state.get('config.chart.items') };
   }
 
   prepareLinkedItems(item: Item, items: Items) {
@@ -385,7 +393,7 @@ export class Api {
 
   recalculateRowsHeightsAndFixOverlappingItems(rowsId: string[]): number {
     let top = 0;
-    const rows: Rows = this.state.get('config.list.rows');
+    const rows: Rows = this.getAllRows();
     for (const rowId of rowsId) {
       const row = rows[rowId];
       this.recalculateRowHeight(row, true);
@@ -397,7 +405,7 @@ export class Api {
 
   recalculateRowsPercents(rowsId: string[], verticalAreaHeight: number) {
     let top = 0;
-    const rows: Rows = this.state.get('config.list.rows');
+    const rows: Rows = this.getAllRows();
     for (const rowId of rowsId) {
       const row = rows[rowId];
       if (verticalAreaHeight <= 0) {
@@ -484,7 +492,7 @@ export class Api {
     let innerHeight = this.state.get('$data.innerHeight');
     if (this.debug) console.log('getVisibleRows #3', { innerHeight }); // eslint-disable-line no-console
     if (!innerHeight) return [];
-    const rows: Rows = this.state.get('config.list.rows');
+    const rows: Rows = this.getAllRows();
     innerHeight += verticalScroll.offset || 0;
     let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
     let index = rowsWithParentsExpanded.indexOf(strictTopRow);
