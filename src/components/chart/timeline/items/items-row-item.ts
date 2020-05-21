@@ -92,13 +92,13 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
     classNameCurrent = className;
     if (props.item.time.start < time.leftGlobal) {
       leftCutStyleMap.style.display = 'block';
-      classNameCurrent += ' ' + className + '--left-cut';
+      classNameCurrent += ' ' + api.getClass(componentName + '--left-cut', props.row.id + '-' + props.item.id);
     } else {
       leftCutStyleMap.style.display = 'none';
     }
     if (props.item.$data.position.right > time.width) {
       rightCutStyleMap.style.display = 'block';
-      classNameCurrent += ' ' + className + '--right-cut';
+      classNameCurrent += ' ' + api.getClass(componentName + '--right-cut', props.row.id + '-' + props.item.id);
     } else {
       rightCutStyleMap.style.display = 'none';
     }
