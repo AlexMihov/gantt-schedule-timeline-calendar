@@ -11548,8 +11548,11 @@ class Api {
         for (let len = rowsWithParentsExpanded.length; index <= len; index++) {
             const rowId = rowsWithParentsExpanded[index];
             const row = rows[rowId];
-            if (!row || !row.$data)
+            if (!row || !row.$data) {
+                if (this.debug)
+                    console.log('getVisibleItems NO-ROW', { row, rowId, rows, index, rowsWithParentsExpanded }); // eslint-disable-line no-console
                 return [];
+            }
             if (currentRowsOffset <= innerHeight) {
                 row.$data.position.viewTop = currentRowsOffset;
                 visibleRows.push(row.id);
