@@ -11551,7 +11551,7 @@
 	        if (index === undefined)
 	            return [];
 	        let currentRowsOffset = 0;
-	        for (let len = rowsWithParentsExpanded.length; index <= len; index++) {
+	        for (let len = rowsWithParentsExpanded.length; index < len; index++) {
 	            const rowId = rowsWithParentsExpanded[index];
 	            const row = rows[rowId];
 	            if (!row || !row.$data) {

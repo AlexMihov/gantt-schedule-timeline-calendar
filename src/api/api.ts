@@ -491,7 +491,7 @@ export class Api {
     if (this.debug) console.log('getVisibleRows #4', { index }); // eslint-disable-line no-console
     if (index === undefined) return [];
     let currentRowsOffset = 0;
-    for (let len = rowsWithParentsExpanded.length; index <= len; index++) {
+    for (let len = rowsWithParentsExpanded.length; index < len; index++) {
       const rowId = rowsWithParentsExpanded[index];
       const row = rows[rowId];
       if (!row || !row.$data) {
