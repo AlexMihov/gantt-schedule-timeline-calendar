@@ -11181,6 +11181,7 @@ class Api {
         this.allActions = [];
         this.state = state;
         this.time = new Time(this.state, this);
+        this.unsubscribes.push(this.state.subscribe('config.debug', dbg => (this.debug = dbg)));
         if (this.debug) {
             // @ts-ignore
             window.state = state;
@@ -11263,8 +11264,10 @@ class Api {
     }
     prepareItems(items) {
         const defaultItemHeight = this.state.get('config.chart.item.height');
-        for (const itemId in items) {
+        for (let itemId in items) {
             const item = items[itemId];
+            itemId = String(itemId);
+            item.id = itemId;
             if (item.$data)
                 return items; // do not iterate whole items if $data is present
             this.prepareLinkedItems(item, items);
@@ -11316,8 +11319,10 @@ class Api {
     fillEmptyRowValues(rows) {
         const defaultHeight = this.state.get('config.list.row.height');
         let top = 0;
-        for (const rowId in rows) {
+        for (let rowId in rows) {
             const row = rows[rowId];
+            rowId = String(rowId);
+            row.id = rowId;
             if (row.$data)
                 return rows; // do not iterate whole tree when $data is present
             if (!row.$data)
@@ -11515,6 +11520,8 @@ class Api {
         return rowsWithParentsExpanded;
     }
     getVisibleRows(rowsWithParentsExpanded) {
+        if (this.debug)
+            console.log('getVisibleRows #1', { rowsWithParentsExpanded }); // eslint-disable-line no-console
         if (rowsWithParentsExpanded.length === 0)
             return [];
         const visibleRows = [];
@@ -11546,6 +11553,8 @@ class Api {
                 break;
             }
         }
+        if (this.debug)
+            console.log('getVisibleRows', { visibleRows, innerHeight, topRow, index }); // eslint-disable-line no-console
         return visibleRows;
     }
     normalizeMouseWheelEvent(event) {
