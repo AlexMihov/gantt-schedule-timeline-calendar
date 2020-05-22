@@ -6188,7 +6188,7 @@
 	            rowsAndItems = 0;
 	        }
 	    }));
-	    onDestroy(state.subscribeAll(['config.list.rows.*.parentId', 'config.chart.items.*.rowId', 'config.chart.items.*.top'], () => {
+	    onDestroy(state.subscribeAll(['config.list.rows.*.parentId', 'config.chart.items.*.rowId'], () => {
 	        if (debug)
 	            console.log('rows.parentId or items.rowId changed.', {}); // eslint-disable-line no-console
 	        generateTree();
@@ -6200,6 +6200,7 @@
 	        'config.list.rows.*.expanded',
 	        'config.chart.items.*.height',
 	        'config.chart.items.*.rowId',
+	        'config.chart.items.*.top',
 	        'config.list.rows.*.$data.outerHeight',
 	        'config.scroll.vertical.area'
 	    ], prepareExpandedCalculateRowHeightsAndFixOverlapped, { bulk: true }));

@@ -269,7 +269,7 @@ export default function Main(vido: Vido, props = {}) {
 
   onDestroy(
     state.subscribeAll(
-      ['config.list.rows.*.parentId', 'config.chart.items.*.rowId', 'config.chart.items.*.top'],
+      ['config.list.rows.*.parentId', 'config.chart.items.*.rowId'],
       () => {
         if (debug) console.log('rows.parentId or items.rowId changed.', {}); // eslint-disable-line no-console
         generateTree();
@@ -287,6 +287,7 @@ export default function Main(vido: Vido, props = {}) {
         'config.list.rows.*.expanded',
         'config.chart.items.*.height',
         'config.chart.items.*.rowId',
+        'config.chart.items.*.top',
         'config.list.rows.*.$data.outerHeight',
         'config.scroll.vertical.area'
       ],
