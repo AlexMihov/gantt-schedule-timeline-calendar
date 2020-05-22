@@ -880,7 +880,7 @@ declare module "plugins/timeline-pointer.plugin" {
 }
 declare module "plugins/selection.plugin" {
     import { ITEM, ITEM_TYPE, CELL, CELL_TYPE, Point, PointerState } from "plugins/timeline-pointer.plugin";
-    import { Item, Cell, Vido } from "gstc";
+    import { Item, Vido } from "gstc";
     export type ModKey = 'shift' | 'ctrl' | 'alt' | '';
     export interface Options {
         enabled?: boolean;
@@ -909,8 +909,8 @@ declare module "plugins/selection.plugin" {
         height: number;
     }
     export interface Selection {
-        [ITEM]: Item[];
-        [CELL]: Cell[];
+        [ITEM]: string[];
+        [CELL]: string[];
     }
     export interface PointerEvents {
         down: PointerEvent | null;

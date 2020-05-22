@@ -1343,7 +1343,9 @@
           this.spacing = this.state.get('config.chart.spacing');
       }
       getSelectedItems() {
-          return this.state.get(`config.plugin.Selection.selected.${ITEM}`).map(item => this.merge({}, item));
+          return this.state
+              .get(`config.plugin.Selection.selected.${ITEM}`)
+              .map(itemId => this.merge({}, this.api.getItem(itemId)));
       }
       getRightStyleMap(item) {
           const rightStyleMap = new this.vido.StyleMap({});

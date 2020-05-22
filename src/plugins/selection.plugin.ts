@@ -79,8 +79,8 @@ export interface Area {
 }
 
 export interface Selection {
-  [ITEM]: Item[];
-  [CELL]: Cell[];
+  [ITEM]: string[];
+  [CELL]: string[];
 }
 
 export interface PointerEvents {
@@ -185,9 +185,7 @@ class SelectionPlugin {
       this.state.subscribe(
         'config.chart.items',
         (items: Items) => {
-          this.data.selected[ITEM] = this.data.selected[ITEM].filter(item => !!items[item.id]).map(
-            item => this.merge({}, items[item.id]) as Item
-          );
+          this.data.selected[ITEM] = this.data.selected[ITEM].filter(itemId => !!items[itemId]);
         },
         { ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected'] }
       )
@@ -260,13 +258,13 @@ class SelectionPlugin {
     return { ...localArea, x: localArea.x + leftPx, y: localArea.y + topPx };
   }
 
-  private collectLinkedItems(item: Item, current: Item[] = []): Item[] {
+  private collectLinkedItems(item: Item, current: string[] = []): string[] {
     if (item.linkedWith && item.linkedWith.length) {
       const items: Items = this.api.getAllItems();
       for (const linkedItemId of item.linkedWith) {
         const linkedItem: Item = items[linkedItemId];
-        if (!current.includes(linkedItem)) {
-          current.push(linkedItem);
+        if (!current.includes(linkedItem.id)) {
+          current.push(linkedItem.id);
           // we don't need to go further because linkedWith property already contains all we need
         }
       }
@@ -274,25 +272,25 @@ class SelectionPlugin {
     return current;
   }
 
-  private getSelected(item: Item): { selected: Item[]; automaticallySelected: Item[] } {
-    let selected: Item[];
-    let automaticallySelected: Item[] = this.data.automaticallySelected[ITEM].slice();
+  private getSelected(item: Item): { selected: string[]; automaticallySelected: string[] } {
+    let selected: string[];
+    let automaticallySelected: string[] = this.data.automaticallySelected[ITEM].slice();
     const move = this.poitnerData.events.move;
     const multi = this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
-    const linked = this.collectLinkedItems(item, [item]);
-    if (this.data.selected[ITEM].find(selectedItem => selectedItem.id === item.id)) {
+    const linked = this.collectLinkedItems(item, [item.id]);
+    if (this.data.selected[ITEM].find(selectedItemId => selectedItemId === item.id)) {
       // if we want to start movement or something - just return currently selected
       selected = this.data.selected[ITEM];
-      if (automaticallySelected.find(auto => auto.id === item.id)) {
+      if (automaticallySelected.find(autoId => autoId === item.id)) {
         // item under the pointer was automaticallySelected so we must remove it from here
         // - it is not automaticallySelected right now
         // we need to replace current item with one that is linked but doesn't lay down
         // in automaticallySelected currently - we need to switch them
         // first of all we need to find out which item is linked with current but
         // not inside automaticallySelected
-        const actualAutoIds = automaticallySelected.map(sel => sel.id);
-        const replaceWith = selected.find(sel => item.linkedWith.includes(sel.id) && !actualAutoIds.includes(sel.id));
-        automaticallySelected = automaticallySelected.filter(currentItem => currentItem.id !== item.id);
+        const actualAutoIds = automaticallySelected;
+        const replaceWith = selected.find(selId => item.linkedWith.includes(selId) && !actualAutoIds.includes(selId));
+        automaticallySelected = automaticallySelected.filter(currentItemId => currentItemId !== item.id);
         automaticallySelected.push(replaceWith);
       } else {
         automaticallySelected = this.data.automaticallySelected[ITEM];
@@ -303,11 +301,12 @@ class SelectionPlugin {
       } else {
         selected = linked;
       }
-      automaticallySelected = linked.filter(currentItem => currentItem.id !== item.id);
+      automaticallySelected = linked.filter(currentItemId => currentItemId !== item.id);
     }
-    selected = selected.map(item => {
+    selected = selected.map(itemId => {
+      item = this.api.getItem(itemId);
       item.selected = true;
-      return item;
+      return itemId;
     });
     return { selected, automaticallySelected };
   }
@@ -336,7 +335,7 @@ class SelectionPlugin {
     );
   }
 
-  private getItemsUnderSelectionArea(areaLocal: Area): { selected: Item[]; automaticallySelected: Item[] } {
+  private getItemsUnderSelectionArea(areaLocal: Area): { selected: string[]; automaticallySelected: string[] } {
     const visibleItemsId: string[] = this.state.get('$data.chart.visibleItems');
     const visibleItems: Item[] = this.api.getItems(visibleItemsId);
     const move = this.poitnerData.events.move;
@@ -350,20 +349,21 @@ class SelectionPlugin {
         this.isItemVerticallyInsideArea(itemData, areaLocal) &&
         this.isItemHorizontallyInsideArea(itemData, areaLocal)
       ) {
-        if (!selected.find(selectedItem => selectedItem.id === item.id)) selected.push(item);
-        const linked = this.collectLinkedItems(item, [item]);
-        for (let linkedItem of linked) {
-          linkedItem = this.merge({}, linkedItem) as Item;
-          if (!selected.find(selectedItem => selectedItem.id === linkedItem.id)) {
-            selected.push(linkedItem);
-            automaticallySelected.push(linkedItem);
+        if (!selected.find(selectedItemId => selectedItemId === item.id)) selected.push(item.id);
+        const linked = this.collectLinkedItems(item, [item.id]);
+        for (let linkedItemId of linked) {
+          const linkedItem = this.api.getItem(linkedItemId);
+          if (!selected.find(selectedItemId => selectedItemId === linkedItem.id)) {
+            selected.push(linkedItem.id);
+            automaticallySelected.push(linkedItem.id);
           }
         }
       }
     }
-    selected = selected.map(item => {
+    selected = selected.map(itemId => {
+      const item = this.api.getItem(itemId);
       item.selected = true;
-      return item;
+      return itemId;
     });
     return { selected, automaticallySelected };
   }
@@ -405,8 +405,8 @@ class SelectionPlugin {
     this.data.selected[ITEM] = selected;
     this.unmarkSelected();
     let multi = this.state.multi();
-    for (const item of selected) {
-      multi = multi.update(`config.chart.items.${item.id}.selected`, true);
+    for (const itemId of selected) {
+      multi = multi.update(`config.chart.items.${itemId}.selected`, true);
     }
     multi.done();
     // TODO save selected cells
@@ -421,15 +421,15 @@ class SelectionPlugin {
     const item: Item = this.merge({}, this.poitnerData.targetData) as Item;
     let { selected, automaticallySelected } = this.getSelected(item);
     if (selected.length > 1 && !this.data.multipleSelection) {
-      selected = [item];
+      selected = [item.id];
       automaticallySelected = [];
     }
     this.data.selected[ITEM] = selected;
     this.data.automaticallySelected[ITEM] = automaticallySelected;
     this.unmarkSelected();
     let multi = this.state.multi();
-    for (const item of this.data.selected[ITEM]) {
-      multi = multi.update(`config.chart.items.${item.id}.selected`, true);
+    for (const itemId of this.data.selected[ITEM]) {
+      multi = multi.update(`config.chart.items.${itemId}.selected`, true);
     }
     multi.done();
   }

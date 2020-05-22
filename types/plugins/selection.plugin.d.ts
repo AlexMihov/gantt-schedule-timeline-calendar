@@ -1,5 +1,5 @@
 import { ITEM, ITEM_TYPE, CELL, CELL_TYPE, Point, PointerState } from './timeline-pointer.plugin';
-import { Item, Cell, Vido } from '../gstc';
+import { Item, Vido } from '../gstc';
 export declare type ModKey = 'shift' | 'ctrl' | 'alt' | '';
 export interface Options {
     enabled?: boolean;
@@ -28,8 +28,8 @@ export interface Area {
     height: number;
 }
 export interface Selection {
-    [ITEM]: Item[];
-    [CELL]: Cell[];
+    [ITEM]: string[];
+    [CELL]: string[];
 }
 export interface PointerEvents {
     down: PointerEvent | null;

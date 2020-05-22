@@ -423,7 +423,7 @@ class ItemMovement {
 
     if (this.data.state === 'end') this.onEnd(); // before this.selection.selected[ITEM] clear
 
-    this.data.moving = this.selection.selected[ITEM].map(item => this.merge({}, item) as Item);
+    this.data.moving = this.selection.selected[ITEM].map(itemId => this.merge({}, this.api.getItem(itemId)) as Item);
     if (this.data.debug) console.log('state', this.data.pointerState); // eslint-disable-line no-console
 
     if (this.data.state === 'start') this.onStart();

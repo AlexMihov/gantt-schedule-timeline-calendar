@@ -232,7 +232,9 @@ class ItemResizing {
   }
 
   private getSelectedItems(): Item[] {
-    return this.state.get(`config.plugin.Selection.selected.${ITEM}`).map(item => this.merge({}, item) as Item);
+    return this.state
+      .get(`config.plugin.Selection.selected.${ITEM}`)
+      .map(itemId => this.merge({}, this.api.getItem(itemId)) as Item);
   }
 
   private getRightStyleMap(item: Item) {
