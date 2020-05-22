@@ -538,6 +538,7 @@ export class Api {
   }
 
   scrollToTime(toTime: number, centered = true, time: DataChartTime = this.state.get('$data.chart.time')): number {
+    if (!time.allDates) return 0;
     if (centered) {
       const chartWidth = this.state.get('$data.chart.dimensions.width');
       const halfChartTime = (chartWidth / 2) * time.timePerPixel;

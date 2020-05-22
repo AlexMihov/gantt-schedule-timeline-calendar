@@ -11612,6 +11612,8 @@
 	        return { x, y, z, event };
 	    }
 	    scrollToTime(toTime, centered = true, time = this.state.get('$data.chart.time')) {
+	        if (!time.allDates)
+	            return 0;
 	        if (centered) {
 	            const chartWidth = this.state.get('$data.chart.dimensions.width');
 	            const halfChartTime = (chartWidth / 2) * time.timePerPixel;
