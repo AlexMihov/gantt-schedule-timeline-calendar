@@ -199,6 +199,7 @@ declare module "gstc" {
         gap?: RowGap;
         style?: RowStyle;
         classNames?: string[];
+        [key: string]: any;
     }
     export interface Rows {
         [id: string]: Row;
@@ -248,6 +249,7 @@ declare module "gstc" {
         linkedWith?: string[];
         selected?: boolean;
         $data: ItemData;
+        [key: string]: any;
     }
     export interface Items {
         [id: string]: Item;

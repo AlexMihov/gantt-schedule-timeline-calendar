@@ -44,6 +44,7 @@ export interface Row {
     gap?: RowGap;
     style?: RowStyle;
     classNames?: string[];
+    [key: string]: any;
 }
 export interface Rows {
     [id: string]: Row;
@@ -93,6 +94,7 @@ export interface Item {
     linkedWith?: string[];
     selected?: boolean;
     $data: ItemData;
+    [key: string]: any;
 }
 export interface Items {
     [id: string]: Item;
