@@ -6436,13 +6436,6 @@ function Main(vido, props = {}) {
             const right = api.time.getViewOffsetPxFromDates(item.$data.time.endDate, false, time);
             const actualTop = item.$data.position.top + item.gap.top;
             const viewTop = row.$data.position.viewTop + item.$data.position.actualTop;
-            const position = item.$data.position;
-            if (position.left === left &&
-                position.right === right &&
-                position.actualTop === actualTop &&
-                position.viewTop === viewTop) {
-                continue;
-            }
             multi = multi.update(`config.chart.items.${item.id}.$data`, function ($data) {
                 if (!$data)
                     return;
