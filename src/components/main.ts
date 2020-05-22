@@ -269,7 +269,7 @@ export default function Main(vido: Vido, props = {}) {
 
   onDestroy(
     state.subscribeAll(
-      ['config.list.rows.*.parentId', 'config.chart.items.*.rowId'],
+      ['config.list.rows.*.parentId', 'config.chart.items.*.rowId', 'config.chart.items.*.top'],
       () => {
         if (debug) console.log('rows.parentId or items.rowId changed.', {}); // eslint-disable-line no-console
         generateTree();
@@ -562,6 +562,7 @@ export default function Main(vido: Vido, props = {}) {
       multi = multi.update(
         `config.chart.items.${item.id}.$data`,
         function($data: ItemData) {
+          if (debug) console.log('Update visble item', { $data, item }); // eslint-disable-line no-console
           if (!$data) return;
           $data.position.left = left;
           $data.position.actualLeft = api.time.limitOffsetPxToView(left, time);

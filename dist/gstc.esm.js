@@ -6182,7 +6182,7 @@ function Main(vido, props = {}) {
             rowsAndItems = 0;
         }
     }));
-    onDestroy(state.subscribeAll(['config.list.rows.*.parentId', 'config.chart.items.*.rowId'], () => {
+    onDestroy(state.subscribeAll(['config.list.rows.*.parentId', 'config.chart.items.*.rowId', 'config.chart.items.*.top'], () => {
         if (debug)
             console.log('rows.parentId or items.rowId changed.', {}); // eslint-disable-line no-console
         generateTree();
@@ -6437,6 +6437,8 @@ function Main(vido, props = {}) {
             const actualTop = item.$data.position.top + item.gap.top;
             const viewTop = row.$data.position.viewTop + item.$data.position.actualTop;
             multi = multi.update(`config.chart.items.${item.id}.$data`, function ($data) {
+                if (debug)
+                    console.log('Update visble item', { $data, item }); // eslint-disable-line no-console
                 if (!$data)
                     return;
                 $data.position.left = left;
