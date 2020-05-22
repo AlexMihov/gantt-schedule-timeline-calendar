@@ -8755,7 +8755,9 @@
 	    const componentName = 'chart-timeline-items-row';
 	    let className = api.getClass(componentName);
 	    const slots = api.generateSlots(componentName, vido, props);
-	    onChange(function onPropsChange(changedProps, options) {
+	    let rowId = props.row.id;
+	    let rowSub = state.subscribe(`config.list.rows.${rowId}`, () => onPropsChange(props, {})); // eslint-disable-line @typescript-eslint/no-use-before-define
+	    function onPropsChange(changedProps, options) {
 	        if (options.leave || !changedProps || changedProps.row === undefined) {
 	            shouldDetach = true;
 	            reuseComponents(itemComponents, [], () => null, ItemComponent, false);
@@ -8763,6 +8765,12 @@
 	            return update();
 	        }
 	        props = changedProps;
+	        if (props.row.id !== rowId) {
+	            if (rowSub)
+	                rowSub();
+	            rowId = props.row.id;
+	            rowSub = state.subscribe(`config.list.rows.${rowId}`, () => onPropsChange(props, options));
+	        }
 	        className = api.getClass(componentName, props.row.id);
 	        for (const prop in props) {
 	            actionProps[prop] = props[prop];
@@ -8775,6 +8783,11 @@
 	        }
 	        updateRow(props.row);
 	        slots.change(changedProps, options);
+	    }
+	    onChange(onPropsChange);
+	    onDestroy(() => {
+	        if (rowSub)
+	            rowSub();
 	    });
 	    onDestroy(state.subscribe('$data.chart.dimensions.width', () => updateRow(props.row)));
 	    onDestroy(() => {
