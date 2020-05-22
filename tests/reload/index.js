@@ -99,6 +99,7 @@ var state = GSTC.api.stateFromConfig(config);
 const element = document.getElementById('app');
 
 element.addEventListener('gstc-loaded', () => {
+  console.log('loaded'); // eslint-disable-line
   gstc.api.scrollToTime(gstc.api.time.date().valueOf()); // eslint-disable-line
 });
 

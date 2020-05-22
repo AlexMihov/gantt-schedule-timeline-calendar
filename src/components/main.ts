@@ -31,6 +31,7 @@ import {
 } from '../gstc';
 
 import { Component, ComponentInstance } from '@neuronet.io/vido/src/vido';
+import { ListenerFunctionEventInfo } from 'deep-state-observer';
 
 export default function Main(vido: Vido, props = {}) {
   const { api, state, onDestroy, Actions, update, createComponent, html, StyleMap } = vido;
@@ -93,10 +94,8 @@ export default function Main(vido: Vido, props = {}) {
   onDestroy(state.subscribe('config.actions.main', actions => (componentActions = actions)));
 
   const styleMap = new StyleMap({});
-  let rowsHeight = 0;
   let resizerActive = false;
   let lastRowsHeight = -1;
-  let timeLoadedEventFired = false;
 
   let className = api.getClass(componentName);
 
@@ -128,8 +127,7 @@ export default function Main(vido: Vido, props = {}) {
   }
   onDestroy(state.subscribe('$data.list.columns.resizer.active', resizerActiveChange));
 
-  function generateTree(bulk = null, eventInfo = null) {
-    if (eventInfo && eventInfo.type === 'subscribe') return;
+  function generateTree() {
     if (debug) console.log('Generating tree.'); // eslint-disable-line no-console
     const rows = state.get('config.list.rows');
     api.fillEmptyRowValues(rows);
@@ -139,20 +137,22 @@ export default function Main(vido: Vido, props = {}) {
     update();
   }
 
-  function prepareExpandedCalculateRowHeightsAndFixOverlapped() {
+  function prepareExpanded() {
     const configRows: Rows = api.getAllRows();
     if (!configRows) return;
     const rowsWithParentsExpanded: string[] = api.getRowsWithParentsExpanded(configRows);
-    rowsHeight = api.recalculateRowsHeightsAndFixOverlappingItems(rowsWithParentsExpanded);
-    const verticalArea: number = state.get('config.scroll.vertical.area');
-    if (debug) console.log('Rows with parent expanded and rows height.', { rowsWithParentsExpanded, rowsHeight }); // eslint-disable-line no-console
-    api.recalculateRowsPercents(rowsWithParentsExpanded, verticalArea);
-    state
-      .multi()
-      .update('$data.list.rowsHeight', rowsHeight, { force: true })
-      .update('$data.list.rowsWithParentsExpanded', rowsWithParentsExpanded)
-      .done();
-    update();
+    state.update('$data.list.rowsWithParentsExpanded', rowsWithParentsExpanded);
+  }
+
+  function calculateRowsHeight() {
+    const rowsWithParentsExpanded: string[] = state.get('$data.list.rowsWithParentsExpanded');
+    const rowsHeight = api.recalculateRowsHeightsAndFixOverlappingItems(rowsWithParentsExpanded);
+    state.update('$data.list.rowsHeight', rowsHeight);
+  }
+
+  function recaculateRowPercents() {
+    const rowsWithParentsExpanded: string[] = state.get('$data.list.rowsWithParentsExpanded');
+    api.recalculateRowsPercents(rowsWithParentsExpanded, state.get('config.scroll.vertical.area'));
   }
 
   function getLastPageRowsHeight(innerHeight: number, rowsWithParentsExpanded: string[]): number {
@@ -178,7 +178,7 @@ export default function Main(vido: Vido, props = {}) {
     return lastPageSize;
   }
 
-  function calculateHeightRelatedThings() {
+  function calculateVerticalScrollArea() {
     const rowsWithParentsExpanded: string[] = state.get('$data.list.rowsWithParentsExpanded');
     const rowsHeight = state.get('$data.list.rowsHeight');
     if (rowsHeight === lastRowsHeight) return;
@@ -238,87 +238,87 @@ export default function Main(vido: Vido, props = {}) {
     update();
   }
 
-  let rowsAndItems = 0;
-  onDestroy(
-    state.subscribeAll(['config.chart.items;', 'config.list.rows;'], (bulk, eventInfo) => {
-      ++rowsAndItems;
-      if (debug) console.log('Reload fired [items or rows changed].', {}); // eslint-disable-line no-console
-      generateTree('reload');
-      generateVisibleRowsAndItems();
-      prepareExpandedCalculateRowHeightsAndFixOverlapped();
-      calculateHeightRelatedThings();
-      calculateVisibleRowsHeights();
-      state.update('config.scroll', (scroll: Scroll) => {
-        scroll.horizontal.dataIndex = 0;
-        scroll.horizontal.data = null;
-        scroll.horizontal.posPx = 0;
-        scroll.vertical.dataIndex = 0;
-        scroll.vertical.data = Object.values(state.get('config.list.rows'))[0] as Row;
-        scroll.vertical.posPx = 0;
-        return scroll;
-      });
-      if (rowsAndItems === 2 && eventInfo.type !== 'subscribe') {
-        timeLoadedEventFired = false;
-      }
-      recalculateTimes({ name: 'reload' }); // eslint-disable-line @typescript-eslint/no-use-before-define
-      if (rowsAndItems === 2) {
-        rowsAndItems = 0;
-      }
-    })
-  );
+  function updateScroll() {
+    state.update('config.scroll', (scroll: Scroll) => {
+      scroll.horizontal.dataIndex = 0;
+      scroll.horizontal.data = null;
+      scroll.horizontal.posPx = 0;
+      scroll.vertical.dataIndex = 0;
+      scroll.vertical.data = Object.values(state.get('config.list.rows'))[0] as Row;
+      scroll.vertical.posPx = 0;
+      return scroll;
+    });
+  }
 
-  onDestroy(
-    state.subscribeAll(
-      ['config.list.rows.*.parentId', 'config.chart.items.*.rowId'],
-      () => {
-        if (debug) console.log('rows.parentId or items.rowId changed.', {}); // eslint-disable-line no-console
-        generateTree();
-        generateVisibleRowsAndItems();
-        calculateHeightRelatedThings();
-        calculateVisibleRowsHeights();
-      },
-      { bulk: true }
-    )
-  );
-
-  onDestroy(
-    state.subscribeAll(
-      [
-        'config.list.rows.*.expanded',
-        'config.chart.items.*.height',
-        'config.chart.items.*.rowId',
-        'config.chart.items.*.top',
-        'config.list.rows.*.$data.outerHeight',
-        'config.scroll.vertical.area'
-      ],
-      prepareExpandedCalculateRowHeightsAndFixOverlapped,
-      { bulk: true }
-    )
-  );
-
-  onDestroy(state.subscribeAll(['$data.innerHeight', '$data.list.rowsHeight'], calculateHeightRelatedThings));
-
+  function minimalReload(bulk = null, eventInfo: ListenerFunctionEventInfo = null) {
+    if (eventInfo && eventInfo.options.data && eventInfo.options.data === 'updateVisibleItems') return;
+    if (debug) console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
+    generateVisibleRowsAndItems();
+    calculateRowsHeight();
+    calculateVerticalScrollArea();
+    recaculateRowPercents();
+    calculateVisibleRowsHeights();
+    updateVisibleItems().done(); // eslint-disable-line
+  }
   onDestroy(
     state.subscribeAll(
       [
         'config.chart.items.*.time',
+        'config.chart.items.*.height',
+        'config.chart.items.*.top',
+        'config.list.rows.*.$data.outerHeight',
         'config.chart.items.*.$data.position',
-        '$data.list.visibleRows',
-        'config.scroll.vertical.offset'
+        'config.scroll.vertical.offset',
+        '$data.innerHeight', // for calculate scroll area
+        '$data.list.rowsHeight' // for calculate scroll area
       ],
-      calculateVisibleRowsHeights,
-      {
-        bulk: true
-      }
+      minimalReload,
+      { bulk: true }
     )
   );
 
+  function partialReload() {
+    if (debug) console.log('Partial reload fired.', {}); // eslint-disable-line no-console
+    generateTree();
+    prepareExpanded();
+    minimalReload();
+  }
   onDestroy(
     state.subscribeAll(
-      ['$data.list.rowsWithParentsExpanded', 'config.scroll.vertical.dataIndex', 'config.chart.items.*.rowId'],
-      generateVisibleRowsAndItems,
-      { bulk: true /*, ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected']*/ }
+      ['config.list.rows.*.parentId', 'config.chart.items.*.rowId', 'config.list.rows.*.expanded'],
+      partialReload,
+      { bulk: true }
     )
+  );
+
+  function triggerLoadedEvent() {
+    Promise.resolve().then(() => {
+      const element = state.get('$data.elements.main');
+      const parent = element.parentNode;
+      const event = new Event('gstc-loaded');
+      element.dispatchEvent(event);
+      parent.dispatchEvent(event);
+    });
+  }
+
+  function fullReload() {
+    if (debug) console.log('Full reload fired.', {}); // eslint-disable-line no-console
+    partialReload();
+    updateScroll();
+    recalculateTimes({ name: 'reload' }); // eslint-disable-line @typescript-eslint/no-use-before-define
+  }
+  onDestroy(
+    state.subscribeAll(['config.chart.items;', 'config.list.rows;'], (bulk, eventInfo) => {
+      if (eventInfo.path.update === 'config') return; // config will reload
+      fullReload();
+    })
+  );
+
+  onDestroy(
+    state.subscribe('config;', () => {
+      fullReload();
+      setTimeout(triggerLoadedEvent, 0);
+    })
   );
 
   function getLastPageDatesWidth(chartWidth: number, allDates: DataChartTimeLevelDate[]): number {
@@ -373,18 +373,6 @@ export default function Main(vido: Vido, props = {}) {
       });
     }
     return dates;
-  }
-
-  function triggerLoadedEvent() {
-    if (timeLoadedEventFired) return;
-    Promise.resolve().then(() => {
-      const element = state.get('$data.elements.main');
-      const parent = element.parentNode;
-      const event = new Event('gstc-loaded');
-      element.dispatchEvent(event);
-      parent.dispatchEvent(event);
-      timeLoadedEventFired = true;
-    });
   }
 
   function limitGlobal(time: DataChartTime, oldTime: DataChartTime) {
@@ -585,8 +573,8 @@ export default function Main(vido: Vido, props = {}) {
   }
 
   onDestroy(
-    state.subscribeAll(
-      ['$data.list.visibleRows;', '$data.chart.visibleItems;', 'config.scroll.vertical', 'config.chart.items'],
+    state.subscribe(
+      'config.chart.items',
       (bulk, eventInfo) => {
         if (eventInfo.options.data && eventInfo.options.data === 'updateVisibleItems') return;
         updateVisibleItems().done();
@@ -766,11 +754,7 @@ export default function Main(vido: Vido, props = {}) {
     multi = multi.update('$data.chart.time.recalculateTimesLastReason', reason.name);
     multi.done();
     if (debug) console.log('Time recalculated.', { time }); // eslint-disable-line no-console
-    update(() => {
-      if (!timeLoadedEventFired) {
-        setTimeout(triggerLoadedEvent, 0);
-      }
-    });
+    update(``);
   }
 
   const recalculationTriggerCache = {
