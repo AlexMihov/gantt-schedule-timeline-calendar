@@ -112,11 +112,12 @@ export default function ChartTimelineGrid(vido: Vido, props) {
     )
   );
 
-  function generateRowsComponents(rowsWithCells: RowWithCells[]) {
+  function generateRowsComponents() {
+    const rowsWithCells = state.get('$data.chart.grid.rowsWithCells');
     reuseComponents(rowsComponents, rowsWithCells || [], row => row, GridRowComponent, false);
     update();
   }
-  onDestroy(state.subscribe('$data.chart.grid.rowsWithCells;', generateRowsComponents));
+  onDestroy(state.subscribeAll(['$data.chart.grid.rowsWithCells;', 'config.list.rows'], generateRowsComponents));
   onDestroy(() => {
     rowsComponents.forEach(row => row.destroy());
   });
