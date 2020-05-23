@@ -6152,7 +6152,7 @@ function Main(vido, props = {}) {
         }
         update();
     }
-    function updateScroll() {
+    function resetScroll() {
         state.update('config.scroll', (scroll) => {
             scroll.horizontal.dataIndex = 0;
             scroll.horizontal.data = null;
@@ -6211,16 +6211,22 @@ function Main(vido, props = {}) {
         if (debug)
             console.log('Full reload fired.', {}); // eslint-disable-line no-console
         partialReload();
-        updateScroll();
         recalculateTimes({ name: 'reload' }); // eslint-disable-line @typescript-eslint/no-use-before-define
     }
     onDestroy(state.subscribeAll(['config.chart.items;', 'config.list.rows;'], (bulk, eventInfo) => {
         if (eventInfo.path.update === 'config')
             return; // config will reload
         fullReload();
+        if (eventInfo.path.update === 'config.list.rows') {
+            const rows = state.get('config.list.rows');
+            const verticalScroll = state.get('config.scroll.vertical');
+            if (!rows[verticalScroll.dataIndex])
+                resetScroll();
+        }
     }));
     onDestroy(state.subscribe('config;', () => {
         fullReload();
+        resetScroll();
         setTimeout(triggerLoadedEvent, 0);
     }));
     function getLastPageDatesWidth(chartWidth, allDates) {
