@@ -28,8 +28,8 @@ class BindElementAction {
     if (shouldUpdate) data.state.update('$data.elements.chart-timeline-grid-rows', rows, { only: null });
   }
   public destroy(element, data) {
-    data.state.update('$data.elements.chart-timeline-grid-rows', (rows) => {
-      return rows.filter((el) => el !== element);
+    data.state.update('$data.elements.chart-timeline-grid-rows', rows => {
+      return rows.filter(el => el !== element);
     });
   }
 }
@@ -40,11 +40,11 @@ export default function ChartTimelineGridRow(vido: Vido, props: RowWithCells) {
   const actionProps = {
     ...props,
     api,
-    state,
+    state
   };
   let wrapper;
   onDestroy(
-    state.subscribe('config.wrappers.ChartTimelineGridRow', (value) => {
+    state.subscribe('config.wrappers.ChartTimelineGridRow', value => {
       wrapper = value;
       update();
     })
@@ -52,7 +52,7 @@ export default function ChartTimelineGridRow(vido: Vido, props: RowWithCells) {
 
   let GridCellComponent;
   onDestroy(
-    state.subscribe('config.components.ChartTimelineGridRowCell', (component) => (GridCellComponent = component))
+    state.subscribe('config.components.ChartTimelineGridRowCell', component => (GridCellComponent = component))
   );
 
   const componentActions = api.getActions(componentName);
@@ -61,7 +61,7 @@ export default function ChartTimelineGridRow(vido: Vido, props: RowWithCells) {
   const styleMap = new StyleMap(
     {
       width: props.width + 'px',
-      height: props.row.height + 'px',
+      height: props.row.height + 'px'
     },
     true
   );
@@ -72,10 +72,10 @@ export default function ChartTimelineGridRow(vido: Vido, props: RowWithCells) {
   const slots = api.generateSlots(componentName, vido, props);
 
   const rowsCellsComponents = [];
-  onChange(function onPropsChange(changedProps, options) {
+  function onPropsChange(changedProps, options) {
     if (options.leave || changedProps.row === undefined) {
       shouldDetach = true;
-      reuseComponents(rowsCellsComponents, [], (cell) => cell, GridCellComponent, false);
+      reuseComponents(rowsCellsComponents, [], cell => cell, GridCellComponent, false);
       slots.change(changedProps, options);
       update();
       return;
@@ -83,7 +83,7 @@ export default function ChartTimelineGridRow(vido: Vido, props: RowWithCells) {
     shouldDetach = false;
     props = changedProps;
     className = api.getClass(componentName, props.row.id);
-    reuseComponents(rowsCellsComponents, props.cells, (cell) => cell, GridCellComponent, false);
+    reuseComponents(rowsCellsComponents, props.cells, cell => cell, GridCellComponent, false);
     styleMap.setStyle({});
     styleMap.style.height = props.row.$data.outerHeight + 'px';
     styleMap.style.width = props.width + 'px';
@@ -106,10 +106,13 @@ export default function ChartTimelineGridRow(vido: Vido, props: RowWithCells) {
     }
     slots.change(changedProps, options);
     update();
-  });
+  }
+  onChange(onPropsChange);
+  // because when item height or position change row must follow
+  onDestroy(state.subscribe('config.chart.items', () => onPropsChange(props, {})));
 
   onDestroy(function destroy() {
-    rowsCellsComponents.forEach((rowCell) => rowCell.destroy());
+    rowsCellsComponents.forEach(rowCell => rowCell.destroy());
   });
 
   if (componentActions.indexOf(BindElementAction) === -1) {
@@ -118,11 +121,11 @@ export default function ChartTimelineGridRow(vido: Vido, props: RowWithCells) {
 
   const actions = Actions.create(componentActions, actionProps);
 
-  return (templateProps) => {
+  return templateProps => {
     return wrapper(
       html`
         <div detach=${detach} class=${className} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${rowsCellsComponents.map((r) => r.html())}
+          ${slots.html('before', templateProps)}${rowsCellsComponents.map(r => r.html())}
           ${slots.html('after', templateProps)}
         </div>
       `,
