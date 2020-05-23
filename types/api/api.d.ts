@@ -1,4 +1,5 @@
 import { Time } from './time';
+import State from 'deep-state-observer';
 import DeepState from 'deep-state-observer';
 import dayjs from 'dayjs';
 import { Config, DataChartTime, ScrollTypeHorizontal, Row, Item, Vido, Items, ScrollTypeVertical, Rows } from '../gstc';
@@ -9,7 +10,7 @@ export declare function getId(name: string, id: string): string;
 export declare function prepareState(userConfig: Config): {
     config: any;
 };
-export declare function stateFromConfig(userConfig: Config): any;
+export declare function stateFromConfig(userConfig: Config): State;
 export declare function wasmStateFromConfig(userConfig: Config, wasmFile?: string): Promise<any>;
 export declare const publicApi: {
     name: string;

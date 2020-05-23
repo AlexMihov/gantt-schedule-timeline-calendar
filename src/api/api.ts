@@ -86,7 +86,11 @@ export function prepareState(userConfig: Config) {
 
 export function stateFromConfig(userConfig: Config) {
   // @ts-ignore
-  return (this.state = new State(prepareState(userConfig), { delimeter: '.', maxSimultaneousJobs: 1000 }));
+  return (this.state = new State(prepareState(userConfig), {
+    delimeter: '.',
+    maxSimultaneousJobs: 1000,
+    Promise: userConfig.Promise
+  }));
 }
 
 export async function wasmStateFromConfig(userConfig: Config, wasmFile: string = './wildcard_matcher_bg.wasm') {

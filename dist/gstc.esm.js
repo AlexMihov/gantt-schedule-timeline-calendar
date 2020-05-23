@@ -6012,6 +6012,8 @@ function Main(vido, props = {}) {
     const styleMap = new StyleMap({});
     let resizerActive = false;
     let lastRowsHeight = -1;
+    let useLast = true; // use state.last with promises - not recommended in angular -> zone.js
+    onDestroy(state.subscribe('config.useLast', val => (useLast = val)));
     let className = api.getClass(componentName);
     function heightChange() {
         if (debug)
@@ -6161,19 +6163,22 @@ function Main(vido, props = {}) {
             return scroll;
         });
     }
+    function _minimalReload() {
+        if (debug)
+            console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
+        generateVisibleRowsAndItems();
+        calculateRowsHeight();
+        calculateVerticalScrollArea();
+        recaculateRowPercents();
+        calculateVisibleRowsHeights();
+        updateVisibleItems().done(); // eslint-disable-line
+    }
     function minimalReload(bulk = null, eventInfo = null) {
         if (eventInfo && eventInfo.options.data && eventInfo.options.data === 'updateVisibleItems')
             return;
-        state.last(() => {
-            if (debug)
-                console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
-            generateVisibleRowsAndItems();
-            calculateRowsHeight();
-            calculateVerticalScrollArea();
-            recaculateRowPercents();
-            calculateVisibleRowsHeights();
-            updateVisibleItems().done(); // eslint-disable-line
-        });
+        if (!useLast)
+            return _minimalReload();
+        state.last(_minimalReload);
     }
     onDestroy(state.subscribeAll([
         'config.chart.items.*.time',
@@ -9481,7 +9486,9 @@ function defaultConfig() {
         usageStatistics: true,
         merge(target, source) {
             return helpers.mergeDeep({}, target, source);
-        }
+        },
+        useLast: true,
+        Promise
     };
 }
 
@@ -10239,17 +10246,20 @@ async function init(input) {
 function log(message, info) {
     console.debug(message, info);
 }
-const defaultOptions$1 = {
-    delimeter: `.`,
-    notRecursive: `;`,
-    param: `:`,
-    wildcard: `*`,
-    experimentalMatch: false,
-    queue: false,
-    maxSimultaneousJobs: 1000,
-    maxQueueRuns: 1000,
-    log
-};
+function getDefaultOptions() {
+    return {
+        delimeter: `.`,
+        notRecursive: `;`,
+        param: `:`,
+        wildcard: `*`,
+        experimentalMatch: false,
+        queue: false,
+        maxSimultaneousJobs: 1000,
+        maxQueueRuns: 1000,
+        log,
+        Promise
+    };
+}
 const defaultListenerOptions = {
     bulk: false,
     debug: false,
@@ -10266,7 +10276,7 @@ const defaultUpdateOptions = {
     force: false
 };
 class DeepState {
-    constructor(data = {}, options = defaultOptions$1) {
+    constructor(data = {}, options = {}) {
         this.jobsRunning = 0;
         this.updateQueue = [];
         this.subscribeQueue = [];
@@ -10274,14 +10284,19 @@ class DeepState {
         this.destroyed = false;
         this.queueRuns = 0;
         this.lastExecs = new WeakMap();
-        this.resolved = Promise.resolve();
         this.listeners = new Map();
         this.waitingListeners = new Map();
         this.data = data;
-        this.options = Object.assign(Object.assign({}, defaultOptions$1), options);
+        this.options = Object.assign(Object.assign({}, getDefaultOptions()), options);
         this.id = 0;
         this.pathGet = ObjectPath.get;
         this.pathSet = ObjectPath.set;
+        if (options.Promise) {
+            this.resolved = options.Promise.resolve();
+        }
+        else {
+            this.resolved = Promise.resolve();
+        }
         this.scan = new WildcardObject(this.data, this.options.delimeter, this.options.wildcard);
         this.destroyed = false;
     }
@@ -11189,7 +11204,11 @@ function prepareState(userConfig) {
 }
 function stateFromConfig(userConfig) {
     // @ts-ignore
-    return (this.state = new DeepState(prepareState(userConfig), { delimeter: '.', maxSimultaneousJobs: 1000 }));
+    return (this.state = new DeepState(prepareState(userConfig), {
+        delimeter: '.',
+        maxSimultaneousJobs: 1000,
+        Promise: userConfig.Promise
+    }));
 }
 function wasmStateFromConfig(userConfig, wasmFile = './wildcard_matcher_bg.wasm') {
     return __awaiter(this, void 0, void 0, function* () {

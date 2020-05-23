@@ -565,6 +565,8 @@ export interface Config {
   utcMode?: boolean;
   usageStatistics?: boolean;
   merge?: (target: object, source: object) => object;
+  useLast?: boolean;
+  Promise?: Promise<unknown> | any;
 }
 
 export interface TreeMapData {

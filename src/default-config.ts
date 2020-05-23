@@ -503,7 +503,9 @@ function defaultConfig(): Config {
     usageStatistics: true,
     merge(target: object, source: object) {
       return helpers.mergeDeep({}, target, source);
-    }
+    },
+    useLast: true,
+    Promise
   };
 }
 

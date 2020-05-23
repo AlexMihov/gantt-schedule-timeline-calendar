@@ -96,6 +96,8 @@ export default function Main(vido: Vido, props = {}) {
   const styleMap = new StyleMap({});
   let resizerActive = false;
   let lastRowsHeight = -1;
+  let useLast = true; // use state.last with promises - not recommended in angular -> zone.js
+  onDestroy(state.subscribe('config.useLast', val => (useLast = val)));
 
   let className = api.getClass(componentName);
 
@@ -250,17 +252,20 @@ export default function Main(vido: Vido, props = {}) {
     });
   }
 
+  function _minimalReload() {
+    if (debug) console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
+    generateVisibleRowsAndItems();
+    calculateRowsHeight();
+    calculateVerticalScrollArea();
+    recaculateRowPercents();
+    calculateVisibleRowsHeights();
+    updateVisibleItems().done(); // eslint-disable-line
+  }
+
   function minimalReload(bulk = null, eventInfo: ListenerFunctionEventInfo = null) {
     if (eventInfo && eventInfo.options.data && eventInfo.options.data === 'updateVisibleItems') return;
-    state.last(() => {
-      if (debug) console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
-      generateVisibleRowsAndItems();
-      calculateRowsHeight();
-      calculateVerticalScrollArea();
-      recaculateRowPercents();
-      calculateVisibleRowsHeights();
-      updateVisibleItems().done(); // eslint-disable-line
-    });
+    if (!useLast) return _minimalReload();
+    state.last(_minimalReload);
   }
   onDestroy(
     state.subscribeAll(

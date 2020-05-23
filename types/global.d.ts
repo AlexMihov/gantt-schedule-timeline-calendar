@@ -70,6 +70,7 @@ declare module "api/slots" {
 }
 declare module "api/api" {
     import { Time } from "api/time";
+    import State from 'deep-state-observer';
     import DeepState from 'deep-state-observer';
     import dayjs from 'dayjs';
     import { Config, DataChartTime, ScrollTypeHorizontal, Row, Item, Vido, Items, ScrollTypeVertical, Rows } from "gstc";
@@ -80,7 +81,7 @@ declare module "api/api" {
     export function prepareState(userConfig: Config): {
         config: any;
     };
-    export function stateFromConfig(userConfig: Config): any;
+    export function stateFromConfig(userConfig: Config): State;
     export function wasmStateFromConfig(userConfig: Config, wasmFile?: string): Promise<any>;
     export const publicApi: {
         name: string;
@@ -618,6 +619,8 @@ declare module "gstc" {
         utcMode?: boolean;
         usageStatistics?: boolean;
         merge?: (target: object, source: object) => object;
+        useLast?: boolean;
+        Promise?: Promise<unknown> | any;
     }
     export interface TreeMapData {
         parents: string[];
