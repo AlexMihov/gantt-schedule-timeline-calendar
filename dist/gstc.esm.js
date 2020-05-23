@@ -8666,7 +8666,12 @@ function ChartTimelineItems(vido, props = {}) {
         reuseComponents(rowsComponents, visibleRows, row => ({ row }), ItemsRowComponent, false);
         update();
     }
-    onDestroy(state.subscribeAll(['$data.list.visibleRows;', 'config.components.ChartTimelineItemsRow', 'config.chart.items.*.rowId'], createRowComponents));
+    onDestroy(state.subscribeAll([
+        '$data.list.visibleRows;',
+        'config.list.rows',
+        'config.components.ChartTimelineItemsRow',
+        'config.chart.items.*.rowId'
+    ], createRowComponents));
     onDestroy(() => {
         rowsComponents.forEach(row => row.destroy());
     });
@@ -8756,8 +8761,6 @@ function ChartTimelineItemsRow(vido, props) {
     const componentName = 'chart-timeline-items-row';
     let className = api.getClass(componentName);
     const slots = api.generateSlots(componentName, vido, props);
-    let rowId = props.row.id;
-    let rowSub = state.subscribe(`config.list.rows.${rowId}`, () => onPropsChange(props, {})); // eslint-disable-line @typescript-eslint/no-use-before-define
     function onPropsChange(changedProps, options) {
         if (options.leave || !changedProps || changedProps.row === undefined) {
             shouldDetach = true;
@@ -8766,12 +8769,6 @@ function ChartTimelineItemsRow(vido, props) {
             return update();
         }
         props = changedProps;
-        if (props.row.id !== rowId) {
-            if (rowSub)
-                rowSub();
-            rowId = props.row.id;
-            rowSub = state.subscribe(`config.list.rows.${rowId}`, () => onPropsChange(props, options));
-        }
         className = api.getClass(componentName, props.row.id);
         for (const prop in props) {
             actionProps[prop] = props[prop];
@@ -8786,10 +8783,6 @@ function ChartTimelineItemsRow(vido, props) {
         slots.change(changedProps, options);
     }
     onChange(onPropsChange);
-    onDestroy(() => {
-        if (rowSub)
-            rowSub();
-    });
     onDestroy(state.subscribe('$data.chart.dimensions.width', () => updateRow(props.row)));
     onDestroy(() => {
         itemComponents.forEach(item => item.destroy());
