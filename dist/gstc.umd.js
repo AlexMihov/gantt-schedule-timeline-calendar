@@ -6170,14 +6170,16 @@
 	    function minimalReload(bulk = null, eventInfo = null) {
 	        if (eventInfo && eventInfo.options.data && eventInfo.options.data === 'updateVisibleItems')
 	            return;
-	        if (debug)
-	            console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
-	        generateVisibleRowsAndItems();
-	        calculateRowsHeight();
-	        calculateVerticalScrollArea();
-	        recaculateRowPercents();
-	        calculateVisibleRowsHeights();
-	        updateVisibleItems().done(); // eslint-disable-line
+	        state.last(() => {
+	            if (debug)
+	                console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
+	            generateVisibleRowsAndItems();
+	            calculateRowsHeight();
+	            calculateVerticalScrollArea();
+	            recaculateRowPercents();
+	            calculateVisibleRowsHeights();
+	            updateVisibleItems().done(); // eslint-disable-line
+	        });
 	    }
 	    onDestroy(state.subscribeAll([
 	        'config.chart.items.*.time',
@@ -10277,6 +10279,8 @@
 	        this.listenersIgnoreCache = new WeakMap();
 	        this.destroyed = false;
 	        this.queueRuns = 0;
+	        this.lastExecs = new WeakMap();
+	        this.resolved = Promise.resolve();
 	        this.listeners = new Map();
 	        this.waitingListeners = new Map();
 	        this.data = data;
@@ -11066,6 +11070,20 @@
 	            return this.data;
 	        }
 	        return this.pathGet(this.split(userPath), this.data);
+	    }
+	    last(callback) {
+	        let last = this.lastExecs.get(callback);
+	        if (!last) {
+	            last = { calls: 0 };
+	            this.lastExecs.set(callback, last);
+	        }
+	        const current = ++last.calls;
+	        this.resolved.then(() => {
+	            if (current === last.calls) {
+	                this.lastExecs.set(callback, { calls: 0 });
+	                callback();
+	            }
+	        });
 	    }
 	    debugSubscribe(listener, listenersCollection, listenerPath) {
 	        if (listener.options.debug) {

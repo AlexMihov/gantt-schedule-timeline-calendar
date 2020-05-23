@@ -252,13 +252,15 @@ export default function Main(vido: Vido, props = {}) {
 
   function minimalReload(bulk = null, eventInfo: ListenerFunctionEventInfo = null) {
     if (eventInfo && eventInfo.options.data && eventInfo.options.data === 'updateVisibleItems') return;
-    if (debug) console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
-    generateVisibleRowsAndItems();
-    calculateRowsHeight();
-    calculateVerticalScrollArea();
-    recaculateRowPercents();
-    calculateVisibleRowsHeights();
-    updateVisibleItems().done(); // eslint-disable-line
+    state.last(() => {
+      if (debug) console.log('Minimal reload fired.', {}); // eslint-disable-line no-console
+      generateVisibleRowsAndItems();
+      calculateRowsHeight();
+      calculateVerticalScrollArea();
+      recaculateRowPercents();
+      calculateVisibleRowsHeights();
+      updateVisibleItems().done(); // eslint-disable-line
+    });
   }
   onDestroy(
     state.subscribeAll(
