@@ -45,7 +45,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
   let wrapper;
   onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
 
-  let itemId = props.item.id;
+  let itemId;
 
   let debug;
   onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
@@ -167,7 +167,23 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
 
   const slots = api.generateSlots(componentName, vido, props);
 
-  let itemSub = state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, {})); // eslint-disable-line @typescript-eslint/no-use-before-define
+  // we need to subscribe current item and also linked items
+  let itemSubs = [];
+  function itemUnsub() {
+    itemSubs.forEach(unsub => unsub());
+    itemSubs.length = 0;
+  }
+  function itemSub(options = {}) {
+    itemUnsub();
+    itemSubs.push(state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, options))); // eslint-disable-line @typescript-eslint/no-use-before-define
+    if (props.item.linkedWith && Array.isArray(props.item.linkedWith)) {
+      for (const itemId of props.item.linkedWith) {
+        itemSubs.push(state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, options))); // eslint-disable-line @typescript-eslint/no-use-before-define
+      }
+    }
+  }
+  itemSub();
+
   function onPropsChange(changedProps, options) {
     if (options.leave || changedProps.row === undefined || changedProps.item === undefined) {
       leave = true;
@@ -188,21 +204,19 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
     props = changedProps;
     if (props.item.id !== itemId) {
       itemId = props.item.id;
-      if (itemSub) itemSub();
-      itemSub = state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, options));
+      itemSub(options);
+      className = api.getClass(componentName, props.row.id + '-' + props.item.id);
+      labelClassName = api.getClass(componentName + '-label', props.row.id + '-' + props.item.id);
+      actionProps.item = props.item;
+      actionProps.row = props.row;
     }
-    className = api.getClass(componentName, props.row.id + '-' + props.item.id);
-    labelClassName = api.getClass(componentName + '-label', props.row.id + '-' + props.item.id);
-    actionProps.item = props.item;
-    actionProps.row = props.row;
     updateItem();
     slots.change(changedProps, options);
     update();
   }
   onChange(onPropsChange);
-  onDestroy(() => {
-    if (itemSub) itemSub();
-  });
+  onDestroy(itemUnsub);
+  onPropsChange(props, {});
 
   const componentActions = api.getActions(componentName);
 

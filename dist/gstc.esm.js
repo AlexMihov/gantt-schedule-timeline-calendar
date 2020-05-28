@@ -6060,6 +6060,8 @@ function Main(vido, props = {}) {
         const rowsWithParentsExpanded = state.get('$data.list.rowsWithParentsExpanded');
         const rowsHeight = api.recalculateRowsHeightsAndFixOverlappingItems(rowsWithParentsExpanded);
         state.update('$data.list.rowsHeight', rowsHeight);
+        if (debug)
+            console.log('calculateRowsHeight.', { rowsHeight }); // eslint-disable-line no-console
     }
     function recaculateRowPercents() {
         const rowsWithParentsExpanded = state.get('$data.list.rowsWithParentsExpanded');
@@ -8348,6 +8350,8 @@ function ChartTimelineGrid(vido, props) {
     const formatCache = new Map();
     const styleMap = new StyleMap({});
     function generateCells() {
+        if (debug)
+            console.log('[grid.ts] generateCells'); // eslint-disable-line no-console
         const width = state.get('$data.chart.dimensions.width');
         const height = state.get('$data.innerHeight');
         const scrollOffset = state.get('config.scroll.vertical.offset') || 0;
@@ -8396,8 +8400,8 @@ function ChartTimelineGrid(vido, props) {
         '$data.list.rowsHeight',
         '$data.list.visibleRows;',
         '$data.list.visibleRowsHeight',
-        '$data.chart.items.*.rowId',
-        '$ddata.chart.items.*.time',
+        'config.chart.items.*.rowId',
+        'config.chart.items.*.time',
         `$data.chart.time.levels`,
         '$data.innerHeight',
         '$data.chart.dimensions.width'
@@ -8405,6 +8409,8 @@ function ChartTimelineGrid(vido, props) {
         bulk: true
     }));
     function generateRowsComponents() {
+        if (debug)
+            console.log('[grid.ts] generate rows components'); // eslint-disable-line no-console
         const rowsWithCells = state.get('$data.chart.grid.rowsWithCells');
         reuseComponents(rowsComponents, rowsWithCells || [], row => row, GridRowComponent, false);
         update();
@@ -8516,7 +8522,7 @@ function ChartTimelineGridRow(vido, props) {
     }
     onChange(onPropsChange);
     // because when item height or position change row must follow
-    onDestroy(state.subscribe('config.chart.items', () => onPropsChange(props, {})));
+    // onDestroy(state.subscribe('config.chart.items', () => onPropsChange(props, {})));
     onDestroy(function destroy() {
         rowsCellsComponents.forEach(rowCell => rowCell.destroy());
     });
@@ -8844,7 +8850,7 @@ function ChartTimelineItemsRowItem(vido, props) {
     const { api, state, onDestroy, Detach, Actions, update, html, svg, onChange, unsafeHTML, StyleMap } = vido;
     let wrapper;
     onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
-    let itemId = props.item.id;
+    let itemId;
     let debug;
     onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
     let itemLeftPx = 0, itemWidthPx = 0, leave = false, classNameCurrent = '';
@@ -8962,7 +8968,22 @@ function ChartTimelineItemsRowItem(vido, props) {
     </div>
   `;
     const slots = api.generateSlots(componentName, vido, props);
-    let itemSub = state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, {})); // eslint-disable-line @typescript-eslint/no-use-before-define
+    // we need to subscribe current item and also linked items
+    let itemSubs = [];
+    function itemUnsub() {
+        itemSubs.forEach(unsub => unsub());
+        itemSubs.length = 0;
+    }
+    function itemSub(options = {}) {
+        itemUnsub();
+        itemSubs.push(state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, options))); // eslint-disable-line @typescript-eslint/no-use-before-define
+        if (props.item.linkedWith && Array.isArray(props.item.linkedWith)) {
+            for (const itemId of props.item.linkedWith) {
+                itemSubs.push(state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, options))); // eslint-disable-line @typescript-eslint/no-use-before-define
+            }
+        }
+    }
+    itemSub();
     function onPropsChange(changedProps, options) {
         if (options.leave || changedProps.row === undefined || changedProps.item === undefined) {
             leave = true;
@@ -8984,23 +9005,19 @@ function ChartTimelineItemsRowItem(vido, props) {
         props = changedProps;
         if (props.item.id !== itemId) {
             itemId = props.item.id;
-            if (itemSub)
-                itemSub();
-            itemSub = state.subscribe(`config.chart.items.${itemId}`, () => onPropsChange(props, options));
+            itemSub(options);
+            className = api.getClass(componentName, props.row.id + '-' + props.item.id);
+            labelClassName = api.getClass(componentName + '-label', props.row.id + '-' + props.item.id);
+            actionProps.item = props.item;
+            actionProps.row = props.row;
         }
-        className = api.getClass(componentName, props.row.id + '-' + props.item.id);
-        labelClassName = api.getClass(componentName + '-label', props.row.id + '-' + props.item.id);
-        actionProps.item = props.item;
-        actionProps.row = props.row;
         updateItem();
         slots.change(changedProps, options);
         update();
     }
     onChange(onPropsChange);
-    onDestroy(() => {
-        if (itemSub)
-            itemSub();
-    });
+    onDestroy(itemUnsub);
+    onPropsChange(props, {});
     const componentActions = api.getActions(componentName);
     onDestroy(state.subscribe('$data.chart.time', updateItem));
     componentActions.push(BindElementAction$7);
@@ -9490,7 +9507,7 @@ function defaultConfig() {
         merge(target, source) {
             return helpers.mergeDeep({}, target, source);
         },
-        useLast: true,
+        useLast: false,
         Promise
     };
 }

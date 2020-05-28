@@ -108,8 +108,6 @@ export default function ChartTimelineGridRow(vido: Vido, props: RowWithCells) {
     update();
   }
   onChange(onPropsChange);
-  // because when item height or position change row must follow
-  onDestroy(state.subscribe('config.chart.items', () => onPropsChange(props, {})));
 
   onDestroy(function destroy() {
     rowsCellsComponents.forEach(rowCell => rowCell.destroy());

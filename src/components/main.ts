@@ -151,6 +151,7 @@ export default function Main(vido: Vido, props = {}) {
     const rowsWithParentsExpanded: string[] = state.get('$data.list.rowsWithParentsExpanded');
     const rowsHeight = api.recalculateRowsHeightsAndFixOverlappingItems(rowsWithParentsExpanded);
     state.update('$data.list.rowsHeight', rowsHeight);
+    if (debug) console.log('calculateRowsHeight.', { rowsHeight }); // eslint-disable-line no-console
   }
 
   function recaculateRowPercents() {

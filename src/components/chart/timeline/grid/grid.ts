@@ -51,6 +51,7 @@ export default function ChartTimelineGrid(vido: Vido, props) {
   const styleMap = new StyleMap({});
 
   function generateCells() {
+    if (debug) console.log('[grid.ts] generateCells'); // eslint-disable-line no-console
     const width = state.get('$data.chart.dimensions.width');
     const height = state.get('$data.innerHeight');
     const scrollOffset = state.get('config.scroll.vertical.offset') || 0;
@@ -99,8 +100,8 @@ export default function ChartTimelineGrid(vido: Vido, props) {
         '$data.list.rowsHeight',
         '$data.list.visibleRows;',
         '$data.list.visibleRowsHeight',
-        '$data.chart.items.*.rowId',
-        '$ddata.chart.items.*.time',
+        'config.chart.items.*.rowId',
+        'config.chart.items.*.time',
         `$data.chart.time.levels`,
         '$data.innerHeight',
         '$data.chart.dimensions.width'
@@ -113,6 +114,7 @@ export default function ChartTimelineGrid(vido: Vido, props) {
   );
 
   function generateRowsComponents() {
+    if (debug) console.log('[grid.ts] generate rows components'); // eslint-disable-line no-console
     const rowsWithCells = state.get('$data.chart.grid.rowsWithCells');
     reuseComponents(rowsComponents, rowsWithCells || [], row => row, GridRowComponent, false);
     update();
