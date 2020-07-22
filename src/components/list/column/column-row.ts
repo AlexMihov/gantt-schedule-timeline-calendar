@@ -28,8 +28,8 @@ class BindElementAction {
     if (shouldUpdate) data.state.update('$data.elements.list-column-rows', elements);
   }
   public destroy(element, data) {
-    data.state.update('$data.elements.list-column-rows', (elements) => {
-      return elements.filter((el) => el !== element);
+    data.state.update('$data.elements.list-column-rows', elements => {
+      return elements.filter(el => el !== element);
     });
   }
 }
@@ -51,7 +51,7 @@ export default function ListColumnRow(vido: Vido, props: Props) {
     createComponent,
     onChange,
     StyleMap,
-    unsafeHTML,
+    unsafeHTML
   } = vido;
 
   const componentName = 'list-column-row';
@@ -60,11 +60,11 @@ export default function ListColumnRow(vido: Vido, props: Props) {
   const detach = new Detach(() => shouldDetach);
 
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.ListColumnRow', (value) => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.ListColumnRow', value => (wrapper = value)));
 
   let ListColumnRowExpanderComponent;
   onDestroy(
-    state.subscribe('config.components.ListColumnRowExpander', (value) => (ListColumnRowExpanderComponent = value))
+    state.subscribe('config.components.ListColumnRowExpander', value => (ListColumnRowExpanderComponent = value))
   );
 
   const styleMap = new StyleMap(
@@ -74,12 +74,12 @@ export default function ListColumnRow(vido: Vido, props: Props) {
           top: '',
           ['--height' as any]: '',
           ['--expander-padding-width' as any]: '',
-          ['--expander-size' as any]: '',
+          ['--expander-size' as any]: ''
         }
       : {
           height: '',
           top: '',
-          ['--height' as any]: '',
+          ['--height' as any]: ''
         },
     true
   );
@@ -152,7 +152,7 @@ export default function ListColumnRow(vido: Vido, props: Props) {
     if (ListColumnRowExpander) {
       ListColumnRowExpander.change(props);
     }
-    slots.change(changedProps, options);
+    slots.change(props, options);
     update();
   }
   onChange(onPropsChange);
@@ -181,7 +181,7 @@ export default function ListColumnRow(vido: Vido, props: Props) {
   if (!componentActions.includes(BindElementAction)) componentActions.push(BindElementAction);
   const actions = Actions.create(componentActions, actionProps);
 
-  return (templateProps) =>
+  return templateProps =>
     wrapper(
       html`
         <div detach=${detach} class=${classNameCurrent} style=${styleMap} data-actions=${actions}>

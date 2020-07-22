@@ -1502,11 +1502,11 @@
   }
 
   var dayjs_min = createCommonjsModule(function (module, exports) {
-  !function(t,n){module.exports=n();}(commonjsGlobal,function(){var t="millisecond",n="second",e="minute",r="hour",i="day",s="week",u="month",o="quarter",a="year",h=/^(\d{4})-?(\d{1,2})-?(\d{0,2})[^0-9]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?.?(\d{1,3})?$/,f=/\[([^\]]+)]|Y{2,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g,c=function(t,n,e){var r=String(t);return !r||r.length>=n?t:""+Array(n+1-r.length).join(e)+t},d={s:c,z:function(t){var n=-t.utcOffset(),e=Math.abs(n),r=Math.floor(e/60),i=e%60;return (n<=0?"+":"-")+c(r,2,"0")+":"+c(i,2,"0")},m:function(t,n){var e=12*(n.year()-t.year())+(n.month()-t.month()),r=t.clone().add(e,u),i=n-r<0,s=t.clone().add(e+(i?-1:1),u);return Number(-(e+(n-r)/(i?r-s:s-r))||0)},a:function(t){return t<0?Math.ceil(t)||0:Math.floor(t)},p:function(h){return {M:u,y:a,w:s,d:i,D:"date",h:r,m:e,s:n,ms:t,Q:o}[h]||String(h||"").toLowerCase().replace(/s$/,"")},u:function(t){return void 0===t}},$={name:"en",weekdays:"Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),months:"January_February_March_April_May_June_July_August_September_October_November_December".split("_")},l="en",m={};m[l]=$;var y=function(t){return t instanceof v},M=function(t,n,e){var r;if(!t)return l;if("string"==typeof t)m[t]&&(r=t),n&&(m[t]=n,r=t);else {var i=t.name;m[i]=t,r=i;}return !e&&r&&(l=r),r||!e&&l},g=function(t,n,e){if(y(t))return t.clone();var r=n?"string"==typeof n?{format:n,pl:e}:n:{};return r.date=t,new v(r)},D=d;D.l=M,D.i=y,D.w=function(t,n){return g(t,{locale:n.$L,utc:n.$u,$offset:n.$offset})};var v=function(){function c(t){this.$L=this.$L||M(t.locale,null,!0),this.parse(t);}var d=c.prototype;return d.parse=function(t){this.$d=function(t){var n=t.date,e=t.utc;if(null===n)return new Date(NaN);if(D.u(n))return new Date;if(n instanceof Date)return new Date(n);if("string"==typeof n&&!/Z$/i.test(n)){var r=n.match(h);if(r)return e?new Date(Date.UTC(r[1],r[2]-1,r[3]||1,r[4]||0,r[5]||0,r[6]||0,r[7]||0)):new Date(r[1],r[2]-1,r[3]||1,r[4]||0,r[5]||0,r[6]||0,r[7]||0)}return new Date(n)}(t),this.init();},d.init=function(){var t=this.$d;this.$y=t.getFullYear(),this.$M=t.getMonth(),this.$D=t.getDate(),this.$W=t.getDay(),this.$H=t.getHours(),this.$m=t.getMinutes(),this.$s=t.getSeconds(),this.$ms=t.getMilliseconds();},d.$utils=function(){return D},d.isValid=function(){return !("Invalid Date"===this.$d.toString())},d.isSame=function(t,n){var e=g(t);return this.startOf(n)<=e&&e<=this.endOf(n)},d.isAfter=function(t,n){return g(t)<this.startOf(n)},d.isBefore=function(t,n){return this.endOf(n)<g(t)},d.$g=function(t,n,e){return D.u(t)?this[n]:this.set(e,t)},d.year=function(t){return this.$g(t,"$y",a)},d.month=function(t){return this.$g(t,"$M",u)},d.day=function(t){return this.$g(t,"$W",i)},d.date=function(t){return this.$g(t,"$D","date")},d.hour=function(t){return this.$g(t,"$H",r)},d.minute=function(t){return this.$g(t,"$m",e)},d.second=function(t){return this.$g(t,"$s",n)},d.millisecond=function(n){return this.$g(n,"$ms",t)},d.unix=function(){return Math.floor(this.valueOf()/1e3)},d.valueOf=function(){return this.$d.getTime()},d.startOf=function(t,o){var h=this,f=!!D.u(o)||o,c=D.p(t),d=function(t,n){var e=D.w(h.$u?Date.UTC(h.$y,n,t):new Date(h.$y,n,t),h);return f?e:e.endOf(i)},$=function(t,n){return D.w(h.toDate()[t].apply(h.toDate(),(f?[0,0,0,0]:[23,59,59,999]).slice(n)),h)},l=this.$W,m=this.$M,y=this.$D,M="set"+(this.$u?"UTC":"");switch(c){case a:return f?d(1,0):d(31,11);case u:return f?d(1,m):d(0,m+1);case s:var g=this.$locale().weekStart||0,v=(l<g?l+7:l)-g;return d(f?y-v:y+(6-v),m);case i:case"date":return $(M+"Hours",0);case r:return $(M+"Minutes",1);case e:return $(M+"Seconds",2);case n:return $(M+"Milliseconds",3);default:return this.clone()}},d.endOf=function(t){return this.startOf(t,!1)},d.$set=function(s,o){var h,f=D.p(s),c="set"+(this.$u?"UTC":""),d=(h={},h[i]=c+"Date",h.date=c+"Date",h[u]=c+"Month",h[a]=c+"FullYear",h[r]=c+"Hours",h[e]=c+"Minutes",h[n]=c+"Seconds",h[t]=c+"Milliseconds",h)[f],$=f===i?this.$D+(o-this.$W):o;if(f===u||f===a){var l=this.clone().set("date",1);l.$d[d]($),l.init(),this.$d=l.set("date",Math.min(this.$D,l.daysInMonth())).toDate();}else d&&this.$d[d]($);return this.init(),this},d.set=function(t,n){return this.clone().$set(t,n)},d.get=function(t){return this[D.p(t)]()},d.add=function(t,o){var h,f=this;t=Number(t);var c=D.p(o),d=function(n){var e=g(f);return D.w(e.date(e.date()+Math.round(n*t)),f)};if(c===u)return this.set(u,this.$M+t);if(c===a)return this.set(a,this.$y+t);if(c===i)return d(1);if(c===s)return d(7);var $=(h={},h[e]=6e4,h[r]=36e5,h[n]=1e3,h)[c]||1,l=this.$d.getTime()+t*$;return D.w(l,this)},d.subtract=function(t,n){return this.add(-1*t,n)},d.format=function(t){var n=this;if(!this.isValid())return "Invalid Date";var e=t||"YYYY-MM-DDTHH:mm:ssZ",r=D.z(this),i=this.$locale(),s=this.$H,u=this.$m,o=this.$M,a=i.weekdays,h=i.months,c=function(t,r,i,s){return t&&(t[r]||t(n,e))||i[r].substr(0,s)},d=function(t){return D.s(s%12||12,t,"0")},$=i.meridiem||function(t,n,e){var r=t<12?"AM":"PM";return e?r.toLowerCase():r},l={YY:String(this.$y).slice(-2),YYYY:this.$y,M:o+1,MM:D.s(o+1,2,"0"),MMM:c(i.monthsShort,o,h,3),MMMM:h[o]||h(this,e),D:this.$D,DD:D.s(this.$D,2,"0"),d:String(this.$W),dd:c(i.weekdaysMin,this.$W,a,2),ddd:c(i.weekdaysShort,this.$W,a,3),dddd:a[this.$W],H:String(s),HH:D.s(s,2,"0"),h:d(1),hh:d(2),a:$(s,u,!0),A:$(s,u,!1),m:String(u),mm:D.s(u,2,"0"),s:String(this.$s),ss:D.s(this.$s,2,"0"),SSS:D.s(this.$ms,3,"0"),Z:r};return e.replace(f,function(t,n){return n||l[t]||r.replace(":","")})},d.utcOffset=function(){return 15*-Math.round(this.$d.getTimezoneOffset()/15)},d.diff=function(t,h,f){var c,d=D.p(h),$=g(t),l=6e4*($.utcOffset()-this.utcOffset()),m=this-$,y=D.m(this,$);return y=(c={},c[a]=y/12,c[u]=y,c[o]=y/3,c[s]=(m-l)/6048e5,c[i]=(m-l)/864e5,c[r]=m/36e5,c[e]=m/6e4,c[n]=m/1e3,c)[d]||m,f?y:D.a(y)},d.daysInMonth=function(){return this.endOf(u).$D},d.$locale=function(){return m[this.$L]},d.locale=function(t,n){if(!t)return this.$L;var e=this.clone(),r=M(t,n,!0);return r&&(e.$L=r),e},d.clone=function(){return D.w(this.$d,this)},d.toDate=function(){return new Date(this.valueOf())},d.toJSON=function(){return this.isValid()?this.toISOString():null},d.toISOString=function(){return this.$d.toISOString()},d.toString=function(){return this.$d.toUTCString()},c}();return g.prototype=v.prototype,g.extend=function(t,n){return t(n,v,g),g},g.locale=M,g.isDayjs=y,g.unix=function(t){return g(1e3*t)},g.en=m[l],g.Ls=m,g});
+  !function(t,e){module.exports=e();}(commonjsGlobal,function(){var t="millisecond",e="second",n="minute",r="hour",i="day",s="week",u="month",o="quarter",a="year",h=/^(\d{4})-?(\d{1,2})-?(\d{0,2})[^0-9]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?.?(\d{1,3})?$/,f=/\[([^\]]+)]|Y{2,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g,c=function(t,e,n){var r=String(t);return !r||r.length>=e?t:""+Array(e+1-r.length).join(n)+t},d={s:c,z:function(t){var e=-t.utcOffset(),n=Math.abs(e),r=Math.floor(n/60),i=n%60;return (e<=0?"+":"-")+c(r,2,"0")+":"+c(i,2,"0")},m:function(t,e){var n=12*(e.year()-t.year())+(e.month()-t.month()),r=t.clone().add(n,u),i=e-r<0,s=t.clone().add(n+(i?-1:1),u);return Number(-(n+(e-r)/(i?r-s:s-r))||0)},a:function(t){return t<0?Math.ceil(t)||0:Math.floor(t)},p:function(h){return {M:u,y:a,w:s,d:i,D:"date",h:r,m:n,s:e,ms:t,Q:o}[h]||String(h||"").toLowerCase().replace(/s$/,"")},u:function(t){return void 0===t}},$={name:"en",weekdays:"Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),months:"January_February_March_April_May_June_July_August_September_October_November_December".split("_")},l="en",m={};m[l]=$;var y=function(t){return t instanceof v},M=function(t,e,n){var r;if(!t)return l;if("string"==typeof t)m[t]&&(r=t),e&&(m[t]=e,r=t);else {var i=t.name;m[i]=t,r=i;}return !n&&r&&(l=r),r||!n&&l},g=function(t,e){if(y(t))return t.clone();var n="object"==typeof e?e:{};return n.date=t,n.args=arguments,new v(n)},D=d;D.l=M,D.i=y,D.w=function(t,e){return g(t,{locale:e.$L,utc:e.$u,$offset:e.$offset})};var v=function(){function c(t){this.$L=this.$L||M(t.locale,null,!0),this.parse(t);}var d=c.prototype;return d.parse=function(t){this.$d=function(t){var e=t.date,n=t.utc;if(null===e)return new Date(NaN);if(D.u(e))return new Date;if(e instanceof Date)return new Date(e);if("string"==typeof e&&!/Z$/i.test(e)){var r=e.match(h);if(r)return n?new Date(Date.UTC(r[1],r[2]-1,r[3]||1,r[4]||0,r[5]||0,r[6]||0,r[7]||0)):new Date(r[1],r[2]-1,r[3]||1,r[4]||0,r[5]||0,r[6]||0,r[7]||0)}return new Date(e)}(t),this.init();},d.init=function(){var t=this.$d;this.$y=t.getFullYear(),this.$M=t.getMonth(),this.$D=t.getDate(),this.$W=t.getDay(),this.$H=t.getHours(),this.$m=t.getMinutes(),this.$s=t.getSeconds(),this.$ms=t.getMilliseconds();},d.$utils=function(){return D},d.isValid=function(){return !("Invalid Date"===this.$d.toString())},d.isSame=function(t,e){var n=g(t);return this.startOf(e)<=n&&n<=this.endOf(e)},d.isAfter=function(t,e){return g(t)<this.startOf(e)},d.isBefore=function(t,e){return this.endOf(e)<g(t)},d.$g=function(t,e,n){return D.u(t)?this[e]:this.set(n,t)},d.year=function(t){return this.$g(t,"$y",a)},d.month=function(t){return this.$g(t,"$M",u)},d.day=function(t){return this.$g(t,"$W",i)},d.date=function(t){return this.$g(t,"$D","date")},d.hour=function(t){return this.$g(t,"$H",r)},d.minute=function(t){return this.$g(t,"$m",n)},d.second=function(t){return this.$g(t,"$s",e)},d.millisecond=function(e){return this.$g(e,"$ms",t)},d.unix=function(){return Math.floor(this.valueOf()/1e3)},d.valueOf=function(){return this.$d.getTime()},d.startOf=function(t,o){var h=this,f=!!D.u(o)||o,c=D.p(t),d=function(t,e){var n=D.w(h.$u?Date.UTC(h.$y,e,t):new Date(h.$y,e,t),h);return f?n:n.endOf(i)},$=function(t,e){return D.w(h.toDate()[t].apply(h.toDate("s"),(f?[0,0,0,0]:[23,59,59,999]).slice(e)),h)},l=this.$W,m=this.$M,y=this.$D,M="set"+(this.$u?"UTC":"");switch(c){case a:return f?d(1,0):d(31,11);case u:return f?d(1,m):d(0,m+1);case s:var g=this.$locale().weekStart||0,v=(l<g?l+7:l)-g;return d(f?y-v:y+(6-v),m);case i:case"date":return $(M+"Hours",0);case r:return $(M+"Minutes",1);case n:return $(M+"Seconds",2);case e:return $(M+"Milliseconds",3);default:return this.clone()}},d.endOf=function(t){return this.startOf(t,!1)},d.$set=function(s,o){var h,f=D.p(s),c="set"+(this.$u?"UTC":""),d=(h={},h[i]=c+"Date",h.date=c+"Date",h[u]=c+"Month",h[a]=c+"FullYear",h[r]=c+"Hours",h[n]=c+"Minutes",h[e]=c+"Seconds",h[t]=c+"Milliseconds",h)[f],$=f===i?this.$D+(o-this.$W):o;if(f===u||f===a){var l=this.clone().set("date",1);l.$d[d]($),l.init(),this.$d=l.set("date",Math.min(this.$D,l.daysInMonth())).toDate();}else d&&this.$d[d]($);return this.init(),this},d.set=function(t,e){return this.clone().$set(t,e)},d.get=function(t){return this[D.p(t)]()},d.add=function(t,o){var h,f=this;t=Number(t);var c=D.p(o),d=function(e){var n=g(f);return D.w(n.date(n.date()+Math.round(e*t)),f)};if(c===u)return this.set(u,this.$M+t);if(c===a)return this.set(a,this.$y+t);if(c===i)return d(1);if(c===s)return d(7);var $=(h={},h[n]=6e4,h[r]=36e5,h[e]=1e3,h)[c]||1,l=this.$d.getTime()+t*$;return D.w(l,this)},d.subtract=function(t,e){return this.add(-1*t,e)},d.format=function(t){var e=this;if(!this.isValid())return "Invalid Date";var n=t||"YYYY-MM-DDTHH:mm:ssZ",r=D.z(this),i=this.$locale(),s=this.$H,u=this.$m,o=this.$M,a=i.weekdays,h=i.months,c=function(t,r,i,s){return t&&(t[r]||t(e,n))||i[r].substr(0,s)},d=function(t){return D.s(s%12||12,t,"0")},$=i.meridiem||function(t,e,n){var r=t<12?"AM":"PM";return n?r.toLowerCase():r},l={YY:String(this.$y).slice(-2),YYYY:this.$y,M:o+1,MM:D.s(o+1,2,"0"),MMM:c(i.monthsShort,o,h,3),MMMM:c(h,o),D:this.$D,DD:D.s(this.$D,2,"0"),d:String(this.$W),dd:c(i.weekdaysMin,this.$W,a,2),ddd:c(i.weekdaysShort,this.$W,a,3),dddd:a[this.$W],H:String(s),HH:D.s(s,2,"0"),h:d(1),hh:d(2),a:$(s,u,!0),A:$(s,u,!1),m:String(u),mm:D.s(u,2,"0"),s:String(this.$s),ss:D.s(this.$s,2,"0"),SSS:D.s(this.$ms,3,"0"),Z:r};return n.replace(f,function(t,e){return e||l[t]||r.replace(":","")})},d.utcOffset=function(){return 15*-Math.round(this.$d.getTimezoneOffset()/15)},d.diff=function(t,h,f){var c,d=D.p(h),$=g(t),l=6e4*($.utcOffset()-this.utcOffset()),m=this-$,y=D.m(this,$);return y=(c={},c[a]=y/12,c[u]=y,c[o]=y/3,c[s]=(m-l)/6048e5,c[i]=(m-l)/864e5,c[r]=m/36e5,c[n]=m/6e4,c[e]=m/1e3,c)[d]||m,f?y:D.a(y)},d.daysInMonth=function(){return this.endOf(u).$D},d.$locale=function(){return m[this.$L]},d.locale=function(t,e){if(!t)return this.$L;var n=this.clone(),r=M(t,e,!0);return r&&(n.$L=r),n},d.clone=function(){return D.w(this.$d,this)},d.toDate=function(){return new Date(this.valueOf())},d.toJSON=function(){return this.isValid()?this.toISOString():null},d.toISOString=function(){return this.$d.toISOString()},d.toString=function(){return this.$d.toUTCString()},c}();return g.prototype=v.prototype,g.extend=function(t,e){return t(e,v,g),g},g.locale=M,g.isDayjs=y,g.unix=function(t){return g(1e3*t)},g.en=m[l],g.Ls=m,g});
   });
 
   var utc = createCommonjsModule(function (module, exports) {
-  !function(t,i){module.exports=i();}(commonjsGlobal,function(){return function(t,i,e){var s=(new Date).getTimezoneOffset(),n=i.prototype;e.utc=function(t,e){return new i({date:t,utc:!0,format:e})},n.utc=function(){return e(this.toDate(),{locale:this.$L,utc:!0})},n.local=function(){return e(this.toDate(),{locale:this.$L,utc:!1})};var u=n.parse;n.parse=function(t){t.utc&&(this.$u=!0),this.$utils().u(t.$offset)||(this.$offset=t.$offset),u.call(this,t);};var o=n.init;n.init=function(){if(this.$u){var t=this.$d;this.$y=t.getUTCFullYear(),this.$M=t.getUTCMonth(),this.$D=t.getUTCDate(),this.$W=t.getUTCDay(),this.$H=t.getUTCHours(),this.$m=t.getUTCMinutes(),this.$s=t.getUTCSeconds(),this.$ms=t.getUTCMilliseconds();}else o.call(this);};var f=n.utcOffset;n.utcOffset=function(t){var i=this.$utils().u;if(i(t))return this.$u?0:i(this.$offset)?f.call(this):this.$offset;var e,n=Math.abs(t)<=16?60*t:t;return 0!==t?(e=this.local().add(n+s,"minute")).$offset=n:e=this.utc(),e};var r=n.format;n.format=function(t){var i=t||(this.$u?"YYYY-MM-DDTHH:mm:ss[Z]":"");return r.call(this,i)},n.valueOf=function(){var t=this.$utils().u(this.$offset)?0:this.$offset+s;return this.$d.valueOf()-6e4*t},n.isUTC=function(){return !!this.$u},n.toISOString=function(){return this.toDate().toISOString()},n.toString=function(){return this.toDate().toUTCString()};}});
+  !function(t,i){module.exports=i();}(commonjsGlobal,function(){return function(t,i,e){var s=(new Date).getTimezoneOffset(),n=i.prototype;e.utc=function(t){return new i({date:t,utc:!0,args:arguments})},n.utc=function(){return e(this.toDate(),{locale:this.$L,utc:!0})},n.local=function(){return e(this.toDate(),{locale:this.$L,utc:!1})};var u=n.parse;n.parse=function(t){t.utc&&(this.$u=!0),this.$utils().u(t.$offset)||(this.$offset=t.$offset),u.call(this,t);};var o=n.init;n.init=function(){if(this.$u){var t=this.$d;this.$y=t.getUTCFullYear(),this.$M=t.getUTCMonth(),this.$D=t.getUTCDate(),this.$W=t.getUTCDay(),this.$H=t.getUTCHours(),this.$m=t.getUTCMinutes(),this.$s=t.getUTCSeconds(),this.$ms=t.getUTCMilliseconds();}else o.call(this);};var f=n.utcOffset;n.utcOffset=function(t){var i=this.$utils().u;if(i(t))return this.$u?0:i(this.$offset)?f.call(this):this.$offset;var e,n=Math.abs(t)<=16?60*t:t;return 0!==t?(e=this.local().add(n+s,"minute")).$offset=n:e=this.utc(),e};var r=n.format;n.format=function(t){var i=t||(this.$u?"YYYY-MM-DDTHH:mm:ss[Z]":"");return r.call(this,i)},n.valueOf=function(){var t=this.$utils().u(this.$offset)?0:this.$offset+s;return this.$d.valueOf()-6e4*t},n.isUTC=function(){return !!this.$u},n.toISOString=function(){return this.toDate().toISOString()},n.toString=function(){return this.toDate().toUTCString()};var a=n.toDate;n.toDate=function(t){return "s"===t&&this.$offset?e(this.format("YYYY-MM-DD HH:mm:ss:SSS")).toDate():a.call(this)};}});
   });
 
   let cachedTextEncoder = new TextEncoder("utf-8");
@@ -1704,7 +1704,7 @@
           simple = lib;
       }
       if (appendix)
-          return `${simple} ${simple}--${appendix.replace(/[^\w]+/gi, '-')}`;
+          return `${simple} ${simple}--${appendix.replace(':', '-')}`;
       return simple;
   }
 
@@ -2081,12 +2081,14 @@
           showOverlay: true,
           rectangularSelection: true,
           multipleSelection: true,
+          selectedClassName: 'gstc__cell-selected',
+          selectingClassName: 'gstc__cell-selecting',
           canSelect(type, currently /*, all*/) {
               return currently;
           },
           canDeselect( /*type, currently, all*/) {
               return [];
-          }
+          },
       };
       options = Object.assign(Object.assign({}, defaultOptions), options);
       return options;
@@ -2095,17 +2097,23 @@
   function generateEmptyData$2(options) {
       return Object.assign({ enabled: true, showOverlay: true, isSelecting: false, pointerState: 'up', selectKey: '', multiKey: 'shift', multipleSelection: true, targetType: '', targetData: null, initialPosition: { x: 0, y: 0 }, currentPosition: { x: 0, y: 0 }, selectionAreaLocal: { x: 0, y: 0, width: 0, height: 0 }, selectionAreaGlobal: { x: 0, y: 0, width: 0, height: 0 }, selecting: {
               [ITEM]: [],
-              [CELL]: []
+              [CELL]: [],
           }, selected: {
               [ITEM]: [],
-              [CELL]: []
+              [CELL]: [],
+          }, previouslySelected: {
+              [ITEM]: [],
+              [CELL]: [],
           }, automaticallySelected: {
               [ITEM]: [],
-              [CELL]: []
+              [CELL]: [],
+          }, previouslyAutomaticallySelected: {
+              [ITEM]: [],
+              [CELL]: [],
           }, events: {
               down: null,
               move: null,
-              up: null
+              up: null,
           } }, options);
   }
   class SelectionPlugin {
@@ -2123,19 +2131,44 @@
           this.wrapper = this.wrapper.bind(this);
           this.destroy = this.destroy.bind(this);
           this.setWrapper();
-          this.onDestroy.push(this.state.subscribe('config.plugin.TimelinePointer', timelinePointerData => {
+          this.onCellCreate = this.onCellCreate.bind(this);
+          this.state.update('config.chart.grid.cell.onCreate', (onCreate) => {
+              if (!onCreate.includes(this.onCellCreate))
+                  onCreate.push(this.onCellCreate);
+              return onCreate;
+          });
+          this.onDestroy.push(this.state.subscribe('config.plugin.TimelinePointer', (timelinePointerData) => {
               this.poitnerData = timelinePointerData;
               this.onPointerData();
           }));
           this.updateData();
-          this.onDestroy.push(this.state.subscribe(pluginPath$3, value => {
+          this.onDestroy.push(this.state.subscribe(pluginPath$3, (value) => {
               this.data = value;
           }));
-          // watch and update items that are inside selection
+          this.updateCellSelectionClassName = this.updateCellSelectionClassName.bind(this);
+          this.selectedCellAction = this.selectedCellAction.bind(this);
+          this.state.update('config.actions.chart-timeline-grid-row-cell', (actions) => {
+              if (!actions.includes(this.selectedCellAction))
+                  actions.push(this.selectedCellAction);
+              return actions;
+          });
+          // watch and update items/cells that are inside selection
+          // remove ones that no longer exist
           this.onDestroy.push(this.state.subscribe('config.chart.items', (items) => {
-              this.data.selected[ITEM] = this.data.selected[ITEM].filter(itemId => !!items[itemId]);
-          }, { ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected'] }));
-          // TODO: watch and update cells that are inside selection
+              this.data.selected[ITEM] = this.data.selected[ITEM].filter((itemId) => !!items[itemId]);
+              this.data.selecting[ITEM] = this.data.selecting[ITEM].filter((itemId) => !!items[itemId]);
+          }, {
+              ignore: [
+                  'config.chart.items.*.$data.detached',
+                  'config.chart.items.*.selected',
+                  'config.chart.items.*.selecting',
+              ],
+          }));
+          this.onDestroy.push(this.state.subscribe('$data.chart.grid', () => {
+              const allCells = this.api.getGridCells();
+              this.data.selected[CELL] = this.data.selected[CELL].filter((cellId) => !!allCells.find((cell) => cell.id === cellId));
+              this.data.selecting[CELL] = this.data.selecting[CELL].filter((cellId) => !!allCells.find((cell) => cell.id === cellId));
+          }, { ignore: ['$data.chart.grid.cells.*.selected', '$data.chart.grid.cells.*.selecting'] }));
       }
       setWrapper() {
           this.state.update('config.wrappers.ChartTimelineItems', (oldWrapper) => {
@@ -2146,8 +2179,14 @@
       }
       destroy() {
           this.state.update('config.wrappers.ChartTimelineItems', this.oldWrapper);
+          this.state.update('config.actions.chart-timeline-grid-row-cell', (actions) => {
+              return actions.filter((action) => action !== this.selectedCellAction);
+          });
+          this.state.update('config.chart.grid.cell.onCreate', (onCreate) => {
+              return onCreate.filter((onCreateFn) => onCreateFn !== this.onCellCreate);
+          });
           this.oldWrapper = null;
-          this.onDestroy.forEach(unsub => unsub());
+          this.onDestroy.forEach((unsub) => unsub());
       }
       updateData() {
           this.state.update(pluginPath$3, Object.assign({}, this.data));
@@ -2165,9 +2204,9 @@
       }
       canSelect() {
           let result = this.data.enabled;
-          const down = this.poitnerData.events.down;
-          if (down && this.data.selectKey)
-              result = result && this.modKeyPressed(this.data.selectKey, down);
+          const downEvent = this.poitnerData.events.down;
+          if (downEvent && this.data.selectKey)
+              result = result && this.modKeyPressed(this.data.selectKey, downEvent);
           return result;
       }
       getSelectionAreaLocal() {
@@ -2215,13 +2254,11 @@
       getSelected(item) {
           let selected;
           let automaticallySelected = this.data.automaticallySelected[ITEM].slice();
-          const move = this.poitnerData.events.move;
-          const multi = this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
           const linked = this.collectLinkedItems(item, [item.id]);
-          if (this.data.selected[ITEM].find(selectedItemId => selectedItemId === item.id)) {
+          if (this.data.selected[ITEM].find((selectedItemId) => selectedItemId === item.id)) {
               // if we want to start movement or something - just return currently selected
               selected = this.data.selected[ITEM];
-              if (automaticallySelected.find(autoId => autoId === item.id)) {
+              if (automaticallySelected.find((autoId) => autoId === item.id)) {
                   // item under the pointer was automaticallySelected so we must remove it from here
                   // - it is not automaticallySelected right now
                   // we need to replace current item with one that is linked but doesn't lay down
@@ -2229,8 +2266,8 @@
                   // first of all we need to find out which item is linked with current but
                   // not inside automaticallySelected
                   const actualAutoIds = automaticallySelected;
-                  const replaceWith = selected.find(selId => item.linkedWith.includes(selId) && !actualAutoIds.includes(selId));
-                  automaticallySelected = automaticallySelected.filter(currentItemId => currentItemId !== item.id);
+                  const replaceWith = selected.find((selId) => item.linkedWith.includes(selId) && !actualAutoIds.includes(selId));
+                  automaticallySelected = automaticallySelected.filter((currentItemId) => currentItemId !== item.id);
                   automaticallySelected.push(replaceWith);
               }
               else {
@@ -2238,15 +2275,15 @@
               }
           }
           else {
-              if (multi) {
-                  selected = [...new Set([...this.data.selected[ITEM], ...linked]).values()];
+              if (this.isMulti()) {
+                  selected = Array.from(new Set([...this.data.previouslySelected[ITEM], ...linked]));
               }
               else {
                   selected = linked;
               }
-              automaticallySelected = linked.filter(currentItemId => currentItemId !== item.id);
+              automaticallySelected = linked.filter((currentItemId) => currentItemId !== item.id);
           }
-          selected = selected.map(itemId => {
+          selected = selected.map((itemId) => {
               item = this.api.getItem(itemId);
               item.selected = true;
               return itemId;
@@ -2273,78 +2310,165 @@
               (itemData.position.actualLeft <= area.x && itemData.position.actualRight >= areaRight) ||
               (itemData.position.actualLeft >= area.x && itemData.position.actualRight <= areaRight));
       }
+      isMulti() {
+          const move = this.poitnerData.events.move;
+          return move && this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
+      }
       getItemsUnderSelectionArea(areaLocal) {
           const visibleItemsId = this.state.get('$data.chart.visibleItems');
           const visibleItems = this.api.getItems(visibleItemsId);
-          const move = this.poitnerData.events.move;
-          const multi = move && this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
-          let selected = multi ? [...this.data.selected[ITEM]] : [];
-          const automaticallySelected = multi ? [...this.data.automaticallySelected[ITEM]] : [];
+          let selectedItems = [];
+          const automaticallySelectedItems = [];
           for (let item of visibleItems) {
               item = this.merge({}, item);
               const itemData = item.$data;
               if (this.isItemVerticallyInsideArea(itemData, areaLocal) &&
                   this.isItemHorizontallyInsideArea(itemData, areaLocal)) {
-                  if (!selected.find(selectedItemId => selectedItemId === item.id))
-                      selected.push(item.id);
+                  if (!selectedItems.find((selectedItemId) => selectedItemId === item.id))
+                      selectedItems.push(item.id);
                   const linked = this.collectLinkedItems(item, [item.id]);
                   for (let linkedItemId of linked) {
                       const linkedItem = this.api.getItem(linkedItemId);
-                      if (!selected.find(selectedItemId => selectedItemId === linkedItem.id)) {
-                          selected.push(linkedItem.id);
-                          automaticallySelected.push(linkedItem.id);
+                      if (!selectedItems.find((selectedItemId) => selectedItemId === linkedItem.id)) {
+                          selectedItems.push(linkedItem.id);
+                          automaticallySelectedItems.push(linkedItem.id);
                       }
                   }
               }
           }
-          selected = selected.map(itemId => {
+          selectedItems = selectedItems.map((itemId) => {
               const item = this.api.getItem(itemId);
               item.selected = true;
               return itemId;
           });
-          return { selected, automaticallySelected };
+          return { selectedItems, automaticallySelectedItems };
       }
-      unmarkSelected() {
-          const items = this.api.getAllItems();
-          let multi = this.state.multi();
-          for (const id in items) {
-              const item = items[id];
-              if (item.selected) {
-                  multi = multi.update(`config.chart.items.${id}.selected`, false);
+      isCellVerticallyInsideArea(cell, area) {
+          if (!area.width || !area.height)
+              return false;
+          const areaBottom = area.y + area.height;
+          const top = cell.top;
+          const bottom = top + cell.row.$data.actualHeight;
+          return ((top >= area.y && top <= areaBottom) ||
+              (bottom >= area.y && bottom <= areaBottom) ||
+              (top >= area.y && bottom <= areaBottom) ||
+              (top <= area.y && bottom >= areaBottom));
+      }
+      isCellHorizontallyInsideArea(cell, area) {
+          if (!area.width || !area.height)
+              return false;
+          const areaRight = area.x + area.width;
+          const left = cell.time.currentView.leftPx;
+          const right = cell.time.currentView.rightPx;
+          return ((left >= area.x && left <= areaRight) ||
+              (right >= area.x && right <= areaRight) ||
+              (left <= area.x && right >= areaRight) ||
+              (left >= area.x && right <= areaRight));
+      }
+      getCellsUnderSelectionArea(areaLocal) {
+          const cells = this.state.get('$data.chart.grid.cells');
+          const selectedCells = [];
+          for (const cellId in cells) {
+              const cell = cells[cellId];
+              if (this.isCellVerticallyInsideArea(cell, areaLocal) && this.isCellHorizontallyInsideArea(cell, areaLocal)) {
+                  if (!selectedCells.find((selectedCell) => selectedCell === cell.id))
+                      selectedCells.push(cell.id);
               }
           }
-          multi.done();
+          return { selectedCells };
+      }
+      updateItems(multi = undefined) {
+          if (!multi)
+              multi = this.state.multi();
+          multi.update('config.chart.items', (items) => {
+              for (const itemId in items) {
+                  const item = items[itemId];
+                  item.selected = this.data.selected[ITEM].includes(item.id);
+                  item.selecting = this.data.selecting[ITEM].includes(item.id);
+              }
+              return items;
+          });
+          return multi;
+      }
+      updateCells(multi = undefined) {
+          if (!multi)
+              multi = this.state.multi();
+          multi.update('$data.chart.grid.cells', (cells) => {
+              for (const cellId in cells) {
+                  const cell = cells[cellId];
+                  cell.selected = this.data.selected[CELL].includes(cell.id);
+                  cell.selecting = this.data.selecting[CELL].includes(cell.id);
+              }
+              return cells;
+          });
+          return multi;
       }
       deselectItems() {
-          this.unmarkSelected();
-          this.data.selected[ITEM] = [];
-          this.updateData();
+          this.data.selected[ITEM].length = 0;
+          this.data.selecting[ITEM].length = 0;
+          this.updateItems();
+      }
+      deselectCells() {
+          this.data.selecting[CELL].length = 0;
+          this.data.selected[CELL].length = 0;
+          this.updateCells();
+      }
+      selectMultipleCells(multi) {
+          const { selectedCells } = this.getCellsUnderSelectionArea(this.data.selectionAreaLocal);
+          if (selectedCells.length === 0) {
+              this.data.selecting[CELL].length = 0;
+              if (!this.isMulti())
+                  this.data.selected[CELL].length = 0;
+          }
+          else {
+              this.data.selecting[CELL] = selectedCells;
+          }
+          const allCells = this.api.getGridCells();
+          const currentlySelectingCellsStr = allCells
+              .filter((cell) => cell.selecting)
+              .map((cell) => cell.id)
+              .join('|');
+          const selectingCellsStr = this.data.selecting[CELL].join('|');
+          if (currentlySelectingCellsStr !== selectingCellsStr)
+              multi = this.updateCells(multi);
+          return multi;
+      }
+      selectMultipleItems(multi) {
+          const { selectedItems, automaticallySelectedItems } = this.getItemsUnderSelectionArea(this.data.selectionAreaLocal);
+          this.data.automaticallySelected[ITEM] = automaticallySelectedItems;
+          if (selectedItems.length === 0) {
+              this.data.selecting[ITEM].length = 0;
+              if (this.isMulti())
+                  this.data.selected[ITEM].length = 0;
+          }
+          else {
+              this.data.selecting[ITEM] = selectedItems;
+          }
+          const allItems = this.api.getItems();
+          const currentlySelectingItemsStr = allItems
+              .filter((item) => item.selecting)
+              .map((item) => item.id)
+              .join('|');
+          const selectingItemsStr = this.data.selecting[ITEM].join('|');
+          if (currentlySelectingItemsStr !== selectingItemsStr)
+              multi = this.updateItems(multi);
+          return multi;
       }
       selectMultipleCellsAndItems() {
           if (!this.canSelect())
               return;
           if (!this.data.multipleSelection) {
               this.deselectItems();
+              this.deselectCells();
               return;
           }
           this.data.isSelecting = true;
           this.data.selectionAreaLocal = this.getSelectionAreaLocal();
           this.data.selectionAreaGlobal = this.translateAreaLocalToGlobal(this.data.selectionAreaLocal);
-          const { selected, automaticallySelected } = this.getItemsUnderSelectionArea(this.data.selectionAreaLocal);
-          this.data.automaticallySelected[ITEM] = automaticallySelected;
-          if (selected.length === 0) {
-              this.unmarkSelected();
-              this.data.selected[ITEM].length = 0;
-              return;
-          }
-          this.data.selected[ITEM] = selected;
-          this.unmarkSelected();
           let multi = this.state.multi();
-          for (const itemId of selected) {
-              multi = multi.update(`config.chart.items.${itemId}.selected`, true);
-          }
+          multi = this.selectMultipleItems(multi);
+          multi = this.selectMultipleCells(multi);
           multi.done();
-          // TODO save selected cells
       }
       selectItemsIndividually() {
           this.data.isSelecting = false;
@@ -2361,11 +2485,29 @@
           }
           this.data.selected[ITEM] = selected;
           this.data.automaticallySelected[ITEM] = automaticallySelected;
-          this.unmarkSelected();
           let multi = this.state.multi();
-          for (const itemId of this.data.selected[ITEM]) {
-              multi = multi.update(`config.chart.items.${itemId}.selected`, true);
+          multi = this.updateItems(multi);
+          multi.done();
+      }
+      finishSelection() {
+          if (this.isMulti()) {
+              this.data.selected[CELL] = Array.from(new Set([...this.data.selected[CELL], ...this.data.selecting[CELL]]));
+              this.data.selected[ITEM] = Array.from(new Set([...this.data.selected[ITEM], ...this.data.selecting[ITEM]]));
+              this.data.selecting[CELL].length = 0;
+              this.data.selecting[ITEM].length = 0;
+              let multi = this.state.multi();
+              multi = this.updateItems(multi);
+              multi = this.updateCells(multi);
+              multi.done();
+              return;
           }
+          this.data.selected[CELL] = [...this.data.selecting[CELL]];
+          this.data.selected[ITEM] = [...this.data.selecting[ITEM]];
+          this.data.selecting[CELL].length = 0;
+          this.data.selecting[ITEM].length = 0;
+          let multi = this.state.multi();
+          multi = this.updateItems(multi);
+          multi = this.updateCells(multi);
           multi.done();
       }
       onPointerData() {
@@ -2379,6 +2521,8 @@
               this.selectItemsIndividually();
           }
           else if (!this.poitnerData.isMoving) {
+              if (this.data.isSelecting)
+                  this.finishSelection();
               this.data.isSelecting = false;
           }
           if (this.poitnerData.isMoving && this.poitnerData.targetType !== CELL && this.poitnerData.targetType !== ITEM) {
@@ -2409,6 +2553,34 @@
           }
           const area = this.html `<div class=${this.wrapperClassName} style=${this.wrapperStyleMap}></div>`;
           return this.html `${oldContent}${shouldDetach ? null : area}`;
+      }
+      updateCellSelectionClassName(element, cell) {
+          if (cell.selected) {
+              element.classList.add(this.data.selectedClassName);
+              element.classList.remove(this.data.selectingClassName);
+          }
+          else {
+              element.classList.remove(this.data.selectedClassName);
+          }
+          if (cell.selecting) {
+              element.classList.add(this.data.selectingClassName);
+              element.classList.remove(this.data.selectedClassName);
+          }
+          else {
+              element.classList.remove(this.data.selectingClassName);
+          }
+      }
+      selectedCellAction(element, data) {
+          this.updateCellSelectionClassName(element, data);
+          return {
+              update: this.updateCellSelectionClassName,
+              destroy: this.updateCellSelectionClassName,
+          };
+      }
+      onCellCreate(cell) {
+          cell.selected = !!this.data.selected[CELL].find((selectedCellId) => selectedCellId === cell.id);
+          cell.selecting = !!this.data.selecting[CELL].find((selectedCellId) => selectedCellId === cell.id);
+          return cell;
       }
   }
   function Plugin$3(options = {}) {

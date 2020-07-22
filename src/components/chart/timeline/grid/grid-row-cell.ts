@@ -9,6 +9,7 @@
  */
 
 import { Row, ChartTimeDate, Rows, Vido } from '../../../../gstc';
+import { ListenerFunctionEventInfo } from 'deep-state-observer';
 
 /**
  * Bind element action
@@ -35,8 +36,8 @@ class BindElementAction {
   public destroy(element, data) {
     data.state.update(
       '$data.elements.chart-timeline-grid-row-cells',
-      cells => {
-        return cells.filter(el => el !== element);
+      (cells) => {
+        return cells.filter((el) => el !== element);
       },
       { only: [''] }
     );
@@ -44,6 +45,7 @@ class BindElementAction {
 }
 
 interface Props {
+  id: string;
   row: Row;
   time: ChartTimeDate;
 }
@@ -54,7 +56,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
   const actionProps = {
     ...props,
     api,
-    state
+    state,
   };
 
   let shouldDetach = false;
@@ -63,7 +65,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
   const componentActions = api.getActions(componentName);
   let wrapper;
   onDestroy(
-    state.subscribe('config.wrappers.ChartTimelineGridRowCell', value => {
+    state.subscribe('config.wrappers.ChartTimelineGridRowCell', (value) => {
       wrapper = value;
       update();
     })
@@ -73,7 +75,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
 
   let className;
   function updateClassName(time: ChartTimeDate) {
-    className = api.getClass(componentName, `${props.row.id}-${props.time.formatted}`);
+    className = api.getClass(componentName, props.id);
     if (time.current) {
       className += ' current';
     }
@@ -112,7 +114,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
   componentActions.push(BindElementAction);
   const actions = Actions.create(componentActions, actionProps);
 
-  return templateProps => {
+  return (templateProps) => {
     return wrapper(
       html`
         ${slots.html('before', templateProps)}
@@ -124,7 +126,7 @@ function ChartTimelineGridRowCell(vido: Vido, props: Props) {
       {
         props,
         vido,
-        templateProps
+        templateProps,
       }
     );
   };

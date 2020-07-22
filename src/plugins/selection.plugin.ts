@@ -15,10 +15,10 @@ import {
   CELL,
   CELL_TYPE,
   Point,
-  PointerState
+  PointerState,
 } from './timeline-pointer.plugin';
 
-import { Item, Cell, Items, Vido, htmlResult, Wrapper, ItemData } from '../gstc';
+import { Item, GridCell, Items, Vido, htmlResult, Wrapper, ItemData, GridRow, GridRows, GridCells } from '../gstc';
 import DeepState from 'deep-state-observer';
 import { Api } from '../api/api';
 import { StyleMap, lithtml } from '@neuronet.io/vido/src/vido';
@@ -36,6 +36,8 @@ export interface Options {
   multipleSelection?: boolean;
   selectKey?: ModKey;
   multiKey?: ModKey;
+  selectedClassName?: string;
+  selectingClassName?: string;
   canSelect?: (type, state, all) => any[];
   canDeselect?: (type, state, all) => any[];
 }
@@ -58,12 +60,14 @@ function prepareOptions(options: Options) {
     showOverlay: true,
     rectangularSelection: true,
     multipleSelection: true,
+    selectedClassName: 'gstc__cell-selected',
+    selectingClassName: 'gstc__cell-selecting',
     canSelect(type, currently /*, all*/) {
       return currently;
     },
     canDeselect(/*type, currently, all*/) {
       return [];
-    }
+    },
   };
   options = { ...defaultOptions, ...options } as Options;
   return options;
@@ -83,6 +87,11 @@ export interface Selection {
   [CELL]: string[];
 }
 
+export interface SelectedCell {
+  rowId: string;
+  cellId: string;
+}
+
 export interface PointerEvents {
   down: PointerEvent | null;
   move: PointerEvent | null;
@@ -99,8 +108,10 @@ export interface PluginData extends Options {
   selectionAreaLocal: Area;
   selectionAreaGlobal: Area;
   selected: Selection;
+  previouslySelected: Selection;
   selecting: Selection;
   automaticallySelected: Selection;
+  previouslyAutomaticallySelected: Selection;
   events: PointerEvents;
   targetType: ITEM_TYPE | CELL_TYPE | '';
   targetData: any;
@@ -123,22 +134,30 @@ function generateEmptyData(options: Options): PluginData {
     selectionAreaGlobal: { x: 0, y: 0, width: 0, height: 0 },
     selecting: {
       [ITEM]: [],
-      [CELL]: []
+      [CELL]: [],
     },
     selected: {
       [ITEM]: [],
-      [CELL]: []
+      [CELL]: [],
+    },
+    previouslySelected: {
+      [ITEM]: [],
+      [CELL]: [],
     },
     automaticallySelected: {
       [ITEM]: [],
-      [CELL]: []
+      [CELL]: [],
+    },
+    previouslyAutomaticallySelected: {
+      [ITEM]: [],
+      [CELL]: [],
     },
     events: {
       down: null,
       move: null,
-      up: null
+      up: null,
     },
-    ...options
+    ...options,
   };
 }
 
@@ -168,29 +187,62 @@ class SelectionPlugin {
     this.wrapper = this.wrapper.bind(this);
     this.destroy = this.destroy.bind(this);
     this.setWrapper();
+    this.onCellCreate = this.onCellCreate.bind(this);
+    this.state.update('config.chart.grid.cell.onCreate', (onCreate) => {
+      if (!onCreate.includes(this.onCellCreate)) onCreate.push(this.onCellCreate);
+      return onCreate;
+    });
     this.onDestroy.push(
-      this.state.subscribe('config.plugin.TimelinePointer', timelinePointerData => {
+      this.state.subscribe('config.plugin.TimelinePointer', (timelinePointerData) => {
         this.poitnerData = timelinePointerData;
         this.onPointerData();
       })
     );
     this.updateData();
     this.onDestroy.push(
-      this.state.subscribe(pluginPath, value => {
+      this.state.subscribe(pluginPath, (value) => {
         this.data = value;
       })
     );
-    // watch and update items that are inside selection
+    this.updateCellSelectionClassName = this.updateCellSelectionClassName.bind(this);
+    this.selectedCellAction = this.selectedCellAction.bind(this);
+    this.state.update('config.actions.chart-timeline-grid-row-cell', (actions) => {
+      if (!actions.includes(this.selectedCellAction)) actions.push(this.selectedCellAction);
+      return actions;
+    });
+    // watch and update items/cells that are inside selection
+    // remove ones that no longer exist
     this.onDestroy.push(
       this.state.subscribe(
         'config.chart.items',
         (items: Items) => {
-          this.data.selected[ITEM] = this.data.selected[ITEM].filter(itemId => !!items[itemId]);
+          this.data.selected[ITEM] = this.data.selected[ITEM].filter((itemId) => !!items[itemId]);
+          this.data.selecting[ITEM] = this.data.selecting[ITEM].filter((itemId) => !!items[itemId]);
         },
-        { ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected'] }
+        {
+          ignore: [
+            'config.chart.items.*.$data.detached',
+            'config.chart.items.*.selected',
+            'config.chart.items.*.selecting',
+          ],
+        }
       )
     );
-    // TODO: watch and update cells that are inside selection
+    this.onDestroy.push(
+      this.state.subscribe(
+        '$data.chart.grid',
+        () => {
+          const allCells = this.api.getGridCells();
+          this.data.selected[CELL] = this.data.selected[CELL].filter(
+            (cellId: string) => !!allCells.find((cell: GridCell) => cell.id === cellId)
+          );
+          this.data.selecting[CELL] = this.data.selecting[CELL].filter(
+            (cellId: string) => !!allCells.find((cell: GridCell) => cell.id === cellId)
+          );
+        },
+        { ignore: ['$data.chart.grid.cells.*.selected', '$data.chart.grid.cells.*.selecting'] }
+      )
+    );
   }
 
   private setWrapper() {
@@ -202,8 +254,14 @@ class SelectionPlugin {
 
   public destroy() {
     this.state.update('config.wrappers.ChartTimelineItems', this.oldWrapper);
+    this.state.update('config.actions.chart-timeline-grid-row-cell', (actions) => {
+      return actions.filter((action) => action !== this.selectedCellAction);
+    });
+    this.state.update('config.chart.grid.cell.onCreate', (onCreate) => {
+      return onCreate.filter((onCreateFn) => onCreateFn !== this.onCellCreate);
+    });
     this.oldWrapper = null;
-    this.onDestroy.forEach(unsub => unsub());
+    this.onDestroy.forEach((unsub) => unsub());
   }
 
   private updateData() {
@@ -224,8 +282,8 @@ class SelectionPlugin {
 
   private canSelect(): boolean {
     let result = this.data.enabled;
-    const down = this.poitnerData.events.down;
-    if (down && this.data.selectKey) result = result && this.modKeyPressed(this.data.selectKey, down);
+    const downEvent = this.poitnerData.events.down;
+    if (downEvent && this.data.selectKey) result = result && this.modKeyPressed(this.data.selectKey, downEvent);
     return result;
   }
 
@@ -275,13 +333,11 @@ class SelectionPlugin {
   private getSelected(item: Item): { selected: string[]; automaticallySelected: string[] } {
     let selected: string[];
     let automaticallySelected: string[] = this.data.automaticallySelected[ITEM].slice();
-    const move = this.poitnerData.events.move;
-    const multi = this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
     const linked = this.collectLinkedItems(item, [item.id]);
-    if (this.data.selected[ITEM].find(selectedItemId => selectedItemId === item.id)) {
+    if (this.data.selected[ITEM].find((selectedItemId) => selectedItemId === item.id)) {
       // if we want to start movement or something - just return currently selected
       selected = this.data.selected[ITEM];
-      if (automaticallySelected.find(autoId => autoId === item.id)) {
+      if (automaticallySelected.find((autoId) => autoId === item.id)) {
         // item under the pointer was automaticallySelected so we must remove it from here
         // - it is not automaticallySelected right now
         // we need to replace current item with one that is linked but doesn't lay down
@@ -289,21 +345,21 @@ class SelectionPlugin {
         // first of all we need to find out which item is linked with current but
         // not inside automaticallySelected
         const actualAutoIds = automaticallySelected;
-        const replaceWith = selected.find(selId => item.linkedWith.includes(selId) && !actualAutoIds.includes(selId));
-        automaticallySelected = automaticallySelected.filter(currentItemId => currentItemId !== item.id);
+        const replaceWith = selected.find((selId) => item.linkedWith.includes(selId) && !actualAutoIds.includes(selId));
+        automaticallySelected = automaticallySelected.filter((currentItemId) => currentItemId !== item.id);
         automaticallySelected.push(replaceWith);
       } else {
         automaticallySelected = this.data.automaticallySelected[ITEM];
       }
     } else {
-      if (multi) {
-        selected = [...new Set([...this.data.selected[ITEM], ...linked]).values()];
+      if (this.isMulti()) {
+        selected = Array.from(new Set([...this.data.previouslySelected[ITEM], ...linked]));
       } else {
         selected = linked;
       }
-      automaticallySelected = linked.filter(currentItemId => currentItemId !== item.id);
+      automaticallySelected = linked.filter((currentItemId) => currentItemId !== item.id);
     }
-    selected = selected.map(itemId => {
+    selected = selected.map((itemId) => {
       item = this.api.getItem(itemId);
       item.selected = true;
       return itemId;
@@ -335,13 +391,18 @@ class SelectionPlugin {
     );
   }
 
-  private getItemsUnderSelectionArea(areaLocal: Area): { selected: string[]; automaticallySelected: string[] } {
+  private isMulti(): boolean {
+    const move = this.poitnerData.events.move;
+    return move && this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
+  }
+
+  private getItemsUnderSelectionArea(
+    areaLocal: Area
+  ): { selectedItems: string[]; automaticallySelectedItems: string[] } {
     const visibleItemsId: string[] = this.state.get('$data.chart.visibleItems');
     const visibleItems: Item[] = this.api.getItems(visibleItemsId);
-    const move = this.poitnerData.events.move;
-    const multi = move && this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
-    let selected = multi ? [...this.data.selected[ITEM]] : [];
-    const automaticallySelected = multi ? [...this.data.automaticallySelected[ITEM]] : [];
+    let selectedItems = [];
+    const automaticallySelectedItems = [];
     for (let item of visibleItems) {
       item = this.merge({}, item) as Item;
       const itemData = item.$data;
@@ -349,67 +410,152 @@ class SelectionPlugin {
         this.isItemVerticallyInsideArea(itemData, areaLocal) &&
         this.isItemHorizontallyInsideArea(itemData, areaLocal)
       ) {
-        if (!selected.find(selectedItemId => selectedItemId === item.id)) selected.push(item.id);
+        if (!selectedItems.find((selectedItemId) => selectedItemId === item.id)) selectedItems.push(item.id);
         const linked = this.collectLinkedItems(item, [item.id]);
         for (let linkedItemId of linked) {
           const linkedItem = this.api.getItem(linkedItemId);
-          if (!selected.find(selectedItemId => selectedItemId === linkedItem.id)) {
-            selected.push(linkedItem.id);
-            automaticallySelected.push(linkedItem.id);
+          if (!selectedItems.find((selectedItemId) => selectedItemId === linkedItem.id)) {
+            selectedItems.push(linkedItem.id);
+            automaticallySelectedItems.push(linkedItem.id);
           }
         }
       }
     }
-    selected = selected.map(itemId => {
+    selectedItems = selectedItems.map((itemId) => {
       const item = this.api.getItem(itemId);
       item.selected = true;
       return itemId;
     });
-    return { selected, automaticallySelected };
+    return { selectedItems, automaticallySelectedItems };
   }
 
-  private unmarkSelected() {
-    const items: Items = this.api.getAllItems();
-    let multi = this.state.multi();
-    for (const id in items) {
-      const item = items[id];
-      if (item.selected) {
-        multi = multi.update(`config.chart.items.${id}.selected`, false);
+  private isCellVerticallyInsideArea(cell: GridCell, area: Area): boolean {
+    if (!area.width || !area.height) return false;
+    const areaBottom = area.y + area.height;
+    const top = cell.top;
+    const bottom = top + cell.row.$data.actualHeight;
+    return (
+      (top >= area.y && top <= areaBottom) ||
+      (bottom >= area.y && bottom <= areaBottom) ||
+      (top >= area.y && bottom <= areaBottom) ||
+      (top <= area.y && bottom >= areaBottom)
+    );
+  }
+
+  private isCellHorizontallyInsideArea(cell: GridCell, area: Area): boolean {
+    if (!area.width || !area.height) return false;
+    const areaRight = area.x + area.width;
+    const left = cell.time.currentView.leftPx;
+    const right = cell.time.currentView.rightPx;
+    return (
+      (left >= area.x && left <= areaRight) ||
+      (right >= area.x && right <= areaRight) ||
+      (left <= area.x && right >= areaRight) ||
+      (left >= area.x && right <= areaRight)
+    );
+  }
+
+  private getCellsUnderSelectionArea(areaLocal: Area): { selectedCells: string[] } {
+    const cells: GridCells = this.state.get('$data.chart.grid.cells');
+    const selectedCells = [];
+    for (const cellId in cells) {
+      const cell = cells[cellId];
+      if (this.isCellVerticallyInsideArea(cell, areaLocal) && this.isCellHorizontallyInsideArea(cell, areaLocal)) {
+        if (!selectedCells.find((selectedCell: string) => selectedCell === cell.id)) selectedCells.push(cell.id);
       }
     }
-    multi.done();
+    return { selectedCells };
+  }
+
+  private updateItems(multi = undefined) {
+    if (!multi) multi = this.state.multi();
+    multi.update('config.chart.items', (items: Items) => {
+      for (const itemId in items) {
+        const item = items[itemId];
+        item.selected = this.data.selected[ITEM].includes(item.id);
+        item.selecting = this.data.selecting[ITEM].includes(item.id);
+      }
+      return items;
+    });
+    return multi;
+  }
+
+  private updateCells(multi = undefined) {
+    if (!multi) multi = this.state.multi();
+    multi.update('$data.chart.grid.cells', (cells: GridCells) => {
+      for (const cellId in cells) {
+        const cell = cells[cellId];
+        cell.selected = this.data.selected[CELL].includes(cell.id);
+        cell.selecting = this.data.selecting[CELL].includes(cell.id);
+      }
+      return cells;
+    });
+    return multi;
   }
 
   private deselectItems() {
-    this.unmarkSelected();
-    this.data.selected[ITEM] = [];
-    this.updateData();
+    this.data.selected[ITEM].length = 0;
+    this.data.selecting[ITEM].length = 0;
+    this.updateItems();
+  }
+
+  private deselectCells() {
+    this.data.selecting[CELL].length = 0;
+    this.data.selected[CELL].length = 0;
+    this.updateCells();
+  }
+
+  private selectMultipleCells(multi) {
+    const { selectedCells } = this.getCellsUnderSelectionArea(this.data.selectionAreaLocal);
+    if (selectedCells.length === 0) {
+      this.data.selecting[CELL].length = 0;
+      if (!this.isMulti()) this.data.selected[CELL].length = 0;
+    } else {
+      this.data.selecting[CELL] = selectedCells;
+    }
+    const allCells: GridCell[] = this.api.getGridCells();
+    const currentlySelectingCellsStr = allCells
+      .filter((cell) => cell.selecting)
+      .map((cell) => cell.id)
+      .join('|');
+    const selectingCellsStr = this.data.selecting[CELL].join('|');
+    if (currentlySelectingCellsStr !== selectingCellsStr) multi = this.updateCells(multi);
+    return multi;
+  }
+
+  private selectMultipleItems(multi) {
+    const { selectedItems, automaticallySelectedItems } = this.getItemsUnderSelectionArea(this.data.selectionAreaLocal);
+    this.data.automaticallySelected[ITEM] = automaticallySelectedItems;
+    if (selectedItems.length === 0) {
+      this.data.selecting[ITEM].length = 0;
+      if (this.isMulti()) this.data.selected[ITEM].length = 0;
+    } else {
+      this.data.selecting[ITEM] = selectedItems;
+    }
+    const allItems: Item[] = this.api.getItems();
+    const currentlySelectingItemsStr = allItems
+      .filter((item) => item.selecting)
+      .map((item) => item.id)
+      .join('|');
+    const selectingItemsStr = this.data.selecting[ITEM].join('|');
+    if (currentlySelectingItemsStr !== selectingItemsStr) multi = this.updateItems(multi);
+    return multi;
   }
 
   private selectMultipleCellsAndItems() {
     if (!this.canSelect()) return;
     if (!this.data.multipleSelection) {
       this.deselectItems();
+      this.deselectCells();
       return;
     }
     this.data.isSelecting = true;
     this.data.selectionAreaLocal = this.getSelectionAreaLocal();
     this.data.selectionAreaGlobal = this.translateAreaLocalToGlobal(this.data.selectionAreaLocal);
-    const { selected, automaticallySelected } = this.getItemsUnderSelectionArea(this.data.selectionAreaLocal);
-    this.data.automaticallySelected[ITEM] = automaticallySelected;
-    if (selected.length === 0) {
-      this.unmarkSelected();
-      this.data.selected[ITEM].length = 0;
-      return;
-    }
-    this.data.selected[ITEM] = selected;
-    this.unmarkSelected();
     let multi = this.state.multi();
-    for (const itemId of selected) {
-      multi = multi.update(`config.chart.items.${itemId}.selected`, true);
-    }
+    multi = this.selectMultipleItems(multi);
+    multi = this.selectMultipleCells(multi);
     multi.done();
-    // TODO save selected cells
   }
 
   private selectItemsIndividually() {
@@ -426,11 +572,30 @@ class SelectionPlugin {
     }
     this.data.selected[ITEM] = selected;
     this.data.automaticallySelected[ITEM] = automaticallySelected;
-    this.unmarkSelected();
     let multi = this.state.multi();
-    for (const itemId of this.data.selected[ITEM]) {
-      multi = multi.update(`config.chart.items.${itemId}.selected`, true);
+    multi = this.updateItems(multi);
+    multi.done();
+  }
+
+  private finishSelection() {
+    if (this.isMulti()) {
+      this.data.selected[CELL] = Array.from(new Set([...this.data.selected[CELL], ...this.data.selecting[CELL]]));
+      this.data.selected[ITEM] = Array.from(new Set([...this.data.selected[ITEM], ...this.data.selecting[ITEM]]));
+      this.data.selecting[CELL].length = 0;
+      this.data.selecting[ITEM].length = 0;
+      let multi = this.state.multi();
+      multi = this.updateItems(multi);
+      multi = this.updateCells(multi);
+      multi.done();
+      return;
     }
+    this.data.selected[CELL] = [...this.data.selecting[CELL]];
+    this.data.selected[ITEM] = [...this.data.selecting[ITEM]];
+    this.data.selecting[CELL].length = 0;
+    this.data.selecting[ITEM].length = 0;
+    let multi = this.state.multi();
+    multi = this.updateItems(multi);
+    multi = this.updateCells(multi);
     multi.done();
   }
 
@@ -442,6 +607,7 @@ class SelectionPlugin {
     } else if (this.poitnerData.isMoving && this.poitnerData.targetType === ITEM) {
       this.selectItemsIndividually();
     } else if (!this.poitnerData.isMoving) {
+      if (this.data.isSelecting) this.finishSelection();
       this.data.isSelecting = false;
     }
     if (this.poitnerData.isMoving && this.poitnerData.targetType !== CELL && this.poitnerData.targetType !== ITEM) {
@@ -474,6 +640,35 @@ class SelectionPlugin {
     }
     const area = this.html`<div class=${this.wrapperClassName} style=${this.wrapperStyleMap}></div>`;
     return this.html`${oldContent}${shouldDetach ? null : area}`;
+  }
+
+  private updateCellSelectionClassName(element: HTMLElement, cell: GridCell) {
+    if (cell.selected) {
+      element.classList.add(this.data.selectedClassName);
+      element.classList.remove(this.data.selectingClassName);
+    } else {
+      element.classList.remove(this.data.selectedClassName);
+    }
+    if (cell.selecting) {
+      element.classList.add(this.data.selectingClassName);
+      element.classList.remove(this.data.selectedClassName);
+    } else {
+      element.classList.remove(this.data.selectingClassName);
+    }
+  }
+
+  private selectedCellAction(element: HTMLElement, data: GridCell) {
+    this.updateCellSelectionClassName(element, data);
+    return {
+      update: this.updateCellSelectionClassName,
+      destroy: this.updateCellSelectionClassName,
+    };
+  }
+
+  private onCellCreate(cell: GridCell) {
+    cell.selected = !!this.data.selected[CELL].find((selectedCellId) => selectedCellId === cell.id);
+    cell.selecting = !!this.data.selecting[CELL].find((selectedCellId) => selectedCellId === cell.id);
+    return cell;
   }
 }
 

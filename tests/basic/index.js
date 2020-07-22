@@ -4,17 +4,18 @@ import { Plugin as Selection } from '../../dist/selection.plugin.esm.js';
 import { Plugin as ItemMovement } from '../../dist/item-movement.plugin.esm.js';
 import { Plugin as ItemResizing } from '../../dist/item-resizing.plugin.esm.js';
 import { Plugin as CalendarScroll } from '../../dist/calendar-scroll.plugin.esm.js';
+import { Plugin as HighlightWeekends } from '../../dist/highlight-weekends.plugin.esm.js';
 
 const iterations = 100;
 
 const rows = {};
 for (let i = 0; i < iterations; i++) {
   const withParent = i > 0 && i % 2 === 0;
-  const id = i.toString();
+  const id = `row-${i}`;
   rows[id] = {
     id,
-    label: `row id: ${id}`,
-    parentId: withParent ? (i - 1).toString() : undefined,
+    label: `Row ${id}`,
+    parentId: withParent ? `row-${i - 1}` : undefined,
     expanded: false,
   };
 }
@@ -23,8 +24,8 @@ const startDate = GSTC.api.date().subtract(5, 'month').valueOf();
 
 const items = {};
 for (let i = 0; i < iterations; i++) {
-  let rowId;
-  let id = (rowId = i.toString());
+  let rowId = `row-${i}`;
+  let id = i.toString();
   let startDayjs = GSTC.api
     .date(startDate)
     .startOf('day')
@@ -44,14 +45,14 @@ for (let i = 0; i < iterations; i++) {
   };
 }
 items['0'].linkedWith = ['1'];
-items['1'].time = {...items['0'].time};
+items['1'].time = { ...items['0'].time };
 
 const columns = {
   data: {
     id: {
       id: 'id',
       data: 'id',
-      width: 50,
+      width: 80,
       header: {
         content: 'ID',
       },
@@ -70,13 +71,8 @@ const columns = {
 };
 
 const config = {
-  plugins: [
-    TimelinePointer(),
-    Selection(),
-    ItemMovement(),
-    ItemResizing(),
-    CalendarScroll()
-  ],
+  debug: true,
+  plugins: [HighlightWeekends(), TimelinePointer(), Selection(), ItemMovement(), ItemResizing(), CalendarScroll()],
   list: {
     rows,
     columns,
@@ -102,3 +98,12 @@ var gstc = GSTC({
 window.state = state;
 //@ts-ignore
 window.gstc = gstc;
+
+document.getElementById('percent').addEventListener('input', (ev) => {
+  gstc.state.update('config.list.columns.percent', +ev.target.value);
+});
+document.getElementById('zoom').addEventListener('input', (ev) => {
+  gstc.state.update('config.chart.time.zoom', +ev.target.value);
+  const period = gstc.state.get('config.chart.time');
+  console.log(`current period: `, period); // eslint-disable-line
+});

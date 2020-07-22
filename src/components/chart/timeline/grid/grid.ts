@@ -8,7 +8,7 @@
  * @link      https://github.com/neuronetio/gantt-schedule-timeline-calendar
  */
 
-import { Cell, RowWithCells, Vido, Rows } from '../../../../gstc';
+import { GridCell, GridRow, Vido, Rows, GridCells, GridRows } from '../../../../gstc';
 
 /**
  * Bind element action
@@ -19,7 +19,7 @@ class BindElementAction {
     if (old !== element) data.state.update('$data.elements.chart-timeline-grid', element);
   }
   public destroy(element, data) {
-    data.state.update('$data.elements', elements => {
+    data.state.update('$data.elements', (elements) => {
       delete elements['chart-timeline-grid'];
       return elements;
     });
@@ -33,20 +33,20 @@ export default function ChartTimelineGrid(vido: Vido, props) {
   const actionProps = { api, state };
 
   let wrapper;
-  onDestroy(state.subscribe('config.wrappers.ChartTimelineGrid', value => (wrapper = value)));
+  onDestroy(state.subscribe('config.wrappers.ChartTimelineGrid', (value) => (wrapper = value)));
 
   const GridRowComponent = state.get('config.components.ChartTimelineGridRow');
 
   const className = api.getClass(componentName);
 
   let onCellCreate;
-  onDestroy(state.subscribe('config.chart.grid.cell.onCreate', onCreate => (onCellCreate = onCreate)));
+  onDestroy(state.subscribe('config.chart.grid.cell.onCreate', (onCreate) => (onCellCreate = onCreate)));
 
   let debug;
-  onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
+  onDestroy(state.subscribe('config.debug', (dbg) => (debug = dbg)));
 
   const rowsComponents = [];
-  const rowsWithCells: RowWithCells[] = [];
+  let rowsWithCells: GridRows = {};
   const formatCache = new Map();
   const styleMap = new StyleMap({});
 
@@ -58,41 +58,43 @@ export default function ChartTimelineGrid(vido: Vido, props) {
     const time = state.get('$data.chart.time');
     const periodDates = state.get(`$data.chart.time.levels.${time.level}`);
     if (!periodDates || periodDates.length === 0) {
-      state.update('$data.chart.grid.rowsWithCells', []);
+      state.update('$data.chart.grid', { rows: {}, cells: {} });
       return;
     }
     const visibleRowsId: string[] = state.get('$data.list.visibleRows');
     styleMap.style.height = height + scrollOffset + 'px';
     styleMap.style.width = width + 'px';
     let top = 0;
-    rowsWithCells.length = 0;
+    rowsWithCells = {};
     const rows: Rows = api.getAllRows();
+    const cells: GridCells = {};
     for (const rowId of visibleRowsId) {
       const row = rows[rowId];
       if (!row || !row.$data) {
         if (debug) console.warn('generateCells EMPTY ROW', { row, rowId, visibleRowsId, rows }); // eslint-disable-line no-console
         continue;
       }
-      const cells: Cell[] = [];
+      const rowCells = [];
       for (const time of periodDates) {
         let format;
         if (formatCache.has(time.leftGlobal)) {
           format = formatCache.get(time.leftGlobal);
         } else {
-          format = api.time.date(time.leftGlobal).format('YYYY-MM-DDTHH:mm');
+          format = api.time.date(time.leftGlobal).format('YYYY-MM-DDTHH-mm-ss');
           formatCache.set(time.leftGlobal, format);
         }
-        const id = row.id + ':' + format;
-        let cell: Cell = { id, time, row, top };
+        const id = row.id + '-' + format;
+        let cell: GridCell = { id, time, row, top };
         for (const onCreate of onCellCreate) {
           cell = onCreate(cell);
         }
-        cells.push(cell);
+        cells[cell.id] = cell;
+        rowCells.push(cell.id);
       }
-      rowsWithCells.push({ row, cells, top, width });
+      rowsWithCells[rowId] = { row, cells: rowCells, top, width };
       top += row.$data.outerHeight;
     }
-    state.update('$data.chart.grid.rowsWithCells', rowsWithCells);
+    state.update('$data.chart.grid', { rows: rowsWithCells, cells });
   }
   onDestroy(
     state.subscribeAll(
@@ -104,35 +106,35 @@ export default function ChartTimelineGrid(vido: Vido, props) {
         'config.chart.items.*.time',
         `$data.chart.time.levels`,
         '$data.innerHeight',
-        '$data.chart.dimensions.width'
+        '$data.chart.dimensions.width',
       ],
       generateCells,
       {
-        bulk: true
+        bulk: true,
       }
     )
   );
 
   function generateRowsComponents() {
     if (debug) console.log('[grid.ts] generate rows components'); // eslint-disable-line no-console
-    const rowsWithCells = state.get('$data.chart.grid.rowsWithCells');
-    reuseComponents(rowsComponents, rowsWithCells || [], row => row, GridRowComponent, false);
+    const rows = api.getGridRows();
+    reuseComponents(rowsComponents, rows || [], (row) => row, GridRowComponent, false);
     update();
   }
-  onDestroy(state.subscribeAll(['$data.chart.grid.rowsWithCells;', 'config.list.rows'], generateRowsComponents));
+  onDestroy(state.subscribeAll(['$data.chart.grid', 'config.list.rows'], generateRowsComponents));
   onDestroy(() => {
-    rowsComponents.forEach(row => row.destroy());
+    rowsComponents.forEach((row) => row.destroy());
   });
   componentActions.push(BindElementAction);
   const actions = Actions.create(componentActions, actionProps);
 
   const slots = api.generateSlots(componentName, vido, props);
 
-  return templateProps =>
+  return (templateProps) =>
     wrapper(
       html`
         <div class=${className} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${rowsComponents.map(r => r.html())}${slots.html(
+          ${slots.html('before', templateProps)}${rowsComponents.map((r) => r.html())}${slots.html(
             'after',
             templateProps
           )}

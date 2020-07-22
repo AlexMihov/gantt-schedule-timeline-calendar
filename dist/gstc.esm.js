@@ -7591,33 +7591,33 @@ class BindElementAction$1 {
             data.state.update('$data.elements.list-column-rows', elements);
     }
     destroy(element, data) {
-        data.state.update('$data.elements.list-column-rows', (elements) => {
-            return elements.filter((el) => el !== element);
+        data.state.update('$data.elements.list-column-rows', elements => {
+            return elements.filter(el => el !== element);
         });
     }
 }
 function ListColumnRow(vido, props) {
-    const { api, state, onDestroy, Detach, Actions, update, html, createComponent, onChange, StyleMap, unsafeHTML, } = vido;
+    const { api, state, onDestroy, Detach, Actions, update, html, createComponent, onChange, StyleMap, unsafeHTML } = vido;
     const componentName = 'list-column-row';
     const actionProps = Object.assign(Object.assign({}, props), { api, state });
     let shouldDetach = false;
     const detach = new Detach(() => shouldDetach);
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ListColumnRow', (value) => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ListColumnRow', value => (wrapper = value)));
     let ListColumnRowExpanderComponent;
-    onDestroy(state.subscribe('config.components.ListColumnRowExpander', (value) => (ListColumnRowExpanderComponent = value)));
+    onDestroy(state.subscribe('config.components.ListColumnRowExpander', value => (ListColumnRowExpanderComponent = value)));
     const styleMap = new StyleMap(props.column.expander
         ? {
             height: '',
             top: '',
             ['--height']: '',
             ['--expander-padding-width']: '',
-            ['--expander-size']: '',
+            ['--expander-size']: ''
         }
         : {
             height: '',
             top: '',
-            ['--height']: '',
+            ['--height']: ''
         }, true);
     const ListColumnRowExpander = createComponent(ListColumnRowExpanderComponent, { row: props.row });
     let className = api.getClass(componentName);
@@ -7685,7 +7685,7 @@ function ListColumnRow(vido, props) {
         if (ListColumnRowExpander) {
             ListColumnRowExpander.change(props);
         }
-        slots.change(changedProps, options);
+        slots.change(props, options);
         update();
     }
     onChange(onPropsChange);
@@ -7715,7 +7715,7 @@ function ListColumnRow(vido, props) {
     if (!componentActions.includes(BindElementAction$1))
         componentActions.push(BindElementAction$1);
     const actions = Actions.create(componentActions, actionProps);
-    return (templateProps) => wrapper(html `
+    return templateProps => wrapper(html `
         <div detach=${detach} class=${classNameCurrent} style=${styleMap} data-actions=${actions}>
           ${props.column.expander ? ListColumnRowExpander.html() : null}
           <div class=${classNameContent}>
@@ -8326,7 +8326,7 @@ class BindElementAction$3 {
             data.state.update('$data.elements.chart-timeline-grid', element);
     }
     destroy(element, data) {
-        data.state.update('$data.elements', elements => {
+        data.state.update('$data.elements', (elements) => {
             delete elements['chart-timeline-grid'];
             return elements;
         });
@@ -8338,15 +8338,15 @@ function ChartTimelineGrid(vido, props) {
     const componentActions = api.getActions(componentName);
     const actionProps = { api, state };
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineGrid', value => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineGrid', (value) => (wrapper = value)));
     const GridRowComponent = state.get('config.components.ChartTimelineGridRow');
     const className = api.getClass(componentName);
     let onCellCreate;
-    onDestroy(state.subscribe('config.chart.grid.cell.onCreate', onCreate => (onCellCreate = onCreate)));
+    onDestroy(state.subscribe('config.chart.grid.cell.onCreate', (onCreate) => (onCellCreate = onCreate)));
     let debug;
-    onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
+    onDestroy(state.subscribe('config.debug', (dbg) => (debug = dbg)));
     const rowsComponents = [];
-    const rowsWithCells = [];
+    let rowsWithCells = {};
     const formatCache = new Map();
     const styleMap = new StyleMap({});
     function generateCells() {
@@ -8358,15 +8358,16 @@ function ChartTimelineGrid(vido, props) {
         const time = state.get('$data.chart.time');
         const periodDates = state.get(`$data.chart.time.levels.${time.level}`);
         if (!periodDates || periodDates.length === 0) {
-            state.update('$data.chart.grid.rowsWithCells', []);
+            state.update('$data.chart.grid', { rows: {}, cells: {} });
             return;
         }
         const visibleRowsId = state.get('$data.list.visibleRows');
         styleMap.style.height = height + scrollOffset + 'px';
         styleMap.style.width = width + 'px';
         let top = 0;
-        rowsWithCells.length = 0;
+        rowsWithCells = {};
         const rows = api.getAllRows();
+        const cells = {};
         for (const rowId of visibleRowsId) {
             const row = rows[rowId];
             if (!row || !row.$data) {
@@ -8374,27 +8375,28 @@ function ChartTimelineGrid(vido, props) {
                     console.warn('generateCells EMPTY ROW', { row, rowId, visibleRowsId, rows }); // eslint-disable-line no-console
                 continue;
             }
-            const cells = [];
+            const rowCells = [];
             for (const time of periodDates) {
                 let format;
                 if (formatCache.has(time.leftGlobal)) {
                     format = formatCache.get(time.leftGlobal);
                 }
                 else {
-                    format = api.time.date(time.leftGlobal).format('YYYY-MM-DDTHH:mm');
+                    format = api.time.date(time.leftGlobal).format('YYYY-MM-DDTHH-mm-ss');
                     formatCache.set(time.leftGlobal, format);
                 }
-                const id = row.id + ':' + format;
+                const id = row.id + '-' + format;
                 let cell = { id, time, row, top };
                 for (const onCreate of onCellCreate) {
                     cell = onCreate(cell);
                 }
-                cells.push(cell);
+                cells[cell.id] = cell;
+                rowCells.push(cell.id);
             }
-            rowsWithCells.push({ row, cells, top, width });
+            rowsWithCells[rowId] = { row, cells: rowCells, top, width };
             top += row.$data.outerHeight;
         }
-        state.update('$data.chart.grid.rowsWithCells', rowsWithCells);
+        state.update('$data.chart.grid', { rows: rowsWithCells, cells });
     }
     onDestroy(state.subscribeAll([
         '$data.list.rowsHeight',
@@ -8404,27 +8406,27 @@ function ChartTimelineGrid(vido, props) {
         'config.chart.items.*.time',
         `$data.chart.time.levels`,
         '$data.innerHeight',
-        '$data.chart.dimensions.width'
+        '$data.chart.dimensions.width',
     ], generateCells, {
-        bulk: true
+        bulk: true,
     }));
     function generateRowsComponents() {
         if (debug)
             console.log('[grid.ts] generate rows components'); // eslint-disable-line no-console
-        const rowsWithCells = state.get('$data.chart.grid.rowsWithCells');
-        reuseComponents(rowsComponents, rowsWithCells || [], row => row, GridRowComponent, false);
+        const rows = api.getGridRows();
+        reuseComponents(rowsComponents, rows || [], (row) => row, GridRowComponent, false);
         update();
     }
-    onDestroy(state.subscribeAll(['$data.chart.grid.rowsWithCells;', 'config.list.rows'], generateRowsComponents));
+    onDestroy(state.subscribeAll(['$data.chart.grid', 'config.list.rows'], generateRowsComponents));
     onDestroy(() => {
-        rowsComponents.forEach(row => row.destroy());
+        rowsComponents.forEach((row) => row.destroy());
     });
     componentActions.push(BindElementAction$3);
     const actions = Actions.create(componentActions, actionProps);
     const slots = api.generateSlots(componentName, vido, props);
-    return templateProps => wrapper(html `
+    return (templateProps) => wrapper(html `
         <div class=${className} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${rowsComponents.map(r => r.html())}${slots.html('after', templateProps)}
+          ${slots.html('before', templateProps)}${rowsComponents.map((r) => r.html())}${slots.html('after', templateProps)}
         </div>
       `, { props, vido, templateProps });
 }
@@ -8457,8 +8459,8 @@ class BindElementAction$4 {
             data.state.update('$data.elements.chart-timeline-grid-rows', rows, { only: null });
     }
     destroy(element, data) {
-        data.state.update('$data.elements.chart-timeline-grid-rows', rows => {
-            return rows.filter(el => el !== element);
+        data.state.update('$data.elements.chart-timeline-grid-rows', (rows) => {
+            return rows.filter((el) => el !== element);
         });
     }
 }
@@ -8468,17 +8470,17 @@ function ChartTimelineGridRow(vido, props) {
     const actionProps = Object.assign(Object.assign({}, props), { api,
         state });
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineGridRow', value => {
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineGridRow', (value) => {
         wrapper = value;
         update();
     }));
     let GridCellComponent;
-    onDestroy(state.subscribe('config.components.ChartTimelineGridRowCell', component => (GridCellComponent = component)));
+    onDestroy(state.subscribe('config.components.ChartTimelineGridRowCell', (component) => (GridCellComponent = component)));
     const componentActions = api.getActions(componentName);
     let className = api.getClass(componentName);
     const styleMap = new StyleMap({
         width: props.width + 'px',
-        height: props.row.height + 'px'
+        height: props.row.height + 'px',
     }, true);
     let shouldDetach = false;
     const detach = new Detach(() => shouldDetach);
@@ -8488,7 +8490,7 @@ function ChartTimelineGridRow(vido, props) {
         var _a, _b, _c, _d, _e, _f, _g;
         if (options.leave || changedProps.row === undefined) {
             shouldDetach = true;
-            reuseComponents(rowsCellsComponents, [], cell => cell, GridCellComponent, false);
+            reuseComponents(rowsCellsComponents, [], (cell) => cell, GridCellComponent, false);
             slots.change(changedProps, options);
             update();
             return;
@@ -8496,7 +8498,8 @@ function ChartTimelineGridRow(vido, props) {
         shouldDetach = false;
         props = changedProps;
         className = api.getClass(componentName, props.row.id);
-        reuseComponents(rowsCellsComponents, props.cells, cell => cell, GridCellComponent, false);
+        const cells = api.getGridCells(props.cells);
+        reuseComponents(rowsCellsComponents, cells, (cell) => cell, GridCellComponent, false);
         styleMap.setStyle({});
         styleMap.style.height = props.row.$data.outerHeight + 'px';
         styleMap.style.width = props.width + 'px';
@@ -8521,19 +8524,17 @@ function ChartTimelineGridRow(vido, props) {
         update();
     }
     onChange(onPropsChange);
-    // because when item height or position change row must follow
-    // onDestroy(state.subscribe('config.chart.items', () => onPropsChange(props, {})));
     onDestroy(function destroy() {
-        rowsCellsComponents.forEach(rowCell => rowCell.destroy());
+        rowsCellsComponents.forEach((rowCell) => rowCell.destroy());
     });
     if (componentActions.indexOf(BindElementAction$4) === -1) {
         componentActions.push(BindElementAction$4);
     }
     const actions = Actions.create(componentActions, actionProps);
-    return templateProps => {
+    return (templateProps) => {
         return wrapper(html `
         <div detach=${detach} class=${className} data-actions=${actions} style=${styleMap}>
-          ${slots.html('before', templateProps)}${rowsCellsComponents.map(r => r.html())}
+          ${slots.html('before', templateProps)}${rowsCellsComponents.map((r) => r.html())}
           ${slots.html('after', templateProps)}
         </div>
       `, { vido, props, templateProps });
@@ -8571,8 +8572,8 @@ class BindElementAction$5 {
             data.state.update('$data.elements.chart-timeline-grid-row-cells', cells, { only: null });
     }
     destroy(element, data) {
-        data.state.update('$data.elements.chart-timeline-grid-row-cells', cells => {
-            return cells.filter(el => el !== element);
+        data.state.update('$data.elements.chart-timeline-grid-row-cells', (cells) => {
+            return cells.filter((el) => el !== element);
         }, { only: [''] });
     }
 }
@@ -8585,14 +8586,14 @@ function ChartTimelineGridRowCell(vido, props) {
     const detach = new Detach(() => shouldDetach);
     const componentActions = api.getActions(componentName);
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineGridRowCell', value => {
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineGridRowCell', (value) => {
         wrapper = value;
         update();
     }));
     const slots = api.generateSlots(componentName, vido, props);
     let className;
     function updateClassName(time) {
-        className = api.getClass(componentName, `${props.row.id}-${props.time.formatted}`);
+        className = api.getClass(componentName, props.id);
         if (time.current) {
             className += ' current';
         }
@@ -8631,7 +8632,7 @@ function ChartTimelineGridRowCell(vido, props) {
     onChange(onPropsChange);
     componentActions.push(BindElementAction$5);
     const actions = Actions.create(componentActions, actionProps);
-    return templateProps => {
+    return (templateProps) => {
         return wrapper(html `
         ${slots.html('before', templateProps)}
         <div detach=${detach} class=${className} data-actions=${actions} style=${styleMap}>
@@ -8641,7 +8642,7 @@ function ChartTimelineGridRowCell(vido, props) {
       `, {
             props,
             vido,
-            templateProps
+            templateProps,
         });
     };
 }
@@ -8659,11 +8660,11 @@ function ChartTimelineItems(vido, props = {}) {
     const { api, state, onDestroy, Actions, update, html, reuseComponents, StyleMap } = vido;
     const componentName = 'chart-timeline-items';
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineItems', value => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineItems', (value) => (wrapper = value)));
     let componentActions;
-    onDestroy(state.subscribe(`config.actions.${componentName}`, actions => (componentActions = actions)));
+    onDestroy(state.subscribe(`config.actions.${componentName}`, (actions) => (componentActions = actions)));
     let ItemsRowComponent;
-    onDestroy(state.subscribe('config.components.ChartTimelineItemsRow', value => (ItemsRowComponent = value)));
+    onDestroy(state.subscribe('config.components.ChartTimelineItemsRow', (value) => (ItemsRowComponent = value)));
     const className = api.getClass(componentName);
     const styleMap = new StyleMap({}, true);
     function calculateStyle() {
@@ -8679,23 +8680,23 @@ function ChartTimelineItems(vido, props = {}) {
     function createRowComponents() {
         const visibleRowsId = state.get('$data.list.visibleRows') || [];
         const visibleRows = api.getRows(visibleRowsId);
-        reuseComponents(rowsComponents, visibleRows, row => ({ row }), ItemsRowComponent, false);
+        reuseComponents(rowsComponents, visibleRows, (row) => ({ row }), ItemsRowComponent, false);
         update();
     }
     onDestroy(state.subscribeAll([
         '$data.list.visibleRows;',
         'config.list.rows',
         'config.components.ChartTimelineItemsRow',
-        'config.chart.items.*.rowId'
-    ], createRowComponents));
+        'config.chart.items.*.rowId',
+    ], createRowComponents, { bulk: true }));
     onDestroy(() => {
-        rowsComponents.forEach(row => row.destroy());
+        rowsComponents.forEach((row) => row.destroy());
     });
     const actions = Actions.create(componentActions, { api, state });
     const slots = api.generateSlots(componentName, vido, props);
-    return templateProps => wrapper(html `
+    return (templateProps) => wrapper(html `
         <div class=${className} style=${styleMap} data-actions=${actions}>
-          ${slots.html('before', templateProps)}${rowsComponents.map(r => r.html())}${slots.html('after', templateProps)}
+          ${slots.html('before', templateProps)}${rowsComponents.map((r) => r.html())}${slots.html('after', templateProps)}
         </div>
       `, { props, vido, templateProps });
 }
@@ -8841,18 +8842,18 @@ class BindElementAction$7 {
             data.state.update('$data.elements.chart-timeline-items-row-items', items, { only: null });
     }
     destroy(element, data) {
-        data.state.update('$data.elements.chart-timeline-items-row-items', items => {
-            return items.filter(el => el !== element);
+        data.state.update('$data.elements.chart-timeline-items-row-items', (items) => {
+            return items.filter((el) => el !== element);
         });
     }
 }
 function ChartTimelineItemsRowItem(vido, props) {
     const { api, state, onDestroy, Detach, Actions, update, html, svg, onChange, unsafeHTML, StyleMap } = vido;
     let wrapper;
-    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', value => (wrapper = value)));
+    onDestroy(state.subscribe('config.wrappers.ChartTimelineItemsRowItem', (value) => (wrapper = value)));
     let itemId;
     let debug;
-    onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
+    onDestroy(state.subscribe('config.debug', (dbg) => (debug = dbg)));
     let itemLeftPx = 0, itemWidthPx = 0, leave = false, classNameCurrent = '';
     const styleMap = new StyleMap({ width: '', height: '', left: '', top: '' }), leftCutStyleMap = new StyleMap({}), rightCutStyleMap = new StyleMap({}), actionProps = {
         item: props.item,
@@ -8860,7 +8861,7 @@ function ChartTimelineItemsRowItem(vido, props) {
         left: itemLeftPx,
         width: itemWidthPx,
         api,
-        state
+        state,
     };
     const componentName = 'chart-timeline-items-row-item';
     let className, labelClassName;
@@ -8880,8 +8881,12 @@ function ChartTimelineItemsRowItem(vido, props) {
             shouldDetach = true;
             return update();
         }
-        if (debug)
-            console.log('Item change before', { id: props.item.id, item: props.item }); // eslint-disable-line no-console
+        if (debug) {
+            console.groupCollapsed('[items-row-item.ts] Update item (before)'); // eslint-disable-line no-console
+            console.log({ id: props.item.id, item: props.item }); // eslint-disable-line no-console
+            console.trace(); // eslint-disable-line no-console
+            console.groupEnd(); // eslint-disable-line no-console
+        }
         itemLeftPx = props.item.$data.position.actualLeft;
         itemWidthPx = props.item.$data.actualWidth;
         if (props.item.time.end <= time.leftGlobal || props.item.time.start >= time.rightGlobal || itemWidthPx <= 0) {
@@ -8949,7 +8954,13 @@ function ChartTimelineItemsRowItem(vido, props) {
         actionProps.left = itemLeftPx;
         actionProps.width = itemWidthPx;
         if (debug)
-            console.log('Item change after', { id: props.item.id, itemLeftPx, itemWidthPx, item: props.item }); // eslint-disable-line no-console
+            // eslint-disable-next-line no-console
+            console.log('[items-row-item.ts] Update item (after)', {
+                id: props.item.id,
+                itemLeftPx,
+                itemWidthPx,
+                item: props.item,
+            });
         update();
     }
     const cutterClassName = api.getClass(componentName + '-cut');
@@ -8971,7 +8982,7 @@ function ChartTimelineItemsRowItem(vido, props) {
     // we need to subscribe current item and also linked items
     let itemSubs = [];
     function itemUnsub() {
-        itemSubs.forEach(unsub => unsub());
+        itemSubs.forEach((unsub) => unsub());
         itemSubs.length = 0;
     }
     function itemSub(options = {}) {
@@ -9047,7 +9058,7 @@ function ChartTimelineItemsRowItem(vido, props) {
             return null;
         return props.item.isHTML ? getHtml() : getText();
     }
-    return templateProps => wrapper(html `
+    return (templateProps) => wrapper(html `
         <div detach=${detach} class=${classNameCurrent} data-actions=${actions} style=${styleMap}>
           ${cutterLeft()}${slots.html('before', templateProps)}
           <div class=${labelClassName} title=${getTitle()}>
@@ -9513,11 +9524,11 @@ function defaultConfig() {
 }
 
 var dayjs_min = createCommonjsModule(function (module, exports) {
-!function(t,n){module.exports=n();}(commonjsGlobal,function(){var t="millisecond",n="second",e="minute",r="hour",i="day",s="week",u="month",o="quarter",a="year",h=/^(\d{4})-?(\d{1,2})-?(\d{0,2})[^0-9]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?.?(\d{1,3})?$/,f=/\[([^\]]+)]|Y{2,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g,c=function(t,n,e){var r=String(t);return !r||r.length>=n?t:""+Array(n+1-r.length).join(e)+t},d={s:c,z:function(t){var n=-t.utcOffset(),e=Math.abs(n),r=Math.floor(e/60),i=e%60;return (n<=0?"+":"-")+c(r,2,"0")+":"+c(i,2,"0")},m:function(t,n){var e=12*(n.year()-t.year())+(n.month()-t.month()),r=t.clone().add(e,u),i=n-r<0,s=t.clone().add(e+(i?-1:1),u);return Number(-(e+(n-r)/(i?r-s:s-r))||0)},a:function(t){return t<0?Math.ceil(t)||0:Math.floor(t)},p:function(h){return {M:u,y:a,w:s,d:i,D:"date",h:r,m:e,s:n,ms:t,Q:o}[h]||String(h||"").toLowerCase().replace(/s$/,"")},u:function(t){return void 0===t}},$={name:"en",weekdays:"Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),months:"January_February_March_April_May_June_July_August_September_October_November_December".split("_")},l="en",m={};m[l]=$;var y=function(t){return t instanceof v},M=function(t,n,e){var r;if(!t)return l;if("string"==typeof t)m[t]&&(r=t),n&&(m[t]=n,r=t);else {var i=t.name;m[i]=t,r=i;}return !e&&r&&(l=r),r||!e&&l},g=function(t,n,e){if(y(t))return t.clone();var r=n?"string"==typeof n?{format:n,pl:e}:n:{};return r.date=t,new v(r)},D=d;D.l=M,D.i=y,D.w=function(t,n){return g(t,{locale:n.$L,utc:n.$u,$offset:n.$offset})};var v=function(){function c(t){this.$L=this.$L||M(t.locale,null,!0),this.parse(t);}var d=c.prototype;return d.parse=function(t){this.$d=function(t){var n=t.date,e=t.utc;if(null===n)return new Date(NaN);if(D.u(n))return new Date;if(n instanceof Date)return new Date(n);if("string"==typeof n&&!/Z$/i.test(n)){var r=n.match(h);if(r)return e?new Date(Date.UTC(r[1],r[2]-1,r[3]||1,r[4]||0,r[5]||0,r[6]||0,r[7]||0)):new Date(r[1],r[2]-1,r[3]||1,r[4]||0,r[5]||0,r[6]||0,r[7]||0)}return new Date(n)}(t),this.init();},d.init=function(){var t=this.$d;this.$y=t.getFullYear(),this.$M=t.getMonth(),this.$D=t.getDate(),this.$W=t.getDay(),this.$H=t.getHours(),this.$m=t.getMinutes(),this.$s=t.getSeconds(),this.$ms=t.getMilliseconds();},d.$utils=function(){return D},d.isValid=function(){return !("Invalid Date"===this.$d.toString())},d.isSame=function(t,n){var e=g(t);return this.startOf(n)<=e&&e<=this.endOf(n)},d.isAfter=function(t,n){return g(t)<this.startOf(n)},d.isBefore=function(t,n){return this.endOf(n)<g(t)},d.$g=function(t,n,e){return D.u(t)?this[n]:this.set(e,t)},d.year=function(t){return this.$g(t,"$y",a)},d.month=function(t){return this.$g(t,"$M",u)},d.day=function(t){return this.$g(t,"$W",i)},d.date=function(t){return this.$g(t,"$D","date")},d.hour=function(t){return this.$g(t,"$H",r)},d.minute=function(t){return this.$g(t,"$m",e)},d.second=function(t){return this.$g(t,"$s",n)},d.millisecond=function(n){return this.$g(n,"$ms",t)},d.unix=function(){return Math.floor(this.valueOf()/1e3)},d.valueOf=function(){return this.$d.getTime()},d.startOf=function(t,o){var h=this,f=!!D.u(o)||o,c=D.p(t),d=function(t,n){var e=D.w(h.$u?Date.UTC(h.$y,n,t):new Date(h.$y,n,t),h);return f?e:e.endOf(i)},$=function(t,n){return D.w(h.toDate()[t].apply(h.toDate(),(f?[0,0,0,0]:[23,59,59,999]).slice(n)),h)},l=this.$W,m=this.$M,y=this.$D,M="set"+(this.$u?"UTC":"");switch(c){case a:return f?d(1,0):d(31,11);case u:return f?d(1,m):d(0,m+1);case s:var g=this.$locale().weekStart||0,v=(l<g?l+7:l)-g;return d(f?y-v:y+(6-v),m);case i:case"date":return $(M+"Hours",0);case r:return $(M+"Minutes",1);case e:return $(M+"Seconds",2);case n:return $(M+"Milliseconds",3);default:return this.clone()}},d.endOf=function(t){return this.startOf(t,!1)},d.$set=function(s,o){var h,f=D.p(s),c="set"+(this.$u?"UTC":""),d=(h={},h[i]=c+"Date",h.date=c+"Date",h[u]=c+"Month",h[a]=c+"FullYear",h[r]=c+"Hours",h[e]=c+"Minutes",h[n]=c+"Seconds",h[t]=c+"Milliseconds",h)[f],$=f===i?this.$D+(o-this.$W):o;if(f===u||f===a){var l=this.clone().set("date",1);l.$d[d]($),l.init(),this.$d=l.set("date",Math.min(this.$D,l.daysInMonth())).toDate();}else d&&this.$d[d]($);return this.init(),this},d.set=function(t,n){return this.clone().$set(t,n)},d.get=function(t){return this[D.p(t)]()},d.add=function(t,o){var h,f=this;t=Number(t);var c=D.p(o),d=function(n){var e=g(f);return D.w(e.date(e.date()+Math.round(n*t)),f)};if(c===u)return this.set(u,this.$M+t);if(c===a)return this.set(a,this.$y+t);if(c===i)return d(1);if(c===s)return d(7);var $=(h={},h[e]=6e4,h[r]=36e5,h[n]=1e3,h)[c]||1,l=this.$d.getTime()+t*$;return D.w(l,this)},d.subtract=function(t,n){return this.add(-1*t,n)},d.format=function(t){var n=this;if(!this.isValid())return "Invalid Date";var e=t||"YYYY-MM-DDTHH:mm:ssZ",r=D.z(this),i=this.$locale(),s=this.$H,u=this.$m,o=this.$M,a=i.weekdays,h=i.months,c=function(t,r,i,s){return t&&(t[r]||t(n,e))||i[r].substr(0,s)},d=function(t){return D.s(s%12||12,t,"0")},$=i.meridiem||function(t,n,e){var r=t<12?"AM":"PM";return e?r.toLowerCase():r},l={YY:String(this.$y).slice(-2),YYYY:this.$y,M:o+1,MM:D.s(o+1,2,"0"),MMM:c(i.monthsShort,o,h,3),MMMM:h[o]||h(this,e),D:this.$D,DD:D.s(this.$D,2,"0"),d:String(this.$W),dd:c(i.weekdaysMin,this.$W,a,2),ddd:c(i.weekdaysShort,this.$W,a,3),dddd:a[this.$W],H:String(s),HH:D.s(s,2,"0"),h:d(1),hh:d(2),a:$(s,u,!0),A:$(s,u,!1),m:String(u),mm:D.s(u,2,"0"),s:String(this.$s),ss:D.s(this.$s,2,"0"),SSS:D.s(this.$ms,3,"0"),Z:r};return e.replace(f,function(t,n){return n||l[t]||r.replace(":","")})},d.utcOffset=function(){return 15*-Math.round(this.$d.getTimezoneOffset()/15)},d.diff=function(t,h,f){var c,d=D.p(h),$=g(t),l=6e4*($.utcOffset()-this.utcOffset()),m=this-$,y=D.m(this,$);return y=(c={},c[a]=y/12,c[u]=y,c[o]=y/3,c[s]=(m-l)/6048e5,c[i]=(m-l)/864e5,c[r]=m/36e5,c[e]=m/6e4,c[n]=m/1e3,c)[d]||m,f?y:D.a(y)},d.daysInMonth=function(){return this.endOf(u).$D},d.$locale=function(){return m[this.$L]},d.locale=function(t,n){if(!t)return this.$L;var e=this.clone(),r=M(t,n,!0);return r&&(e.$L=r),e},d.clone=function(){return D.w(this.$d,this)},d.toDate=function(){return new Date(this.valueOf())},d.toJSON=function(){return this.isValid()?this.toISOString():null},d.toISOString=function(){return this.$d.toISOString()},d.toString=function(){return this.$d.toUTCString()},c}();return g.prototype=v.prototype,g.extend=function(t,n){return t(n,v,g),g},g.locale=M,g.isDayjs=y,g.unix=function(t){return g(1e3*t)},g.en=m[l],g.Ls=m,g});
+!function(t,e){module.exports=e();}(commonjsGlobal,function(){var t="millisecond",e="second",n="minute",r="hour",i="day",s="week",u="month",o="quarter",a="year",h=/^(\d{4})-?(\d{1,2})-?(\d{0,2})[^0-9]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?.?(\d{1,3})?$/,f=/\[([^\]]+)]|Y{2,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g,c=function(t,e,n){var r=String(t);return !r||r.length>=e?t:""+Array(e+1-r.length).join(n)+t},d={s:c,z:function(t){var e=-t.utcOffset(),n=Math.abs(e),r=Math.floor(n/60),i=n%60;return (e<=0?"+":"-")+c(r,2,"0")+":"+c(i,2,"0")},m:function(t,e){var n=12*(e.year()-t.year())+(e.month()-t.month()),r=t.clone().add(n,u),i=e-r<0,s=t.clone().add(n+(i?-1:1),u);return Number(-(n+(e-r)/(i?r-s:s-r))||0)},a:function(t){return t<0?Math.ceil(t)||0:Math.floor(t)},p:function(h){return {M:u,y:a,w:s,d:i,D:"date",h:r,m:n,s:e,ms:t,Q:o}[h]||String(h||"").toLowerCase().replace(/s$/,"")},u:function(t){return void 0===t}},$={name:"en",weekdays:"Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),months:"January_February_March_April_May_June_July_August_September_October_November_December".split("_")},l="en",m={};m[l]=$;var y=function(t){return t instanceof v},M=function(t,e,n){var r;if(!t)return l;if("string"==typeof t)m[t]&&(r=t),e&&(m[t]=e,r=t);else {var i=t.name;m[i]=t,r=i;}return !n&&r&&(l=r),r||!n&&l},g=function(t,e){if(y(t))return t.clone();var n="object"==typeof e?e:{};return n.date=t,n.args=arguments,new v(n)},D=d;D.l=M,D.i=y,D.w=function(t,e){return g(t,{locale:e.$L,utc:e.$u,$offset:e.$offset})};var v=function(){function c(t){this.$L=this.$L||M(t.locale,null,!0),this.parse(t);}var d=c.prototype;return d.parse=function(t){this.$d=function(t){var e=t.date,n=t.utc;if(null===e)return new Date(NaN);if(D.u(e))return new Date;if(e instanceof Date)return new Date(e);if("string"==typeof e&&!/Z$/i.test(e)){var r=e.match(h);if(r)return n?new Date(Date.UTC(r[1],r[2]-1,r[3]||1,r[4]||0,r[5]||0,r[6]||0,r[7]||0)):new Date(r[1],r[2]-1,r[3]||1,r[4]||0,r[5]||0,r[6]||0,r[7]||0)}return new Date(e)}(t),this.init();},d.init=function(){var t=this.$d;this.$y=t.getFullYear(),this.$M=t.getMonth(),this.$D=t.getDate(),this.$W=t.getDay(),this.$H=t.getHours(),this.$m=t.getMinutes(),this.$s=t.getSeconds(),this.$ms=t.getMilliseconds();},d.$utils=function(){return D},d.isValid=function(){return !("Invalid Date"===this.$d.toString())},d.isSame=function(t,e){var n=g(t);return this.startOf(e)<=n&&n<=this.endOf(e)},d.isAfter=function(t,e){return g(t)<this.startOf(e)},d.isBefore=function(t,e){return this.endOf(e)<g(t)},d.$g=function(t,e,n){return D.u(t)?this[e]:this.set(n,t)},d.year=function(t){return this.$g(t,"$y",a)},d.month=function(t){return this.$g(t,"$M",u)},d.day=function(t){return this.$g(t,"$W",i)},d.date=function(t){return this.$g(t,"$D","date")},d.hour=function(t){return this.$g(t,"$H",r)},d.minute=function(t){return this.$g(t,"$m",n)},d.second=function(t){return this.$g(t,"$s",e)},d.millisecond=function(e){return this.$g(e,"$ms",t)},d.unix=function(){return Math.floor(this.valueOf()/1e3)},d.valueOf=function(){return this.$d.getTime()},d.startOf=function(t,o){var h=this,f=!!D.u(o)||o,c=D.p(t),d=function(t,e){var n=D.w(h.$u?Date.UTC(h.$y,e,t):new Date(h.$y,e,t),h);return f?n:n.endOf(i)},$=function(t,e){return D.w(h.toDate()[t].apply(h.toDate("s"),(f?[0,0,0,0]:[23,59,59,999]).slice(e)),h)},l=this.$W,m=this.$M,y=this.$D,M="set"+(this.$u?"UTC":"");switch(c){case a:return f?d(1,0):d(31,11);case u:return f?d(1,m):d(0,m+1);case s:var g=this.$locale().weekStart||0,v=(l<g?l+7:l)-g;return d(f?y-v:y+(6-v),m);case i:case"date":return $(M+"Hours",0);case r:return $(M+"Minutes",1);case n:return $(M+"Seconds",2);case e:return $(M+"Milliseconds",3);default:return this.clone()}},d.endOf=function(t){return this.startOf(t,!1)},d.$set=function(s,o){var h,f=D.p(s),c="set"+(this.$u?"UTC":""),d=(h={},h[i]=c+"Date",h.date=c+"Date",h[u]=c+"Month",h[a]=c+"FullYear",h[r]=c+"Hours",h[n]=c+"Minutes",h[e]=c+"Seconds",h[t]=c+"Milliseconds",h)[f],$=f===i?this.$D+(o-this.$W):o;if(f===u||f===a){var l=this.clone().set("date",1);l.$d[d]($),l.init(),this.$d=l.set("date",Math.min(this.$D,l.daysInMonth())).toDate();}else d&&this.$d[d]($);return this.init(),this},d.set=function(t,e){return this.clone().$set(t,e)},d.get=function(t){return this[D.p(t)]()},d.add=function(t,o){var h,f=this;t=Number(t);var c=D.p(o),d=function(e){var n=g(f);return D.w(n.date(n.date()+Math.round(e*t)),f)};if(c===u)return this.set(u,this.$M+t);if(c===a)return this.set(a,this.$y+t);if(c===i)return d(1);if(c===s)return d(7);var $=(h={},h[n]=6e4,h[r]=36e5,h[e]=1e3,h)[c]||1,l=this.$d.getTime()+t*$;return D.w(l,this)},d.subtract=function(t,e){return this.add(-1*t,e)},d.format=function(t){var e=this;if(!this.isValid())return "Invalid Date";var n=t||"YYYY-MM-DDTHH:mm:ssZ",r=D.z(this),i=this.$locale(),s=this.$H,u=this.$m,o=this.$M,a=i.weekdays,h=i.months,c=function(t,r,i,s){return t&&(t[r]||t(e,n))||i[r].substr(0,s)},d=function(t){return D.s(s%12||12,t,"0")},$=i.meridiem||function(t,e,n){var r=t<12?"AM":"PM";return n?r.toLowerCase():r},l={YY:String(this.$y).slice(-2),YYYY:this.$y,M:o+1,MM:D.s(o+1,2,"0"),MMM:c(i.monthsShort,o,h,3),MMMM:c(h,o),D:this.$D,DD:D.s(this.$D,2,"0"),d:String(this.$W),dd:c(i.weekdaysMin,this.$W,a,2),ddd:c(i.weekdaysShort,this.$W,a,3),dddd:a[this.$W],H:String(s),HH:D.s(s,2,"0"),h:d(1),hh:d(2),a:$(s,u,!0),A:$(s,u,!1),m:String(u),mm:D.s(u,2,"0"),s:String(this.$s),ss:D.s(this.$s,2,"0"),SSS:D.s(this.$ms,3,"0"),Z:r};return n.replace(f,function(t,e){return e||l[t]||r.replace(":","")})},d.utcOffset=function(){return 15*-Math.round(this.$d.getTimezoneOffset()/15)},d.diff=function(t,h,f){var c,d=D.p(h),$=g(t),l=6e4*($.utcOffset()-this.utcOffset()),m=this-$,y=D.m(this,$);return y=(c={},c[a]=y/12,c[u]=y,c[o]=y/3,c[s]=(m-l)/6048e5,c[i]=(m-l)/864e5,c[r]=m/36e5,c[n]=m/6e4,c[e]=m/1e3,c)[d]||m,f?y:D.a(y)},d.daysInMonth=function(){return this.endOf(u).$D},d.$locale=function(){return m[this.$L]},d.locale=function(t,e){if(!t)return this.$L;var n=this.clone(),r=M(t,e,!0);return r&&(n.$L=r),n},d.clone=function(){return D.w(this.$d,this)},d.toDate=function(){return new Date(this.valueOf())},d.toJSON=function(){return this.isValid()?this.toISOString():null},d.toISOString=function(){return this.$d.toISOString()},d.toString=function(){return this.$d.toUTCString()},c}();return g.prototype=v.prototype,g.extend=function(t,e){return t(e,v,g),g},g.locale=M,g.isDayjs=y,g.unix=function(t){return g(1e3*t)},g.en=m[l],g.Ls=m,g});
 });
 
 var utc = createCommonjsModule(function (module, exports) {
-!function(t,i){module.exports=i();}(commonjsGlobal,function(){return function(t,i,e){var s=(new Date).getTimezoneOffset(),n=i.prototype;e.utc=function(t,e){return new i({date:t,utc:!0,format:e})},n.utc=function(){return e(this.toDate(),{locale:this.$L,utc:!0})},n.local=function(){return e(this.toDate(),{locale:this.$L,utc:!1})};var u=n.parse;n.parse=function(t){t.utc&&(this.$u=!0),this.$utils().u(t.$offset)||(this.$offset=t.$offset),u.call(this,t);};var o=n.init;n.init=function(){if(this.$u){var t=this.$d;this.$y=t.getUTCFullYear(),this.$M=t.getUTCMonth(),this.$D=t.getUTCDate(),this.$W=t.getUTCDay(),this.$H=t.getUTCHours(),this.$m=t.getUTCMinutes(),this.$s=t.getUTCSeconds(),this.$ms=t.getUTCMilliseconds();}else o.call(this);};var f=n.utcOffset;n.utcOffset=function(t){var i=this.$utils().u;if(i(t))return this.$u?0:i(this.$offset)?f.call(this):this.$offset;var e,n=Math.abs(t)<=16?60*t:t;return 0!==t?(e=this.local().add(n+s,"minute")).$offset=n:e=this.utc(),e};var r=n.format;n.format=function(t){var i=t||(this.$u?"YYYY-MM-DDTHH:mm:ss[Z]":"");return r.call(this,i)},n.valueOf=function(){var t=this.$utils().u(this.$offset)?0:this.$offset+s;return this.$d.valueOf()-6e4*t},n.isUTC=function(){return !!this.$u},n.toISOString=function(){return this.toDate().toISOString()},n.toString=function(){return this.toDate().toUTCString()};}});
+!function(t,i){module.exports=i();}(commonjsGlobal,function(){return function(t,i,e){var s=(new Date).getTimezoneOffset(),n=i.prototype;e.utc=function(t){return new i({date:t,utc:!0,args:arguments})},n.utc=function(){return e(this.toDate(),{locale:this.$L,utc:!0})},n.local=function(){return e(this.toDate(),{locale:this.$L,utc:!1})};var u=n.parse;n.parse=function(t){t.utc&&(this.$u=!0),this.$utils().u(t.$offset)||(this.$offset=t.$offset),u.call(this,t);};var o=n.init;n.init=function(){if(this.$u){var t=this.$d;this.$y=t.getUTCFullYear(),this.$M=t.getUTCMonth(),this.$D=t.getUTCDate(),this.$W=t.getUTCDay(),this.$H=t.getUTCHours(),this.$m=t.getUTCMinutes(),this.$s=t.getUTCSeconds(),this.$ms=t.getUTCMilliseconds();}else o.call(this);};var f=n.utcOffset;n.utcOffset=function(t){var i=this.$utils().u;if(i(t))return this.$u?0:i(this.$offset)?f.call(this):this.$offset;var e,n=Math.abs(t)<=16?60*t:t;return 0!==t?(e=this.local().add(n+s,"minute")).$offset=n:e=this.utc(),e};var r=n.format;n.format=function(t){var i=t||(this.$u?"YYYY-MM-DDTHH:mm:ss[Z]":"");return r.call(this,i)},n.valueOf=function(){var t=this.$utils().u(this.$offset)?0:this.$offset+s;return this.$d.valueOf()-6e4*t},n.isUTC=function(){return !!this.$u},n.toISOString=function(){return this.toDate().toISOString()},n.toString=function(){return this.toDate().toUTCString()};var a=n.toDate;n.toDate=function(t){return "s"===t&&this.$offset?e(this.format("YYYY-MM-DD HH:mm:ss:SSS")).toDate():a.call(this)};}});
 });
 
 /**
@@ -11181,7 +11192,7 @@ function getClass(name, appendix = '') {
         simple = lib;
     }
     if (appendix)
-        return `${simple} ${simple}--${appendix.replace(/[^\w]+/gi, '-')}`;
+        return `${simple} ${simple}--${appendix.replace(':', '-')}`;
     return simple;
 }
 function getId(name, id) {
@@ -11195,7 +11206,7 @@ function mergeActions(userConfig, defaultConfig, merge) {
     const defaultConfigActions = merge({}, defaultConfig.actions);
     const userActions = merge({}, userConfig.actions);
     let allActionNames = [...Object.keys(defaultConfigActions), ...Object.keys(userActions)];
-    allActionNames = allActionNames.filter(i => allActionNames.includes(i));
+    allActionNames = allActionNames.filter((i) => allActionNames.includes(i));
     const actions = {};
     for (const actionName of allActionNames) {
         actions[actionName] = [];
@@ -11227,7 +11238,7 @@ function stateFromConfig(userConfig) {
     return (this.state = new DeepState(prepareState(userConfig), {
         delimeter: '.',
         maxSimultaneousJobs: 1000,
-        Promise: userConfig.Promise
+        Promise: userConfig.Promise,
     }));
 }
 function wasmStateFromConfig(userConfig, wasmFile = './wildcard_matcher_bg.wasm') {
@@ -11251,7 +11262,7 @@ const publicApi = {
         this.state.update('config.chart.time.period', period);
         return this.state.get('config.chart.time.zoom');
     },
-    dayjs: dayjs_min
+    dayjs: dayjs_min,
 };
 class Api {
     constructor(state) {
@@ -11266,7 +11277,7 @@ class Api {
         this.allActions = [];
         this.state = state;
         this.time = new Time(this.state, this);
-        this.unsubscribes.push(this.state.subscribe('config.debug', dbg => (this.debug = dbg)));
+        this.unsubscribes.push(this.state.subscribe('config.debug', (dbg) => (this.debug = dbg)));
         if (this.debug) {
             // @ts-ignore
             window.state = state;
@@ -11330,9 +11341,9 @@ class Api {
     getItem(itemId) {
         return this.state.get(`config.chart.items.${itemId}`);
     }
-    getItems(itemsId) {
+    getItems(itemsId = []) {
         if (!itemsId.length)
-            return [];
+            return Object.values(this.getAllItems());
         const items = [];
         const configItems = this.getAllItems();
         for (const itemId of itemsId) {
@@ -11350,7 +11361,7 @@ class Api {
             const linkedItem = items[linkedItemId];
             if (!linkedItem)
                 throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
-            linkedItem.linkedWith = allLinkedIds.filter(linkedItemId => linkedItemId !== linkedItem.id);
+            linkedItem.linkedWith = allLinkedIds.filter((linkedItemId) => linkedItemId !== linkedItem.id);
         }
     }
     prepareItems(items) {
@@ -11381,15 +11392,15 @@ class Api {
                         actualRight: 0,
                         top: item.top || 0,
                         actualTop: item.top || 0,
-                        viewTop: 0
+                        viewTop: 0,
                     },
                     width: -1,
                     actualWidth: -1,
-                    detached: false
+                    detached: false,
                 };
             item.$data.time = {
                 startDate: this.time.date(item.time.start),
-                endDate: this.time.date(item.time.end)
+                endDate: this.time.date(item.time.end),
             };
             item.$data.actualHeight = item.height;
             if (typeof item.top !== 'number')
@@ -11424,11 +11435,11 @@ class Api {
                         top: 0,
                         topPercent: 0,
                         bottomPercent: 0,
-                        viewTop: 0
+                        viewTop: 0,
                     },
                     items: [],
                     actualHeight: 0,
-                    outerHeight: 0
+                    outerHeight: 0,
                 };
             if (typeof row.height !== 'number') {
                 row.height = defaultHeight;
@@ -11507,7 +11518,7 @@ class Api {
         if (fixOverlapped) {
             const rowItems = this.getItems(row.$data.items);
             this.fixOverlappedItems(rowItems);
-            row.$data.items = rowItems.map(item => item.id);
+            row.$data.items = rowItems.map((item) => item.id);
         }
         for (const item of this.getItems(row.$data.items)) {
             actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);
@@ -11624,7 +11635,7 @@ class Api {
             return [];
         const rows = this.getAllRows();
         innerHeight += verticalScroll.offset || 0;
-        let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
+        let strictTopRow = rowsWithParentsExpanded.find((rowId) => rowId === topRow.id);
         let index = rowsWithParentsExpanded.indexOf(strictTopRow);
         if (this.debug)
             console.log('getVisibleRows #4', { index }); // eslint-disable-line no-console
@@ -11760,6 +11771,30 @@ class Api {
     getScrollTop() {
         return this.state.get('config.scroll.vertical');
     }
+    getGridCells(cellIds = undefined) {
+        const allCells = this.state.get('$data.chart.grid.cells');
+        if (typeof cellIds !== 'undefined') {
+            return allCells ? Object.values(allCells).filter((cell) => cellIds.includes(cell.id)) : [];
+        }
+        if (!allCells)
+            return [];
+        return Object.values(allCells);
+    }
+    getGridRows(rowIds = undefined) {
+        const allRows = this.state.get('$data.chart.grid.rows');
+        if (typeof rowIds !== 'undefined') {
+            return allRows ? Object.values(allRows).filter((row) => rowIds.includes(row.row.id)) : [];
+        }
+        if (!allRows)
+            return [];
+        return Object.values(allRows);
+    }
+    getGridCell(cellId) {
+        return this.state.get(`$data.chart.grid.cells.${cellId}`);
+    }
+    getGridRow(rowId) {
+        return this.state.get(`$data.chart.grid.rows.${rowId}`);
+    }
     getSVGIconSrc(svg) {
         if (typeof this.iconsCache[svg] === 'string')
             return this.iconsCache[svg];
@@ -11797,17 +11832,17 @@ function getDefaultData() {
             visibleRowsHeight: 0,
             rowsWithParentsExpanded: [],
             rowsHeight: 0,
-            width: 0
+            width: 0,
         },
         dimensions: {
             width: 0,
-            height: 0
+            height: 0,
         },
         chart: {
             dimensions: {
                 width: 0,
                 innerWidth: 0,
-                height: 0
+                height: 0,
             },
             visibleItems: [],
             time: {
@@ -11817,7 +11852,7 @@ function getDefaultData() {
                     zoomTo: 0,
                     format() {
                         return '';
-                    }
+                    },
                 },
                 level: 0,
                 levels: [],
@@ -11839,10 +11874,10 @@ function getDefaultData() {
                 to: 0,
                 fromDate: null,
                 toDate: null,
-                additionalSpaceAdded: false
-            }
+                additionalSpaceAdded: false,
+            },
         },
-        elements: {}
+        elements: {},
     };
 }
 function GSTC(options) {
@@ -11853,10 +11888,10 @@ function GSTC(options) {
         // @ts-ignore
         window.state = state;
     }
-    state.update('', oldValue => {
+    state.update('', (oldValue) => {
         return {
             config: oldValue.config,
-            $data
+            $data,
         };
     });
     const vido = Vido(state, api);

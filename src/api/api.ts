@@ -26,7 +26,11 @@ import {
   DefaultItem,
   DataChartTimeLevelDate,
   ScrollTypeVertical,
-  Rows
+  Rows,
+  GridCell,
+  GridRows,
+  GridRow,
+  GridCells,
 } from '../gstc';
 import { generateSlots } from './slots';
 import { lithtml } from '@neuronet.io/vido/src/vido';
@@ -40,7 +44,7 @@ export function getClass(name: string, appendix: string = '') {
   if (name === lib) {
     simple = lib;
   }
-  if (appendix) return `${simple} ${simple}--${appendix.replace(/[^\w]+/gi, '-')}`;
+  if (appendix) return `${simple} ${simple}--${appendix.replace(':', '-')}`;
   return simple;
 }
 
@@ -56,7 +60,7 @@ function mergeActions(userConfig: Config, defaultConfig: Config, merge) {
   const defaultConfigActions = merge({}, defaultConfig.actions);
   const userActions = merge({}, userConfig.actions);
   let allActionNames = [...Object.keys(defaultConfigActions), ...Object.keys(userActions)];
-  allActionNames = allActionNames.filter(i => allActionNames.includes(i));
+  allActionNames = allActionNames.filter((i) => allActionNames.includes(i));
   const actions = {};
   for (const actionName of allActionNames) {
     actions[actionName] = [];
@@ -89,7 +93,7 @@ export function stateFromConfig(userConfig: Config) {
   return (this.state = new State(prepareState(userConfig), {
     delimeter: '.',
     maxSimultaneousJobs: 1000,
-    Promise: userConfig.Promise
+    Promise: userConfig.Promise,
   }));
 }
 
@@ -113,7 +117,7 @@ export const publicApi = {
     this.state.update('config.chart.time.period', period);
     return this.state.get('config.chart.time.zoom');
   },
-  dayjs
+  dayjs,
 };
 
 export interface WheelResult {
@@ -141,7 +145,7 @@ export class Api {
   constructor(state: DeepState) {
     this.state = state;
     this.time = new Time(this.state, this);
-    this.unsubscribes.push(this.state.subscribe('config.debug', dbg => (this.debug = dbg)));
+    this.unsubscribes.push(this.state.subscribe('config.debug', (dbg) => (this.debug = dbg)));
     if (this.debug) {
       // @ts-ignore
       window.state = state;
@@ -216,8 +220,8 @@ export class Api {
     return this.state.get(`config.chart.items.${itemId}`) as Item;
   }
 
-  getItems(itemsId: string[]): Item[] {
-    if (!itemsId.length) return [];
+  getItems(itemsId: string[] = []): Item[] {
+    if (!itemsId.length) return Object.values(this.getAllItems());
     const items = [];
     const configItems: Items = this.getAllItems();
     for (const itemId of itemsId) {
@@ -235,7 +239,7 @@ export class Api {
     for (const linkedItemId of allLinkedIds) {
       const linkedItem = items[linkedItemId];
       if (!linkedItem) throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
-      linkedItem.linkedWith = allLinkedIds.filter(linkedItemId => linkedItemId !== linkedItem.id);
+      linkedItem.linkedWith = allLinkedIds.filter((linkedItemId) => linkedItemId !== linkedItem.id);
     }
   }
 
@@ -265,15 +269,15 @@ export class Api {
             actualRight: 0,
             top: item.top || 0,
             actualTop: item.top || 0,
-            viewTop: 0
+            viewTop: 0,
           },
           width: -1,
           actualWidth: -1,
-          detached: false
+          detached: false,
         };
       item.$data.time = {
         startDate: this.time.date(item.time.start),
-        endDate: this.time.date(item.time.end)
+        endDate: this.time.date(item.time.end),
       };
       item.$data.actualHeight = item.height;
       if (typeof item.top !== 'number') item.top = 0;
@@ -303,11 +307,11 @@ export class Api {
             top: 0,
             topPercent: 0,
             bottomPercent: 0,
-            viewTop: 0
+            viewTop: 0,
           },
           items: [],
           actualHeight: 0,
-          outerHeight: 0
+          outerHeight: 0,
         };
       if (typeof row.height !== 'number') {
         row.height = defaultHeight;
@@ -378,7 +382,7 @@ export class Api {
     if (fixOverlapped) {
       const rowItems = this.getItems(row.$data.items);
       this.fixOverlappedItems(rowItems);
-      row.$data.items = rowItems.map(item => item.id);
+      row.$data.items = rowItems.map((item) => item.id);
     }
     for (const item of this.getItems(row.$data.items)) {
       actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);
@@ -492,7 +496,7 @@ export class Api {
     if (!innerHeight) return [];
     const rows: Rows = this.getAllRows();
     innerHeight += verticalScroll.offset || 0;
-    let strictTopRow = rowsWithParentsExpanded.find(rowId => rowId === topRow.id);
+    let strictTopRow = rowsWithParentsExpanded.find((rowId) => rowId === topRow.id);
     let index = rowsWithParentsExpanded.indexOf(strictTopRow);
     if (this.debug) console.log('getVisibleRows #4', { index }); // eslint-disable-line no-console
     if (index === undefined) return [];
@@ -630,6 +634,32 @@ export class Api {
 
   getScrollTop(): ScrollTypeVertical {
     return this.state.get('config.scroll.vertical');
+  }
+
+  getGridCells(cellIds: string[] = undefined): GridCell[] {
+    const allCells: GridCells = this.state.get('$data.chart.grid.cells');
+    if (typeof cellIds !== 'undefined') {
+      return allCells ? Object.values(allCells).filter((cell) => cellIds.includes(cell.id)) : [];
+    }
+    if (!allCells) return [];
+    return Object.values(allCells);
+  }
+
+  getGridRows(rowIds: string[] = undefined): GridRow[] {
+    const allRows: GridRows = this.state.get('$data.chart.grid.rows');
+    if (typeof rowIds !== 'undefined') {
+      return allRows ? Object.values(allRows).filter((row) => rowIds.includes(row.row.id)) : [];
+    }
+    if (!allRows) return [];
+    return Object.values(allRows);
+  }
+
+  getGridCell(cellId: string): GridCell {
+    return this.state.get(`$data.chart.grid.cells.${cellId}`);
+  }
+
+  getGridRow(rowId: string): GridRow {
+    return this.state.get(`$data.chart.grid.rows.${rowId}`);
   }
 
   getSVGIconSrc(svg) {

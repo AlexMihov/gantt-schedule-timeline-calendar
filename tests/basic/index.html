@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf8" />
+    <title>Gantt-Schedule-Timeline-Calendar (GSTC) demo</title>
     <base href="./" />
     <meta name="viewport" content="width=device-width" />
     <link rel="stylesheet" href="../../dist/style.css" />
@@ -13,6 +14,10 @@
   </head>
 
   <body>
+    <div>
+      <input type="range" min="0" max="100" value="100" id="percent" />
+      <input type="range" min="12" max="26" value="20" id="zoom" />
+    </div>
     <div id="app"></div>
     <script src="index.js" type="module"></script>
   </body>
