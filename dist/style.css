@@ -30,10 +30,10 @@ body.gstc-scrolling * {
 .gstc__helper-dark {
   background: #f9fafb;
 }
-.gstc__cell-selecting {
+.gstc__grid-cell-selecting {
   background: rgba(52,152,219,0.627) !important;
 }
-.gstc__cell-selected {
+.gstc__grid-cell-selected {
   background: #3498db !important;
 }
 .gstc__list-column-header-resizer--active {

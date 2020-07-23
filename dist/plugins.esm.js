@@ -2091,13 +2091,13 @@ function prepareOptions$1(options) {
         showOverlay: true,
         rectangularSelection: true,
         multipleSelection: true,
-        selectedClassName: 'gstc__cell-selected',
-        selectingClassName: 'gstc__cell-selecting',
-        canSelect(type, currently /*, all*/) {
-            return currently;
+        selectedClassName: 'gstc__grid-cell-selected',
+        selectingClassName: 'gstc__grid-cell-selecting',
+        onSelecting(selecting) {
+            return selecting;
         },
-        canDeselect( /*type, currently, all*/) {
-            return [];
+        onSelected(selected) {
+            return selected;
         },
     };
     options = Object.assign(Object.assign({}, defaultOptions), options);
@@ -2111,10 +2111,10 @@ function generateEmptyData$2(options) {
         }, selected: {
             [ITEM]: [],
             [CELL]: [],
-        }, automaticallySelected: {
+        }, lastSelected: {
             [ITEM]: [],
             [CELL]: [],
-        }, previouslyAutomaticallySelected: {
+        }, automaticallySelected: {
             [ITEM]: [],
             [CELL]: [],
         }, events: {
@@ -2250,7 +2250,7 @@ class SelectionPlugin {
         }
         return current;
     }
-    getSelected(item) {
+    getSelectedItem(item) {
         let selected;
         let automaticallySelected = this.data.automaticallySelected[ITEM].slice();
         const linked = this.collectLinkedItems(item, [item.id]);
@@ -2413,16 +2413,44 @@ class SelectionPlugin {
         this.data.selected[CELL].length = 0;
         this.updateCells();
     }
-    selectMultipleCells(multi) {
+    selectMultipleCellsAndItems() {
+        if (!this.canSelect())
+            return;
+        if (!this.data.multipleSelection) {
+            this.deselectItems();
+            this.deselectCells();
+            this.updateData();
+            return;
+        }
+        this.data.isSelecting = true;
+        this.data.selectionAreaLocal = this.getSelectionAreaLocal();
+        this.data.selectionAreaGlobal = this.translateAreaLocalToGlobal(this.data.selectionAreaLocal);
+        let selecting = {
+            [CELL]: [],
+            [ITEM]: [],
+        };
+        const isMulti = this.isMulti();
         const { selectedCells } = this.getCellsUnderSelectionArea(this.data.selectionAreaLocal);
         if (selectedCells.length === 0) {
-            this.data.selecting[CELL].length = 0;
-            if (!this.isMulti())
+            selecting[CELL].length = 0;
+            if (!isMulti)
                 this.data.selected[CELL].length = 0;
         }
         else {
-            this.data.selecting[CELL] = selectedCells;
+            selecting[CELL] = selectedCells;
         }
+        const { selectedItems, automaticallySelectedItems } = this.getItemsUnderSelectionArea(this.data.selectionAreaLocal);
+        this.data.automaticallySelected[ITEM] = automaticallySelectedItems;
+        if (selectedItems.length === 0) {
+            selecting[ITEM].length = 0;
+            if (!isMulti)
+                this.data.selected[ITEM].length = 0;
+        }
+        else {
+            selecting[ITEM] = selectedItems;
+        }
+        this.data.selecting = this.data.onSelecting(selecting, this.api.mergeDeep({}, this.data.selecting));
+        let multi = this.state.multi();
         const allCells = this.api.getGridCells();
         const currentlySelectingCellsStr = allCells
             .filter((cell) => cell.selecting)
@@ -2431,19 +2459,6 @@ class SelectionPlugin {
         const selectingCellsStr = this.data.selecting[CELL].join('|');
         if (currentlySelectingCellsStr !== selectingCellsStr)
             multi = this.updateCells(multi);
-        return multi;
-    }
-    selectMultipleItems(multi) {
-        const { selectedItems, automaticallySelectedItems } = this.getItemsUnderSelectionArea(this.data.selectionAreaLocal);
-        this.data.automaticallySelected[ITEM] = automaticallySelectedItems;
-        if (selectedItems.length === 0) {
-            this.data.selecting[ITEM].length = 0;
-            if (this.isMulti())
-                this.data.selected[ITEM].length = 0;
-        }
-        else {
-            this.data.selecting[ITEM] = selectedItems;
-        }
         const allItems = this.api.getItems();
         const currentlySelectingItemsStr = allItems
             .filter((item) => item.selecting)
@@ -2452,22 +2467,6 @@ class SelectionPlugin {
         const selectingItemsStr = this.data.selecting[ITEM].join('|');
         if (currentlySelectingItemsStr !== selectingItemsStr)
             multi = this.updateItems(multi);
-        return multi;
-    }
-    selectMultipleCellsAndItems() {
-        if (!this.canSelect())
-            return;
-        if (!this.data.multipleSelection) {
-            this.deselectItems();
-            this.deselectCells();
-            return;
-        }
-        this.data.isSelecting = true;
-        this.data.selectionAreaLocal = this.getSelectionAreaLocal();
-        this.data.selectionAreaGlobal = this.translateAreaLocalToGlobal(this.data.selectionAreaLocal);
-        let multi = this.state.multi();
-        multi = this.selectMultipleItems(multi);
-        multi = this.selectMultipleCells(multi);
         multi.done();
     }
     selectItemsIndividually() {
@@ -2478,7 +2477,7 @@ class SelectionPlugin {
         if (!this.canSelect())
             return;
         const item = this.merge({}, this.pointerData.targetData);
-        let { selected, automaticallySelected } = this.getSelected(item);
+        let { selected, automaticallySelected } = this.getSelectedItem(item);
         if (selected.length > 1 && !this.data.multipleSelection) {
             selected = [item.id];
             automaticallySelected = [];
@@ -2490,19 +2489,21 @@ class SelectionPlugin {
         multi.done();
     }
     finishSelection() {
+        let selected;
         if (this.isMulti()) {
-            this.data.selected[CELL] = Array.from(new Set([...this.data.selected[CELL], ...this.data.selecting[CELL]]));
-            this.data.selected[ITEM] = Array.from(new Set([...this.data.selected[ITEM], ...this.data.selecting[ITEM]]));
-            this.data.selecting[CELL].length = 0;
-            this.data.selecting[ITEM].length = 0;
-            let multi = this.state.multi();
-            multi = this.updateItems(multi);
-            multi = this.updateCells(multi);
-            multi.done();
-            return;
+            selected = {
+                [CELL]: Array.from(new Set([...this.data.selected[CELL], ...this.data.selecting[CELL]])),
+                [ITEM]: Array.from(new Set([...this.data.selected[ITEM], ...this.data.selecting[ITEM]])),
+            };
         }
-        this.data.selected[CELL] = [...this.data.selecting[CELL]];
-        this.data.selected[ITEM] = [...this.data.selecting[ITEM]];
+        else {
+            selected = {
+                [CELL]: [...this.data.selecting[CELL]],
+                [ITEM]: [...this.data.selecting[ITEM]],
+            };
+        }
+        this.data.selected = this.data.onSelected(selected, this.api.mergeDeep({}, this.data.lastSelected));
+        this.data.lastSelected = this.api.mergeDeep({}, this.data.selected);
         this.data.selecting[CELL].length = 0;
         this.data.selecting[ITEM].length = 0;
         let multi = this.state.multi();
