@@ -164,17 +164,13 @@ class SelectionPlugin {
         });
         // watch and update items/cells that are inside selection
         // remove ones that no longer exist
+        // for cells we cannot do that because cells are created dynamically
         this.onDestroy.push(this.state.subscribe('config.chart.items', (items) => {
             this.data.selected[ITEM] = this.data.selected[ITEM].filter((itemId) => !!items[itemId]);
             this.data.selecting[ITEM] = this.data.selecting[ITEM].filter((itemId) => !!items[itemId]);
         }, {
             ignore: ['$data.chart.items.*.detached', 'config.chart.items.*.selected', 'config.chart.items.*.selecting'],
         }));
-        this.onDestroy.push(this.state.subscribe('$data.chart.grid', () => {
-            const allCells = this.api.getGridCells();
-            this.data.selected[CELL] = this.data.selected[CELL].filter((cellId) => !!allCells.find((cell) => cell.id === cellId));
-            this.data.selecting[CELL] = this.data.selecting[CELL].filter((cellId) => !!allCells.find((cell) => cell.id === cellId));
-        }, { ignore: ['$data.chart.grid.cells.*.selected', '$data.chart.grid.cells.*.selecting'] }));
     }
     setWrapper() {
         this.state.update('config.wrappers.ChartTimelineItems', (oldWrapper) => {

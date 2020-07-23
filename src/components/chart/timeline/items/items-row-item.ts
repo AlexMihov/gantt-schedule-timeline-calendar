@@ -116,6 +116,9 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
     if (props.item.selected) {
       classNameCurrent += ' ' + api.getClass(componentName) + '--selected';
     }
+    if (props.item.selecting) {
+      classNameCurrent += ' ' + api.getClass(componentName) + '--selecting';
+    }
     const oldWidth = styleMap.style.width;
     const oldLeft = styleMap.style.left;
     const oldTop = styleMap.style.top;

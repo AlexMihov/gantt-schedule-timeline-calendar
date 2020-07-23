@@ -448,7 +448,7 @@ body.gstc-scrolling * {
   padding: 4px 4px;
   user-select: none;
   background: #e74c3c;
-  border-radius: 18px;
+  border-radius: 4px;
   color: #fff;
   line-height: 22px;
   display: flex;
@@ -510,14 +510,14 @@ body.gstc-scrolling * {
   margin-left: 1px;
 }
 .gstc__chart-timeline-items-row-item-resizing-handle--right {
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
   cursor: e-resize;
   padding-left: 5px;
 }
 .gstc__chart-timeline-items-row-item-resizing-handle--left {
-  border-top-left-radius: 20px;
-  border-bottom-left-radius: 20px;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
   cursor: w-resize;
   padding-left: 7px;
 }
