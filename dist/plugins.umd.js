@@ -1951,20 +1951,20 @@
               return;
           this.onPointerMove(ev);
           const selected = this.getSelectedItems();
-          const movement = this.merge({}, this.data.movement);
+          const itemDataToSave = {};
+          const movement = this.data.movement;
           const time = this.state.get('$data.chart.time');
           for (let i = 0, len = selected.length; i < len; i++) {
               const item = selected[i];
-              const itemData = this.merge({}, this.api.getItemData(item.id));
-              itemData.position.left = this.api.getItemData(this.data.initialItems[i].id).position.left + movement.px;
+              const itemData = this.merge({}, this.data.initialItemsData[item.id]);
+              itemData.position.left = itemData.position.left + movement.px;
               if (itemData.position.left > itemData.position.right)
                   itemData.position.left = itemData.position.right;
-              itemData.position.actualLeft = itemData.position.left;
+              const leftGlobal = this.api.time.getTimeFromViewOffsetPx(itemData.position.left, time, true);
               itemData.width = itemData.position.right - itemData.position.left;
               if (itemData.width < item.minWidth)
                   itemData.width = item.minWidth;
               itemData.actualWidth = itemData.width;
-              const leftGlobal = this.api.time.getTimeFromViewOffsetPx(itemData.position.left, time, true);
               const finalLeftGlobalDate = this.data.snapToTime.start({
                   startTime: this.api.time.date(leftGlobal),
                   item,
@@ -1974,9 +1974,9 @@
               });
               item.time.start = finalLeftGlobalDate.valueOf();
               itemData.time.startDate = finalLeftGlobalDate;
-              //this.api.setItemData(item.id, itemData);
+              itemDataToSave[item.id] = itemData;
           }
-          this.dispatchEvent('onResize', selected);
+          this.dispatchEvent('onResize', selected, itemDataToSave);
           this.updateData();
       }
       onRightPointerMove(ev) {
