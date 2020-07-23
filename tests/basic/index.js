@@ -108,3 +108,12 @@ document.getElementById('zoom').addEventListener('input', (ev) => {
   const period = gstc.state.get('config.chart.time');
   console.log(`current period: `, period); // eslint-disable-line
 });
+
+function selectCells() {
+  const api = gstc.api;
+  const allCells = api.getGridCells();
+  api.plugins.selection.selectCells([allCells[0].id, allCells[1].id]);
+  api.plugins.selection.selectItems(['1']);
+  console.log(api.plugins.selection.getSelection());
+}
+document.getElementById('select-cells').addEventListener('click', selectCells);

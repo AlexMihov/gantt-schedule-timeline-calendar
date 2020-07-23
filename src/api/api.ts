@@ -34,6 +34,7 @@ import {
   DataItems,
   ItemData,
   ItemDataUpdate,
+  ChartTime,
 } from '../gstc';
 import { generateSlots } from './slots';
 import { lithtml } from '@neuronet.io/vido/src/vido';
@@ -142,6 +143,7 @@ export class Api {
   public state: DeepState;
   public time: Time;
   public vido: Vido;
+  public plugins: any = {};
   private iconsCache: IconsCache = {};
   private unsubscribes: Unsubscribes = [];
 
@@ -172,7 +174,7 @@ export class Api {
   getId = getId;
   allActions = [];
 
-  getActions(name: string) {
+  private getActions(name: string) {
     if (!this.allActions.includes(name)) this.allActions.push(name);
     let actions = this.state.get('config.actions.' + name);
     if (typeof actions === 'undefined') {
@@ -181,7 +183,12 @@ export class Api {
     return actions.slice();
   }
 
-  isItemInViewport(item: Item, leftGlobal: number, rightGlobal: number) {
+  public isItemInViewport(item: Item, leftGlobal: number = undefined, rightGlobal: number = undefined) {
+    if (!leftGlobal || !rightGlobal) {
+      const time: ChartTime = this.state.get('config.chart.time');
+      leftGlobal = time.leftGlobal;
+      rightGlobal = time.rightGlobal;
+    }
     return item.time.start <= rightGlobal && item.time.end >= leftGlobal;
   }
 
@@ -201,11 +208,11 @@ export class Api {
     return allLinked;
   }
 
-  getRow(rowId: string): Row {
+  public getRow(rowId: string): Row {
     return this.state.get(`config.list.rows.${rowId}`) as Row;
   }
 
-  getRows(rowsId: string[]): Row[] {
+  public getRows(rowsId: string[]): Row[] {
     if (!rowsId.length) return [];
     const configRows: Rows = this.getAllRows();
     const rows = [];
@@ -215,15 +222,15 @@ export class Api {
     return rows;
   }
 
-  getAllRows(): Rows {
+  public getAllRows(): Rows {
     return this.state.get('config.list.rows');
   }
 
-  getItem(itemId: string): Item {
+  public getItem(itemId: string): Item {
     return this.state.get(`config.chart.items.${itemId}`) as Item;
   }
 
-  getItems(itemsId: string[] = []): Item[] {
+  public getItems(itemsId: string[] = []): Item[] {
     if (!itemsId.length) return Object.values(this.getAllItems());
     const items = [];
     const configItems: Items = this.getAllItems();
@@ -233,19 +240,19 @@ export class Api {
     return items;
   }
 
-  getAllItems(): Items {
+  public getAllItems(): Items {
     return this.state.get('config.chart.items');
   }
 
-  getItemData(itemId: string): ItemData {
+  public getItemData(itemId: string): ItemData {
     return this.state.get(`$data.chart.items.${itemId}`);
   }
 
-  getItemsData(): DataItems {
+  public getItemsData(): DataItems {
     return this.state.get(`$data.chart.items`);
   }
 
-  setItemData(itemId: string, data: ItemDataUpdate) {
+  public setItemData(itemId: string, data: ItemDataUpdate) {
     this.state.update(`$data.chart.items.${itemId}`, (currentData: ItemData) => {
       for (const key in data) {
         currentData[key] = data[key];
@@ -254,11 +261,11 @@ export class Api {
     });
   }
 
-  setItemsData(data: DataItems) {
+  public setItemsData(data: DataItems) {
     this.state.update('$data.chart.items', data);
   }
 
-  prepareLinkedItems(item: Item, items: Items) {
+  private prepareLinkedItems(item: Item, items: Items) {
     const allLinkedIds = this.getAllLinkedItemsIds(item, items);
     for (const linkedItemId of allLinkedIds) {
       const linkedItem = items[linkedItemId];
@@ -267,7 +274,7 @@ export class Api {
     }
   }
 
-  prepareItems(items: Items) {
+  private prepareItems(items: Items) {
     const defaultItemHeight = this.state.get('config.chart.item.height');
     const itemsData = this.getItemsData();
     for (let itemId in items) {
@@ -316,7 +323,7 @@ export class Api {
     return items;
   }
 
-  fillEmptyRowValues(rows: Rows) {
+  private fillEmptyRowValues(rows: Rows) {
     const defaultHeight = this.state.get('config.list.row.height');
     let top = 0;
     for (let rowId in rows) {
@@ -355,7 +362,7 @@ export class Api {
     return rows;
   }
 
-  itemsOnTheSameLevel(item1: Item, item2: Item) {
+  private itemsOnTheSameLevel(item1: Item, item2: Item) {
     const item1Data = this.getItemData(item1.id);
     const item2Data = this.getItemData(item2.id);
     const item1Bottom = item1Data.position.top + item1Data.outerHeight;
@@ -366,7 +373,7 @@ export class Api {
     return false;
   }
 
-  itemsOverlaps(item1: Item, item2: Item): boolean {
+  private itemsOverlaps(item1: Item, item2: Item): boolean {
     if (this.itemsOnTheSameLevel(item1, item2)) {
       if (item2.time.start >= item1.time.start && item2.time.start <= item1.time.end) return true;
       if (item2.time.end >= item1.time.start && item2.time.end <= item1.time.end) return true;
@@ -377,7 +384,7 @@ export class Api {
     return false;
   }
 
-  itemOverlapsWithOthers(item: Item, items: Item[]): Item {
+  private itemOverlapsWithOthers(item: Item, items: Item[]): Item {
     for (let i = 0, len = items.length; i < len; i++) {
       const item2 = items[i];
       const nonZeroTime = item2.time.start && item.time.start && item2.time.end && item.time.end;
@@ -386,7 +393,7 @@ export class Api {
     return null;
   }
 
-  fixOverlappedItems(rowItems: Item[]) {
+  private fixOverlappedItems(rowItems: Item[]) {
     if (rowItems.length === 0) return;
     let index = 0;
     for (let item of rowItems) {
@@ -406,7 +413,7 @@ export class Api {
     }
   }
 
-  recalculateRowHeight(row: Row, fixOverlapped = false): number {
+  private recalculateRowHeight(row: Row, fixOverlapped = false): number {
     if (!row.$data) return 0;
     let actualHeight = 0;
     if (fixOverlapped) {
@@ -425,7 +432,7 @@ export class Api {
     return row.$data.outerHeight;
   }
 
-  recalculateRowsHeightsAndFixOverlappingItems(rowsId: string[]): number {
+  private recalculateRowsHeightsAndFixOverlappingItems(rowsId: string[]): number {
     let top = 0;
     const rows: Rows = this.getAllRows();
     for (const rowId of rowsId) {
@@ -437,7 +444,7 @@ export class Api {
     return top;
   }
 
-  recalculateRowsPercents(rowsId: string[], verticalAreaHeight: number) {
+  private recalculateRowsPercents(rowsId: string[], verticalAreaHeight: number) {
     let top = 0;
     const rows: Rows = this.getAllRows();
     for (const rowId of rowsId) {
@@ -453,7 +460,7 @@ export class Api {
     }
   }
 
-  generateParents(rows: Rows | Items, parentName = 'parentId') {
+  private generateParents(rows: Rows | Items, parentName = 'parentId') {
     const parents = {};
     for (const rowId in rows) {
       const row = rows[rowId];
@@ -466,7 +473,7 @@ export class Api {
     return parents;
   }
 
-  fastTree(rowParents, node, parents = []) {
+  private fastTree(rowParents, node, parents = []) {
     const children = rowParents[node.id];
     node.$data.parents = parents;
     if (typeof children === 'undefined') {
@@ -484,7 +491,7 @@ export class Api {
     return node;
   }
 
-  makeTreeMap(rows: Rows, items: Items) {
+  private makeTreeMap(rows: Rows, items: Items) {
     const itemParents: Items = this.generateParents(items, 'rowId');
     for (const rowId in rows) {
       if (!rows[rowId].$data) return;
@@ -500,7 +507,7 @@ export class Api {
     return this.fastTree(rowParents, tree);
   }
 
-  getRowsWithParentsExpanded(rows: Rows) {
+  private getRowsWithParentsExpanded(rows: Rows) {
     const rowsWithParentsExpanded = [];
     next: for (const rowId in rows) {
       if (!rows[rowId].$data || !rows[rowId].$data.parents) return [];
@@ -515,7 +522,7 @@ export class Api {
     return rowsWithParentsExpanded;
   }
 
-  getVisibleRows(rowsWithParentsExpanded: string[]): string[] {
+  private getVisibleRows(rowsWithParentsExpanded: string[]): string[] {
     if (this.debug) console.log('getVisibleRows #1', { rowsWithParentsExpanded }); // eslint-disable-line no-console
     if (rowsWithParentsExpanded.length === 0) return [];
     const visibleRows = [];
@@ -553,7 +560,7 @@ export class Api {
     return visibleRows;
   }
 
-  normalizeMouseWheelEvent(event: MouseWheelEvent): WheelResult {
+  private normalizeMouseWheelEvent(event: MouseWheelEvent): WheelResult {
     let x = event.deltaX || 0;
     let y = event.deltaY || 0;
     let z = event.deltaZ || 0;
@@ -577,7 +584,11 @@ export class Api {
     return { x, y, z, event };
   }
 
-  scrollToTime(toTime: number, centered = true, time: DataChartTime = this.state.get('$data.chart.time')): number {
+  public scrollToTime(
+    toTime: number,
+    centered = true,
+    time: DataChartTime = this.state.get('$data.chart.time')
+  ): number {
     if (!time.allDates) return 0;
     if (centered) {
       const chartWidth = this.state.get('$data.chart.dimensions.width');
@@ -590,7 +601,7 @@ export class Api {
     return this.setScrollLeft(dataIndex, time).posPx;
   }
 
-  setScrollLeft(
+  public setScrollLeft(
     dataIndex: number | undefined,
     time: DataChartTime = this.state.get('$data.chart.time'),
     multi = undefined,
@@ -634,11 +645,11 @@ export class Api {
     return result;
   }
 
-  getScrollLeft(): ScrollTypeHorizontal {
+  public getScrollLeft(): ScrollTypeHorizontal {
     return this.state.get('config.scroll.horizontal');
   }
 
-  setScrollTop(dataIndex: number | undefined, offset: number = 0) {
+  public setScrollTop(dataIndex: number | undefined, offset: number = 0) {
     if (dataIndex === undefined) {
       dataIndex = 0;
     }
@@ -664,11 +675,11 @@ export class Api {
     });
   }
 
-  getScrollTop(): ScrollTypeVertical {
+  public getScrollTop(): ScrollTypeVertical {
     return this.state.get('config.scroll.vertical');
   }
 
-  getGridCells(cellIds: string[] = undefined): GridCell[] {
+  public getGridCells(cellIds: string[] = undefined): GridCell[] {
     const allCells: GridCells = this.state.get('$data.chart.grid.cells');
     if (typeof cellIds !== 'undefined') {
       return allCells ? Object.values(allCells).filter((cell) => cellIds.includes(cell.id)) : [];
@@ -677,7 +688,7 @@ export class Api {
     return Object.values(allCells);
   }
 
-  getGridRows(rowIds: string[] = undefined): GridRow[] {
+  public getGridRows(rowIds: string[] = undefined): GridRow[] {
     const allRows: GridRows = this.state.get('$data.chart.grid.rows');
     if (typeof rowIds !== 'undefined') {
       return allRows ? Object.values(allRows).filter((row) => rowIds.includes(row.row.id)) : [];
@@ -686,15 +697,15 @@ export class Api {
     return Object.values(allRows);
   }
 
-  getGridCell(cellId: string): GridCell {
+  public getGridCell(cellId: string): GridCell {
     return this.state.get(`$data.chart.grid.cells.${cellId}`);
   }
 
-  getGridRow(rowId: string): GridRow {
+  public getGridRow(rowId: string): GridRow {
     return this.state.get(`$data.chart.grid.rows.${rowId}`);
   }
 
-  getSVGIconSrc(svg) {
+  private getSVGIconSrc(svg) {
     if (typeof this.iconsCache[svg] === 'string') return this.iconsCache[svg];
     this.iconsCache[svg] = 'data:image/svg+xml;base64,' + btoa(svg);
     return this.iconsCache[svg];

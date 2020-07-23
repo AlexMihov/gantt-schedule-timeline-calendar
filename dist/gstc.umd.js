@@ -11275,6 +11275,7 @@
 	    constructor(state) {
 	        this.name = lib;
 	        this.debug = false;
+	        this.plugins = {};
 	        this.iconsCache = {};
 	        this.unsubscribes = [];
 	        this.generateSlots = generateSlots;
@@ -11308,7 +11309,12 @@
 	        }
 	        return actions.slice();
 	    }
-	    isItemInViewport(item, leftGlobal, rightGlobal) {
+	    isItemInViewport(item, leftGlobal = undefined, rightGlobal = undefined) {
+	        if (!leftGlobal || !rightGlobal) {
+	            const time = this.state.get('config.chart.time');
+	            leftGlobal = time.leftGlobal;
+	            rightGlobal = time.rightGlobal;
+	        }
 	        return item.time.start <= rightGlobal && item.time.end >= leftGlobal;
 	    }
 	    getAllLinkedItemsIds(item, items, allLinked = []) {

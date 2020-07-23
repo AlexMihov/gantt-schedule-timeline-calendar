@@ -148,6 +148,20 @@
           this.destroy = this.destroy.bind(this);
           this.setWrapper();
           this.onCellCreate = this.onCellCreate.bind(this);
+          this.apiGetSelection = this.apiGetSelection.bind(this);
+          this.apiGetSelecting = this.apiGetSelecting.bind(this);
+          this.apiGetSelected = this.apiGetSelected.bind(this);
+          this.apiSetSelection = this.apiSetSelection.bind(this);
+          this.apiSelectCells = this.apiSelectCells.bind(this);
+          this.apiSelectItems = this.apiSelectItems.bind(this);
+          this.api.plugins.selection = {
+              getSelection: this.apiGetSelection,
+              getSelected: this.apiGetSelected,
+              getSelecting: this.apiGetSelecting,
+              setSelection: this.apiSetSelection,
+              selectCells: this.apiSelectCells,
+              selectItems: this.apiSelectItems,
+          };
           this.state.update('config.chart.grid.cell.onCreate', (onCreate) => {
               if (!onCreate.includes(this.onCellCreate))
                   onCreate.push(this.onCellCreate);
@@ -199,6 +213,40 @@
       updateData() {
           this.state.update(pluginPath, Object.assign({}, this.data));
           this.vido.update(); // draw selection area overlay
+      }
+      apiSetSelection(selection) {
+          this.data.selected = this.api.mergeDeep({}, selection);
+          let multi = this.state.multi();
+          multi = this.updateCells(multi);
+          multi = this.updateItems(multi);
+          multi.done();
+          this.updateData();
+      }
+      apiSelectCells(cellsId) {
+          this.data.selected[CELL] = [...cellsId];
+          let multi = this.state.multi();
+          multi = this.updateCells(multi);
+          multi.done();
+          this.updateData();
+      }
+      apiSelectItems(itemsId) {
+          this.data.selected[ITEM] = [...itemsId];
+          let multi = this.state.multi();
+          multi = this.updateItems(multi);
+          multi.done();
+          this.updateData();
+      }
+      apiGetSelection() {
+          return {
+              selecting: this.getSelectionWithData(this.data.selecting),
+              selected: this.getSelectionWithData(this.data.selected),
+          };
+      }
+      apiGetSelecting() {
+          return this.getSelectionWithData(this.data.selecting);
+      }
+      apiGetSelected() {
+          return this.getSelectionWithData(this.data.selected);
       }
       modKeyPressed(modKey, ev) {
           switch (modKey) {
@@ -385,9 +433,20 @@
           }
           return { selectedCells };
       }
-      updateItems(multi = undefined) {
-          if (!multi)
-              multi = this.state.multi();
+      updateItems(multi) {
+          const allItems = this.api.getItems();
+          const currentlySelectingItemsStr = allItems
+              .filter((item) => item.selecting)
+              .map((item) => item.id)
+              .join('|');
+          const selectingItemsStr = this.data.selecting[ITEM].join('|');
+          const currentlySelectedItemsStr = allItems
+              .filter((item) => item.selected)
+              .map((item) => item.id)
+              .join('|');
+          const selectedItemsStr = this.data.selected[ITEM].join('|');
+          if (currentlySelectingItemsStr === selectingItemsStr && currentlySelectedItemsStr === selectedItemsStr)
+              return multi;
           multi = multi.update('config.chart.items.*.selected', false);
           multi = multi.update('config.chart.items.*.selecting', false);
           const itemsId = Array.from(new Set([...this.data.selecting[ITEM], ...this.data.selected[ITEM]]));
@@ -399,9 +458,20 @@
           }
           return multi;
       }
-      updateCells(multi = undefined) {
-          if (!multi)
-              multi = this.state.multi();
+      updateCells(multi) {
+          const allCells = this.api.getGridCells();
+          const currentlySelectingCellsStr = allCells
+              .filter((cell) => cell.selecting)
+              .map((cell) => cell.id)
+              .join('|');
+          const selectingCellsStr = this.data.selecting[CELL].join('|');
+          const currentlySelectedCellsStr = allCells
+              .filter((cell) => cell.selected)
+              .map((cell) => cell.id)
+              .join('|');
+          const selectedCellsStr = this.data.selected[CELL].join('|');
+          if (currentlySelectingCellsStr === selectingCellsStr && currentlySelectedCellsStr === selectedCellsStr)
+              return multi;
           multi.update('$data.chart.grid.cells', (cells) => {
               for (const cellId in cells) {
                   const cell = cells[cellId];
@@ -415,26 +485,30 @@
       deselectItems() {
           this.data.selected[ITEM].length = 0;
           this.data.selecting[ITEM].length = 0;
-          this.updateItems();
+          let multi = this.state.multi();
+          multi = this.updateItems(multi);
+          multi.done();
       }
       deselectCells() {
           this.data.selecting[CELL].length = 0;
           this.data.selected[CELL].length = 0;
-          this.updateCells();
+          let multi = this.state.multi();
+          multi = this.updateCells(multi);
+          multi.done();
+      }
+      getSelectionWithData(selection) {
+          const items = this.state.get('config.chart.items');
+          const cells = this.state.get('$data.chart.grid.cells');
+          return {
+              [CELL]: selection[CELL].map((cellId) => cells[cellId]),
+              [ITEM]: selection[ITEM].map((itemId) => items[itemId]),
+          };
       }
       // send cell and item data to event - not just id
       onSelecting(selecting, last) {
-          const items = this.state.get('config.chart.items');
-          const cells = this.state.get('$data.chart.grid.cells');
-          const selectingWithMeat = {
-              [CELL]: selecting[CELL].map((cellId) => cells[cellId]),
-              [ITEM]: selecting[ITEM].map((itemId) => items[itemId]),
-          };
-          const lastWithMeat = {
-              [CELL]: last[CELL].map((cellId) => cells[cellId]),
-              [ITEM]: last[ITEM].map((itemId) => items[itemId]),
-          };
-          const result = this.data.onSelecting(selectingWithMeat, lastWithMeat);
+          const selectingWithData = this.getSelectionWithData(selecting);
+          const lastWithData = this.getSelectionWithData(last);
+          const result = this.data.onSelecting(selectingWithData, lastWithData);
           return {
               [CELL]: result[CELL].map((cell) => cell.id),
               [ITEM]: result[ITEM].map((item) => item.id),
@@ -442,17 +516,9 @@
       }
       // send cell and item data to event - not just id
       onSelected(selected, last) {
-          const items = this.state.get('config.chart.items');
-          const cells = this.state.get('$data.chart.grid.cells');
-          const selectedWithMeat = {
-              [CELL]: selected[CELL].map((cellId) => cells[cellId]),
-              [ITEM]: selected[ITEM].map((itemId) => items[itemId]),
-          };
-          const lastWithMeat = {
-              [CELL]: last[CELL].map((cellId) => cells[cellId]),
-              [ITEM]: last[ITEM].map((itemId) => items[itemId]),
-          };
-          const result = this.data.onSelected(selectedWithMeat, lastWithMeat);
+          const selectedWithData = this.getSelectionWithData(selected);
+          const lastWithData = this.getSelectionWithData(last);
+          const result = this.data.onSelected(selectedWithData, lastWithData);
           return {
               [CELL]: result[CELL].map((cell) => cell.id),
               [ITEM]: result[ITEM].map((item) => item.id),
@@ -496,22 +562,8 @@
           }
           this.data.selecting = this.onSelecting(selecting, this.api.mergeDeep({}, this.data.lastSelected));
           let multi = this.state.multi();
-          const allCells = this.api.getGridCells();
-          const currentlySelectingCellsStr = allCells
-              .filter((cell) => cell.selecting)
-              .map((cell) => cell.id)
-              .join('|');
-          const selectingCellsStr = this.data.selecting[CELL].join('|');
-          if (currentlySelectingCellsStr !== selectingCellsStr)
-              multi = this.updateCells(multi);
-          const allItems = this.api.getItems();
-          const currentlySelectingItemsStr = allItems
-              .filter((item) => item.selecting)
-              .map((item) => item.id)
-              .join('|');
-          const selectingItemsStr = this.data.selecting[ITEM].join('|');
-          if (currentlySelectingItemsStr !== selectingItemsStr)
-              multi = this.updateItems(multi);
+          multi = this.updateCells(multi);
+          multi = this.updateItems(multi);
           multi.done();
       }
       selectItemsIndividually() {
@@ -528,7 +580,10 @@
               automaticallySelected = [];
           }
           this.data.selected[ITEM] = selected;
+          if (!this.isMulti())
+              this.data.selected[CELL].length = 0;
           this.data.automaticallySelected[ITEM] = automaticallySelected;
+          this.data.selected = this.onSelected(this.api.mergeDeep({}, this.data.selected), this.api.mergeDeep({}, this.data.lastSelected));
           let multi = this.state.multi();
           multi = this.updateItems(multi);
           multi.done();
