@@ -47,8 +47,8 @@ export interface Options {
   multiKey?: ModKey;
   selectedClassName?: string;
   selectingClassName?: string;
-  onSelecting?: (selecting: Selection, last: Selection) => Selection;
-  onSelected?: (selected: Selection, last: Selection) => Selection;
+  onSelecting?: (selecting: EventSelection, last: EventSelection) => EventSelection;
+  onSelected?: (selected: EventSelection, last: EventSelection) => EventSelection;
 }
 
 function prepareOptions(options: Options) {
@@ -83,8 +83,13 @@ export interface Area {
 }
 
 export interface Selection {
-  [ITEM]: string[];
   [CELL]: string[];
+  [ITEM]: string[];
+}
+
+export interface EventSelection {
+  [CELL]: GridCell[];
+  [ITEM]: Item[];
 }
 
 export interface SelectedCell {
@@ -483,6 +488,44 @@ class SelectionPlugin {
     this.updateCells();
   }
 
+  // send cell and item data to event - not just id
+  private onSelecting(selecting: Selection, last: Selection): Selection {
+    const items = this.state.get('config.chart.items');
+    const cells = this.state.get('$data.chart.grid.cells');
+    const selectingWithMeat: EventSelection = {
+      [CELL]: selecting[CELL].map((cellId) => cells[cellId]),
+      [ITEM]: selecting[ITEM].map((itemId) => items[itemId]),
+    };
+    const lastWithMeat: EventSelection = {
+      [CELL]: last[CELL].map((cellId) => cells[cellId]),
+      [ITEM]: last[ITEM].map((itemId) => items[itemId]),
+    };
+    const result = this.data.onSelecting(selectingWithMeat, lastWithMeat);
+    return {
+      [CELL]: result[CELL].map((cell) => cell.id),
+      [ITEM]: result[ITEM].map((item) => item.id),
+    };
+  }
+
+  // send cell and item data to event - not just id
+  private onSelected(selected: Selection, last: Selection): Selection {
+    const items = this.state.get('config.chart.items');
+    const cells = this.state.get('$data.chart.grid.cells');
+    const selectedWithMeat: EventSelection = {
+      [CELL]: selected[CELL].map((cellId) => cells[cellId]),
+      [ITEM]: selected[ITEM].map((itemId) => items[itemId]),
+    };
+    const lastWithMeat: EventSelection = {
+      [CELL]: last[CELL].map((cellId) => cells[cellId]),
+      [ITEM]: last[ITEM].map((itemId) => items[itemId]),
+    };
+    const result = this.data.onSelected(selectedWithMeat, lastWithMeat);
+    return {
+      [CELL]: result[CELL].map((cell) => cell.id),
+      [ITEM]: result[ITEM].map((item) => item.id),
+    };
+  }
+
   private selectMultipleCellsAndItems() {
     if (!this.canSelect()) return;
     if (!this.data.multipleSelection) {
@@ -517,7 +560,7 @@ class SelectionPlugin {
       selecting[ITEM] = selectedItems;
     }
 
-    this.data.selecting = this.data.onSelecting(selecting, this.api.mergeDeep({}, this.data.selecting));
+    this.data.selecting = this.onSelecting(selecting, this.api.mergeDeep({}, this.data.lastSelected));
 
     let multi = this.state.multi();
     const allCells: GridCell[] = this.api.getGridCells();
@@ -570,7 +613,7 @@ class SelectionPlugin {
         [ITEM]: [...this.data.selecting[ITEM]],
       };
     }
-    this.data.selected = this.data.onSelected(selected, this.api.mergeDeep({}, this.data.lastSelected));
+    this.data.selected = this.onSelected(selected, this.api.mergeDeep({}, this.data.lastSelected));
     this.data.lastSelected = this.api.mergeDeep({}, this.data.selected);
     this.data.selecting[CELL].length = 0;
     this.data.selecting[ITEM].length = 0;

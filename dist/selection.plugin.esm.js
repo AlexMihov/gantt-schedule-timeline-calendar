@@ -416,6 +416,42 @@ class SelectionPlugin {
         this.data.selected[CELL].length = 0;
         this.updateCells();
     }
+    // send cell and item data to event - not just id
+    onSelecting(selecting, last) {
+        const items = this.state.get('config.chart.items');
+        const cells = this.state.get('$data.chart.grid.cells');
+        const selectingWithMeat = {
+            [CELL]: selecting[CELL].map((cellId) => cells[cellId]),
+            [ITEM]: selecting[ITEM].map((itemId) => items[itemId]),
+        };
+        const lastWithMeat = {
+            [CELL]: last[CELL].map((cellId) => cells[cellId]),
+            [ITEM]: last[ITEM].map((itemId) => items[itemId]),
+        };
+        const result = this.data.onSelecting(selectingWithMeat, lastWithMeat);
+        return {
+            [CELL]: result[CELL].map((cell) => cell.id),
+            [ITEM]: result[ITEM].map((item) => item.id),
+        };
+    }
+    // send cell and item data to event - not just id
+    onSelected(selected, last) {
+        const items = this.state.get('config.chart.items');
+        const cells = this.state.get('$data.chart.grid.cells');
+        const selectedWithMeat = {
+            [CELL]: selected[CELL].map((cellId) => cells[cellId]),
+            [ITEM]: selected[ITEM].map((itemId) => items[itemId]),
+        };
+        const lastWithMeat = {
+            [CELL]: last[CELL].map((cellId) => cells[cellId]),
+            [ITEM]: last[ITEM].map((itemId) => items[itemId]),
+        };
+        const result = this.data.onSelected(selectedWithMeat, lastWithMeat);
+        return {
+            [CELL]: result[CELL].map((cell) => cell.id),
+            [ITEM]: result[ITEM].map((item) => item.id),
+        };
+    }
     selectMultipleCellsAndItems() {
         if (!this.canSelect())
             return;
@@ -452,7 +488,7 @@ class SelectionPlugin {
         else {
             selecting[ITEM] = selectedItems;
         }
-        this.data.selecting = this.data.onSelecting(selecting, this.api.mergeDeep({}, this.data.selecting));
+        this.data.selecting = this.onSelecting(selecting, this.api.mergeDeep({}, this.data.lastSelected));
         let multi = this.state.multi();
         const allCells = this.api.getGridCells();
         const currentlySelectingCellsStr = allCells
@@ -505,7 +541,7 @@ class SelectionPlugin {
                 [ITEM]: [...this.data.selecting[ITEM]],
             };
         }
-        this.data.selected = this.data.onSelected(selected, this.api.mergeDeep({}, this.data.lastSelected));
+        this.data.selected = this.onSelected(selected, this.api.mergeDeep({}, this.data.lastSelected));
         this.data.lastSelected = this.api.mergeDeep({}, this.data.selected);
         this.data.selecting[CELL].length = 0;
         this.data.selecting[ITEM].length = 0;
