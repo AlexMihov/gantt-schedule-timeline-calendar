@@ -99,6 +99,16 @@ export interface ItemData {
   detached: boolean;
 }
 
+export interface ItemDataUpdate {
+  time?: ItemDataTime;
+  actualHeight?: number;
+  outerHeight?: number;
+  position?: ItemDataPosition;
+  width?: number;
+  actualWidth?: number;
+  detached?: boolean;
+}
+
 export type ItemLabelFunction = ({ item: Item, vido: Vido }) => lithtml.TemplateResult | string;
 
 export interface Item {
@@ -115,7 +125,6 @@ export interface Item {
   isHTML?: boolean;
   linkedWith?: string[];
   selected?: boolean;
-  $data: ItemData;
   [key: string]: any;
 }
 
@@ -606,7 +615,18 @@ export interface DataChartDimensions extends Dimensions {
   innerWidth: number;
 }
 
+export interface DataGrid {
+  cells: GridCells;
+  rows: GridRows;
+}
+
+export interface DataItems {
+  [id: string]: ItemData;
+}
+
 export interface DataChart {
+  grid: DataGrid;
+  items: DataItems;
   dimensions: DataChartDimensions;
   visibleItems: Item[];
   time: DataChartTime;
@@ -661,6 +681,11 @@ function getDefaultData(): Data {
       height: 0,
     },
     chart: {
+      items: {},
+      grid: {
+        cells: {},
+        rows: {},
+      },
       dimensions: {
         width: 0,
         innerWidth: 0,

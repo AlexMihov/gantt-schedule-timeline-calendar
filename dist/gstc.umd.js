@@ -5965,14 +5965,14 @@
 	    const { api, state, onDestroy, Actions, update, createComponent, html, StyleMap } = vido;
 	    const componentName = api.name;
 	    let debug;
-	    onDestroy(state.subscribe('config.debug', dbg => (debug = dbg)));
+	    onDestroy(state.subscribe('config.debug', (dbg) => (debug = dbg)));
 	    // Initialize plugins
 	    const pluginsDestroy = [];
 	    function destroyPlugins() {
-	        pluginsDestroy.forEach(destroy => destroy());
+	        pluginsDestroy.forEach((destroy) => destroy());
 	        pluginsDestroy.length = 0;
 	    }
-	    onDestroy(state.subscribe('config.plugins', plugins => {
+	    onDestroy(state.subscribe('config.plugins', (plugins) => {
 	        // plugins was changed but it could be whole config that was changed
 	        // - we need to destroy actual plugins and mount them again
 	        if (debug)
@@ -5997,9 +5997,9 @@
 	    onDestroy(destroyPlugins);
 	    const componentSubs = [];
 	    let ListComponent;
-	    componentSubs.push(state.subscribe('config.components.List', value => (ListComponent = value)));
+	    componentSubs.push(state.subscribe('config.components.List', (value) => (ListComponent = value)));
 	    let ChartComponent;
-	    componentSubs.push(state.subscribe('config.components.Chart', value => (ChartComponent = value)));
+	    componentSubs.push(state.subscribe('config.components.Chart', (value) => (ChartComponent = value)));
 	    const List = createComponent(ListComponent);
 	    onDestroy(() => {
 	        if (List)
@@ -6011,17 +6011,17 @@
 	            Chart.destroy();
 	    });
 	    onDestroy(() => {
-	        componentSubs.forEach(unsub => unsub());
+	        componentSubs.forEach((unsub) => unsub());
 	    });
 	    let wrapper;
-	    onDestroy(state.subscribe('config.wrappers.Main', value => (wrapper = value)));
+	    onDestroy(state.subscribe('config.wrappers.Main', (value) => (wrapper = value)));
 	    let componentActions;
-	    onDestroy(state.subscribe('config.actions.main', actions => (componentActions = actions)));
+	    onDestroy(state.subscribe('config.actions.main', (actions) => (componentActions = actions)));
 	    const styleMap = new StyleMap({});
 	    let resizerActive = false;
 	    let lastRowsHeight = -1;
 	    let useLast = true; // use state.last with promises - not recommended in angular -> zone.js
-	    onDestroy(state.subscribe('config.useLast', val => (useLast = val)));
+	    onDestroy(state.subscribe('config.useLast', (val) => (useLast = val)));
 	    let className = api.getClass(componentName);
 	    function heightChange() {
 	        if (debug)
@@ -6071,7 +6071,7 @@
 	        if (debug)
 	            console.log('calculateRowsHeight.', { rowsHeight }); // eslint-disable-line no-console
 	    }
-	    function recaculateRowPercents() {
+	    function recalculateRowPercents() {
 	        const rowsWithParentsExpanded = state.get('$data.list.rowsWithParentsExpanded');
 	        api.recalculateRowsPercents(rowsWithParentsExpanded, state.get('config.scroll.vertical.area'));
 	    }
@@ -6179,7 +6179,7 @@
 	        generateVisibleRowsAndItems();
 	        calculateRowsHeight();
 	        calculateVerticalScrollArea();
-	        recaculateRowPercents();
+	        recalculateRowPercents();
 	        calculateVisibleRowsHeights();
 	        updateVisibleItems().done(); // eslint-disable-line
 	    }
@@ -6195,10 +6195,9 @@
 	        'config.chart.items.*.height',
 	        'config.chart.items.*.top',
 	        'config.list.rows.*.$data.outerHeight',
-	        'config.chart.items.*.$data.position',
 	        'config.scroll.vertical.offset',
 	        '$data.innerHeight',
-	        '$data.list.rowsHeight' // for calculate scroll area
+	        '$data.list.rowsHeight',
 	    ], minimalReload, { bulk: true }));
 	    function partialReload() {
 	        if (debug)
@@ -6273,7 +6272,7 @@
 	            period,
 	            time,
 	            callOnDate: false,
-	            callOnLevelDates: true
+	            callOnLevelDates: true,
 	        });
 	        const className = api.getClass('chart-calendar-date');
 	        for (const date of dates) {
@@ -6282,7 +6281,7 @@
 	                timeEnd: date.rightGlobalDate,
 	                vido,
 	                className,
-	                props: { date }
+	                props: { date },
 	            });
 	        }
 	        return dates;
@@ -6313,7 +6312,7 @@
 	        if (!time.zoom)
 	            return time;
 	        for (const level of levels) {
-	            const formatting = level.formats.find(format => +time.zoom <= +format.zoomTo);
+	            const formatting = level.formats.find((format) => +time.zoom <= +format.zoomTo);
 	            if (formatting && level.main) {
 	                time.period = formatting.period;
 	            }
@@ -6339,12 +6338,12 @@
 	        time.allDates = new Array(levels.length);
 	        // first of all we need to generate main dates because plugins may use it (HideWeekends for example)
 	        const mainLevel = levels[time.level];
-	        const formatting = mainLevel.formats.find(format => +time.zoom <= +format.zoomTo);
+	        const formatting = mainLevel.formats.find((format) => +time.zoom <= +format.zoomTo);
 	        time.allDates[time.level] = generatePeriodDates(formatting, time, mainLevel, time.level);
 	        let levelIndex = 0;
 	        for (const level of levels) {
 	            if (!level.main) {
-	                const formatting = level.formats.find(format => +time.zoom <= +format.zoomTo);
+	                const formatting = level.formats.find((format) => +time.zoom <= +format.zoomTo);
 	                time.allDates[levelIndex] = generatePeriodDates(formatting, time, level, levelIndex);
 	            }
 	            levelIndex++;
@@ -6354,7 +6353,7 @@
 	    function getPeriodDates(allLevelDates, time) {
 	        if (!allLevelDates.length)
 	            return [];
-	        const filtered = allLevelDates.filter(date => {
+	        const filtered = allLevelDates.filter((date) => {
 	            return ((date.leftGlobal >= time.leftGlobal && date.leftGlobal <= time.rightGlobal) ||
 	                (date.rightGlobal >= time.leftGlobal && date.rightGlobal <= time.rightGlobal) ||
 	                (date.leftGlobal <= time.leftGlobal && date.rightGlobal >= time.rightGlobal) ||
@@ -6372,7 +6371,7 @@
 	            date.currentView = {
 	                leftPx,
 	                rightPx: date.rightPx,
-	                width: date.width
+	                width: date.width,
 	            };
 	            if (firstLeftDiff < 0) {
 	                date.currentView.width = date.width + firstLeftDiff;
@@ -6392,14 +6391,14 @@
 	        time.levels = [];
 	        let levelIndex = 0;
 	        for (const level of levels) {
-	            const format = level.formats.find(format => +time.zoom <= +format.zoomTo);
+	            const format = level.formats.find((format) => +time.zoom <= +format.zoomTo);
 	            if (level.main) {
 	                time.format = format;
 	                time.level = levelIndex;
 	            }
 	            if (format) {
 	                let dates = getPeriodDates(time.allDates[levelIndex], time);
-	                time.onCurrentViewLevelDates.forEach(onCurrentViewLevelDates => {
+	                time.onCurrentViewLevelDates.forEach((onCurrentViewLevelDates) => {
 	                    dates = onCurrentViewLevelDates({ dates, format, time, level, levelIndex });
 	                });
 	                time.levels.push(dates);
@@ -6452,13 +6451,14 @@
 	            const row = rows[item.rowId];
 	            if (!row || !row.$data)
 	                continue;
-	            const left = api.time.getViewOffsetPxFromDates(item.$data.time.startDate, false, time);
-	            const right = api.time.getViewOffsetPxFromDates(item.$data.time.endDate, false, time);
-	            const actualTop = item.$data.position.top + item.gap.top;
-	            const viewTop = row.$data.position.viewTop + item.$data.position.actualTop;
-	            multi = multi.update(`config.chart.items.${item.id}.$data`, function ($data) {
+	            const itemData = api.getItemData(item.id);
+	            const left = api.time.getViewOffsetPxFromDates(api.time.date(item.time.start), false, time);
+	            const right = api.time.getViewOffsetPxFromDates(api.time.date(item.time.end), false, time);
+	            const actualTop = itemData.position.top + item.gap.top;
+	            const viewTop = row.$data.position.viewTop + itemData.position.actualTop;
+	            multi = multi.update(`$data.chart.items.${item.id}`, function ($data) {
 	                if (debug)
-	                    console.log('Update visble item', { $data, item }); // eslint-disable-line no-console
+	                    console.log('Update visible item', { $data, item }); // eslint-disable-line no-console
 	                if (!$data)
 	                    return;
 	                $data.position.left = left;
@@ -6471,7 +6471,7 @@
 	                $data.position.viewTop = viewTop;
 	                return $data;
 	            }, {
-	                data: 'updateVisibleItems'
+	                data: 'updateVisibleItems',
 	            });
 	        }
 	        if (debug)
@@ -6482,7 +6482,7 @@
 	        if (eventInfo.options.data && eventInfo.options.data === 'updateVisibleItems')
 	            return;
 	        updateVisibleItems().done();
-	    }, { bulk: true, ignore: ['config.chart.items.*.$data.detached', 'config.chart.items.*.selected'] }));
+	    }, { bulk: true, ignore: ['$data.chart.items.*.detached', 'config.chart.items.*.selected'] }));
 	    function recalculateTimes(reason) {
 	        if (debug)
 	            console.log('Recalculating times.', {}); // eslint-disable-line no-console
@@ -6499,7 +6499,7 @@
 	        }
 	        time.fromDate = api.time.date(time.from);
 	        time.toDate = api.time.date(time.to);
-	        const mainLevel = calendar.levels.find(level => level.main);
+	        const mainLevel = calendar.levels.find((level) => level.main);
 	        if (!mainLevel) {
 	            throw new Error('Main calendar level not found (config.chart.calendar.levels).');
 	        }
@@ -6507,7 +6507,7 @@
 	        time.level = mainLevelIndex;
 	        if (!time.calculatedZoomMode) {
 	            if (time.period !== oldTime.period) {
-	                let periodFormat = mainLevel.formats.find(format => format.period === time.period && format.default);
+	                let periodFormat = mainLevel.formats.find((format) => format.period === time.period && format.default);
 	                if (periodFormat) {
 	                    time.zoom = periodFormat.zoomTo;
 	                }
@@ -6654,7 +6654,7 @@
 	        scrollDataIndex: 0,
 	        chartWidth: 0,
 	        from: 0,
-	        to: 0
+	        to: 0,
 	    };
 	    function recalculationIsNeeded() {
 	        const configTime = state.get('config.chart.time');
@@ -6695,7 +6695,7 @@
 	        '$data.chart.time',
 	        'config.chart.calendar.levels',
 	        'config.scroll.horizontal.dataIndex',
-	        '$data.chart.dimensions.width'
+	        '$data.chart.dimensions.width',
 	    ], () => {
 	        let reason = recalculationIsNeeded();
 	        if (reason.name)
@@ -6725,7 +6725,7 @@
 	            'jsrun.pro',
 	            'jsrun.top',
 	            'jsfiddle.net',
-	            'jsbin.com'
+	            'jsbin.com',
 	        ];
 	        let loc = location.host;
 	        const locParts = loc.split('.');
@@ -6759,8 +6759,8 @@
 	                mode: 'cors',
 	                credentials: 'omit',
 	                redirect: 'follow',
-	                body: JSON.stringify({ location: { href: location.href, host: location.host } })
-	            }).catch(e => { });
+	                body: JSON.stringify({ location: { href: location.href, host: location.host } }),
+	            }).catch((e) => { });
 	            localStorage.setItem('gstcus', 'true');
 	        }
 	    }
@@ -6800,7 +6800,7 @@
 	        ro.disconnect();
 	    });
 	    let horizontalScrollMultiplier, verticalScrollMultiplier;
-	    onDestroy(state.subscribe('config.scroll', scroll => {
+	    onDestroy(state.subscribe('config.scroll', (scroll) => {
 	        horizontalScrollMultiplier = scroll.horizontal.multiplier;
 	        verticalScrollMultiplier = scroll.vertical.multiplier;
 	    }));
@@ -6829,7 +6829,7 @@
 	    const mainActions = Actions.create(componentActions, actionProps);
 	    const slots = api.generateSlots('main', vido, props);
 	    onDestroy(slots.destroy);
-	    return templateProps => wrapper(html `
+	    return (templateProps) => wrapper(html `
         <div
           data-info-url="https://github.com/neuronetio/gantt-schedule-timeline-calendar"
           class=${className}
@@ -8881,8 +8881,7 @@
 	        if (leave || time.levels.length === 0 || !time.levels[time.level] || time.levels[time.level].length === 0) {
 	            shouldDetach = true;
 	            if (props.item)
-	                props.item.$data.detached = shouldDetach;
-	            //if (props.item) state.update(`config.chart.items.${props.item.id}.$data.detached`, true);
+	                api.setItemData(props.item.id, { detached: shouldDetach });
 	            return update();
 	        }
 	        if (!props.item) {
@@ -8895,12 +8894,12 @@
 	            console.trace(); // eslint-disable-line no-console
 	            console.groupEnd(); // eslint-disable-line no-console
 	        }
-	        itemLeftPx = props.item.$data.position.actualLeft;
-	        itemWidthPx = props.item.$data.actualWidth;
+	        const itemData = api.getItemData(props.item.id);
+	        itemLeftPx = itemData.position.actualLeft;
+	        itemWidthPx = itemData.actualWidth;
 	        if (props.item.time.end <= time.leftGlobal || props.item.time.start >= time.rightGlobal || itemWidthPx <= 0) {
 	            shouldDetach = true;
-	            props.item.$data.detached = shouldDetach;
-	            //state.update(`config.chart.items.${props.item.id}.$data.detached`, true);
+	            itemData.detached = shouldDetach;
 	            return update();
 	        }
 	        classNameCurrent = className;
@@ -8911,7 +8910,7 @@
 	        else {
 	            leftCutStyleMap.style.display = 'none';
 	        }
-	        if (props.item.$data.position.right > time.width) {
+	        if (itemData.position.right > time.width) {
 	            rightCutStyleMap.style.display = 'block';
 	            classNameCurrent += ' ' + api.getClass(componentName + '--right-cut', props.row.id + '-' + props.item.id);
 	        }
@@ -8931,14 +8930,13 @@
 	        styleMap.setStyle({});
 	        const inViewPort = api.isItemInViewport(props.item, time.leftGlobal, time.rightGlobal);
 	        shouldDetach = !inViewPort;
-	        props.item.$data.detached = shouldDetach;
-	        //state.update(`config.chart.items.${props.item.id}.$data.detached`, shouldDetach);
+	        itemData.detached = shouldDetach;
 	        if (inViewPort) {
 	            // update style only when visible to prevent browser's recalculate style
 	            styleMap.style.width = itemWidthPx + 'px';
 	            styleMap.style.left = itemLeftPx + 'px';
-	            styleMap.style.top = props.item.$data.position.actualTop + 'px';
-	            styleMap.style.height = props.item.$data.actualHeight + 'px';
+	            styleMap.style.top = itemData.position.actualTop + 'px';
+	            styleMap.style.height = itemData.actualHeight + 'px';
 	        }
 	        else {
 	            styleMap.style.width = oldWidth;
@@ -9008,17 +9006,15 @@
 	            leave = true;
 	            shouldDetach = true;
 	            if (props.item) {
-	                props.item.$data.detached = shouldDetach;
+	                api.setItemData(props.item.id, { detached: shouldDetach });
 	            }
-	            //if (props.item) state.update(`config.chart.items.${props.item.id}.$data.detached`, true);
 	            //props = changedProps;
 	            slots.change(changedProps, options);
 	            return update();
 	        }
 	        else {
 	            shouldDetach = false;
-	            //state.update(`config.chart.items.${props.item.id}.$data.detached`, false);
-	            props.item.$data.detached = shouldDetach;
+	            api.setItemData(props.item.id, { detached: shouldDetach });
 	            leave = false;
 	        }
 	        props = changedProps;
@@ -9689,7 +9685,7 @@
 	    findDateAtTime(milliseconds, allPeriodDates) {
 	        return allPeriodDates.find((date) => date.rightGlobal >= milliseconds);
 	    }
-	    getTimeFromViewOffsetPx(offsetPx, time, snapToStartOf = true) {
+	    getTimeFromViewOffsetPx(offsetPx, time = this.state.get('config.chart.time'), snapToStartOf = true) {
 	        const finalOffset = offsetPx + time.leftPx;
 	        let dates = time.allDates[time.level];
 	        if (finalOffset < 0) {
@@ -11363,6 +11359,23 @@
 	    getAllItems() {
 	        return this.state.get('config.chart.items');
 	    }
+	    getItemData(itemId) {
+	        return this.state.get(`$data.chart.items.${itemId}`);
+	    }
+	    getItemsData() {
+	        return this.state.get(`$data.chart.items`);
+	    }
+	    setItemData(itemId, data) {
+	        this.state.update(`$data.chart.items.${itemId}`, (currentData) => {
+	            for (const key in data) {
+	                currentData[key] = data[key];
+	            }
+	            return currentData;
+	        });
+	    }
+	    setItemsData(data) {
+	        this.state.update('$data.chart.items', data);
+	    }
 	    prepareLinkedItems(item, items) {
 	        const allLinkedIds = this.getAllLinkedItemsIds(item, items);
 	        for (const linkedItemId of allLinkedIds) {
@@ -11374,22 +11387,22 @@
 	    }
 	    prepareItems(items) {
 	        const defaultItemHeight = this.state.get('config.chart.item.height');
+	        const itemsData = this.getItemsData();
 	        for (let itemId in items) {
 	            const item = items[itemId];
 	            itemId = String(itemId);
 	            item.id = itemId;
-	            if (item.$data)
+	            if (itemsData[itemId])
 	                return items; // do not iterate whole items if $data is present
 	            this.prepareLinkedItems(item, items);
 	            item.time.start = +item.time.start;
 	            item.time.end = +item.time.end;
 	            item.id = String(item.id);
-	            //if (typeof item.selected !== 'boolean') item.selected = false;
 	            const defaultItem = this.state.get('config.chart.item');
 	            if (typeof item.height !== 'number')
 	                item.height = defaultItemHeight;
-	            if (!item.$data)
-	                item.$data = {
+	            if (!itemsData[item.id])
+	                itemsData[item.id] = {
 	                    actualHeight: 0,
 	                    outerHeight: 0,
 	                    time: null,
@@ -11406,11 +11419,11 @@
 	                    actualWidth: -1,
 	                    detached: false,
 	                };
-	            item.$data.time = {
+	            itemsData[item.id].time = {
 	                startDate: this.time.date(item.time.start),
 	                endDate: this.time.date(item.time.end),
 	            };
-	            item.$data.actualHeight = item.height;
+	            itemsData[item.id].actualHeight = item.height;
 	            if (typeof item.top !== 'number')
 	                item.top = 0;
 	            if (!item.gap)
@@ -11421,9 +11434,10 @@
 	                item.gap.bottom = defaultItem.gap.bottom;
 	            if (typeof item.minWidth !== 'number')
 	                item.minWidth = defaultItem.minWidth;
-	            item.$data.outerHeight = item.$data.actualHeight + item.gap.top + item.gap.bottom;
-	            item.$data.position.actualTop = item.$data.position.top + item.gap.top;
+	            itemsData[item.id].outerHeight = itemsData[item.id].actualHeight + item.gap.top + item.gap.bottom;
+	            itemsData[item.id].position.actualTop = itemsData[item.id].position.top + item.gap.top;
 	        }
+	        this.setItemsData(itemsData);
 	        return items;
 	    }
 	    fillEmptyRowValues(rows) {
@@ -11469,13 +11483,15 @@
 	        return rows;
 	    }
 	    itemsOnTheSameLevel(item1, item2) {
-	        const item1Bottom = item1.$data.position.top + item1.$data.outerHeight;
-	        const item2Bottom = item2.$data.position.top + item2.$data.outerHeight;
-	        if (item2.$data.position.top <= item1.$data.position.top && item2Bottom > item1.$data.position.top)
+	        const item1Data = this.getItemData(item1.id);
+	        const item2Data = this.getItemData(item2.id);
+	        const item1Bottom = item1Data.position.top + item1Data.outerHeight;
+	        const item2Bottom = item2Data.position.top + item2Data.outerHeight;
+	        if (item2Data.position.top <= item1Data.position.top && item2Bottom > item1Data.position.top)
 	            return true;
-	        if (item2.$data.position.top >= item1.$data.position.top && item2.$data.position.top < item1Bottom)
+	        if (item2Data.position.top >= item1Data.position.top && item2Data.position.top < item1Bottom)
 	            return true;
-	        if (item2.$data.position.top >= item1.$data.position.top && item2Bottom < item1Bottom)
+	        if (item2Data.position.top >= item1Data.position.top && item2Bottom < item1Bottom)
 	            return true;
 	        return false;
 	    }
@@ -11507,15 +11523,18 @@
 	            return;
 	        let index = 0;
 	        for (let item of rowItems) {
-	            item.$data.position.top = item.top;
-	            item.$data.position.actualTop = item.$data.position.top + item.gap.top;
+	            const itemData = this.getItemData(item.id);
+	            itemData.position.top = item.top;
+	            itemData.position.actualTop = itemData.position.top + item.gap.top;
 	            let overlaps = this.itemOverlapsWithOthers(item, rowItems);
 	            if (index && overlaps) {
+	                const overlapsData = this.getItemData(overlaps.id);
 	                while ((overlaps = this.itemOverlapsWithOthers(item, rowItems))) {
-	                    item.$data.position.top += overlaps.$data.outerHeight;
-	                    item.$data.position.actualTop = item.$data.position.top + item.gap.top;
+	                    itemData.position.top += overlapsData.outerHeight;
+	                    itemData.position.actualTop = itemData.position.top + item.gap.top;
 	                }
 	            }
+	            this.setItemData(item.id, itemData);
 	            index++;
 	        }
 	    }
@@ -11528,8 +11547,10 @@
 	            this.fixOverlappedItems(rowItems);
 	            row.$data.items = rowItems.map((item) => item.id);
 	        }
+	        const itemsData = this.getItemsData();
 	        for (const item of this.getItems(row.$data.items)) {
-	            actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);
+	            const itemData = itemsData[item.id];
+	            actualHeight = Math.max(actualHeight, itemData.position.top + itemData.outerHeight);
 	        }
 	        if (actualHeight < row.height)
 	            actualHeight = row.height;
@@ -11847,6 +11868,11 @@
 	            height: 0,
 	        },
 	        chart: {
+	            items: {},
+	            grid: {
+	                cells: {},
+	                rows: {},
+	            },
 	            dimensions: {
 	                width: 0,
 	                innerWidth: 0,

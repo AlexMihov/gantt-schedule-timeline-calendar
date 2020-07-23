@@ -98,7 +98,7 @@ function generateEmptyPluginData(options) {
         },
         onEnd({ items }) {
             return items.after;
-        }
+        },
     };
     const snapToTime = {
         start({ startTime, time }) {
@@ -106,11 +106,11 @@ function generateEmptyPluginData(options) {
         },
         end({ endTime, time }) {
             return endTime.endOf(time.period);
-        }
+        },
     };
     const result = Object.assign({ debug: false, moving: [], targetData: null, initialItems: [], pointerState: 'up', pointerMoved: false, state: '', position: { x: 0, y: 0 }, movement: {
             px: { horizontal: 0, vertical: 0 },
-            time: 0
+            time: 0,
         }, lastMovement: { x: 0, y: 0, time: 0 }, events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
     if (options.snapToTime) {
         result.snapToTime = Object.assign(Object.assign({}, snapToTime), options.snapToTime);
@@ -130,7 +130,7 @@ class ItemMovement {
         this.state = vido.state;
         this.merge = this.state.get('config.merge');
         this.destroy = this.destroy.bind(this);
-        this.onDestroy.push(this.state.subscribe(pluginPath, data => {
+        this.onDestroy.push(this.state.subscribe(pluginPath, (data) => {
             this.data = data;
             if (!data.enabled) {
                 document.body.classList.remove(this.data.bodyClass);
@@ -145,7 +145,7 @@ class ItemMovement {
         this.onDestroy.push(this.state.subscribe('config.plugin.Selection', this.onSelectionChange));
     }
     destroy() {
-        this.onDestroy.forEach(unsub => unsub());
+        this.onDestroy.forEach((unsub) => unsub());
     }
     updateData() {
         this.state.update(pluginPath, Object.assign({}, this.data));
@@ -165,7 +165,8 @@ class ItemMovement {
     }
     getItemMovingTimes(item, time) {
         const horizontal = this.data.movement.px.horizontal;
-        const positionLeft = this.api.time.getViewOffsetPxFromDates(item.$data.time.startDate, false, time);
+        const itemData = this.api.getItemData(item.id);
+        const positionLeft = this.api.time.getViewOffsetPxFromDates(itemData.time.startDate, false, time);
         const x = positionLeft + horizontal + this.getStartCumulationForItem(item);
         const leftGlobal = this.api.time.getTimeFromViewOffsetPx(x, time);
         const startTime = this.data.snapToTime.start({
@@ -173,11 +174,11 @@ class ItemMovement {
             item,
             time,
             movement: this.data.movement,
-            vido: this.vido
+            vido: this.vido,
         });
         const snapStartPxDiff = this.api.time.getDatesDiffPx(startTime, this.api.time.date(leftGlobal), time, true);
         this.setStartCumulationForItem(item, snapStartPxDiff);
-        const startEndTimeDiff = item.$data.time.endDate.diff(item.$data.time.startDate, 'millisecond');
+        const startEndTimeDiff = itemData.time.endDate.diff(itemData.time.startDate, 'millisecond');
         // diff could be too much if we are in the middle of european summer time (daylight-saving time)
         const rightGlobal = startTime.add(startEndTimeDiff, 'millisecond').valueOf();
         const rightGlobalDate = this.api.time.date(rightGlobal);
@@ -192,7 +193,7 @@ class ItemMovement {
             item,
             time,
             movement: this.data.movement,
-            vido: this.vido
+            vido: this.vido,
         });
         return { startTime, endTime };
     }
@@ -209,7 +210,7 @@ class ItemMovement {
     getItemViewTop(item) {
         const rows = this.api.getAllRows();
         const row = rows[item.rowId];
-        return row.$data.position.viewTop + item.$data.position.actualTop;
+        return row.$data.position.viewTop + this.api.getItemData(item.id).position.actualTop;
     }
     saveItemsRelativeVerticalPosition() {
         for (const item of this.data.moving) {
@@ -241,18 +242,18 @@ class ItemMovement {
                 initial: this.data.initialItems,
                 before,
                 after: afterItems,
-                targetData: this.merge({}, this.data.targetData)
+                targetData: this.merge({}, this.data.targetData),
             },
             vido: this.vido,
             state: this.state,
-            time: this.state.get('$data.chart.time')
+            time: this.state.get('$data.chart.time'),
         };
     }
     moveItems() {
         if (!this.data.enabled)
             return;
         const time = this.state.get('$data.chart.time');
-        const moving = this.data.moving.map(item => this.merge({}, item));
+        const moving = this.data.moving.map((item) => this.merge({}, item));
         if (this.data.debug)
             console.log('moveItems', moving); // eslint-disable-line no-console
         for (let item of moving) {
@@ -261,8 +262,10 @@ class ItemMovement {
             if (newItemTimes.startTime.valueOf() !== item.time.start || newItemTimes.endTime.valueOf() !== item.time.end) {
                 item.time.start = newItemTimes.startTime.valueOf();
                 item.time.end = newItemTimes.endTime.valueOf();
-                item.$data.time.startDate = newItemTimes.startTime;
-                item.$data.time.endDate = newItemTimes.endTime;
+                const itemData = this.api.getItemData(item.id);
+                itemData.time.startDate = newItemTimes.startTime;
+                itemData.time.endDate = newItemTimes.endTime;
+                this.api.setItemData(item.id, itemData);
             }
         }
         this.dispatchEvent('onMove', moving);
@@ -277,11 +280,11 @@ class ItemMovement {
         this.data.pointerMoved = false;
     }
     dispatchEvent(type, items) {
-        items = items.map(item => this.merge({}, item));
+        items = items.map((item) => this.merge({}, item));
         const modified = this.data.events[type](this.getEventArgument(items));
         let multi = this.state.multi();
         for (const item of modified) {
-            multi = multi.update(`config.chart.items.${item.id}`, currentItem => {
+            multi = multi.update(`config.chart.items.${item.id}`, (currentItem) => {
                 // items should be always references - we cannot make a copy of the object because it may lead us to troubles
                 mergeDeep(currentItem, item);
                 return currentItem;
@@ -291,17 +294,17 @@ class ItemMovement {
         this.data.moving = modified;
     }
     onStart() {
-        this.data.initialItems = this.data.moving.map(item => this.merge({}, item));
+        this.data.initialItems = this.data.moving.map((item) => this.merge({}, item));
         this.clearCumulationsForItems();
         document.body.classList.add(this.data.bodyClassMoving);
         this.data.position = Object.assign({}, this.selection.currentPosition);
         this.data.lastMovement.time = this.data.moving[0].time.start;
         this.saveItemsRelativeVerticalPosition();
-        const initial = this.data.initialItems.map(item => this.merge({}, item));
+        const initial = this.data.initialItems.map((item) => this.merge({}, item));
         this.dispatchEvent('onStart', initial);
     }
     onEnd() {
-        const moving = this.data.moving.map(item => this.merge({}, item));
+        const moving = this.data.moving.map((item) => this.merge({}, item));
         this.dispatchEvent('onEnd', moving);
         document.body.classList.remove(this.data.bodyClassMoving);
         this.clearSelection();
@@ -340,7 +343,7 @@ class ItemMovement {
         this.data.targetData = Object.assign({}, this.selection.targetData);
         if (this.data.state === 'end')
             this.onEnd(); // before this.selection.selected[ITEM] clear
-        this.data.moving = this.selection.selected[ITEM].map(itemId => this.merge({}, this.api.getItem(itemId)));
+        this.data.moving = this.selection.selected[ITEM].map((itemId) => this.merge({}, this.api.getItem(itemId)));
         if (this.data.debug)
             console.log('state', this.data.pointerState); // eslint-disable-line no-console
         if (this.data.state === 'start')

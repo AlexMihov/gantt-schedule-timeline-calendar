@@ -188,7 +188,11 @@ export class Time {
     return allPeriodDates.find((date) => date.rightGlobal >= milliseconds);
   }
 
-  public getTimeFromViewOffsetPx(offsetPx: number, time: DataChartTime, snapToStartOf = true): number {
+  public getTimeFromViewOffsetPx(
+    offsetPx: number,
+    time: DataChartTime = this.state.get('config.chart.time'),
+    snapToStartOf = true
+  ): number {
     const finalOffset = offsetPx + time.leftPx;
     let dates: DataChartTimeLevelDate[] = time.allDates[time.level];
     if (finalOffset < 0) {

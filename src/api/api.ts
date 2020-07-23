@@ -31,6 +31,9 @@ import {
   GridRows,
   GridRow,
   GridCells,
+  DataItems,
+  ItemData,
+  ItemDataUpdate,
 } from '../gstc';
 import { generateSlots } from './slots';
 import { lithtml } from '@neuronet.io/vido/src/vido';
@@ -234,6 +237,27 @@ export class Api {
     return this.state.get('config.chart.items');
   }
 
+  getItemData(itemId: string): ItemData {
+    return this.state.get(`$data.chart.items.${itemId}`);
+  }
+
+  getItemsData(): DataItems {
+    return this.state.get(`$data.chart.items`);
+  }
+
+  setItemData(itemId: string, data: ItemDataUpdate) {
+    this.state.update(`$data.chart.items.${itemId}`, (currentData: ItemData) => {
+      for (const key in data) {
+        currentData[key] = data[key];
+      }
+      return currentData;
+    });
+  }
+
+  setItemsData(data: DataItems) {
+    this.state.update('$data.chart.items', data);
+  }
+
   prepareLinkedItems(item: Item, items: Items) {
     const allLinkedIds = this.getAllLinkedItemsIds(item, items);
     for (const linkedItemId of allLinkedIds) {
@@ -245,20 +269,20 @@ export class Api {
 
   prepareItems(items: Items) {
     const defaultItemHeight = this.state.get('config.chart.item.height');
+    const itemsData = this.getItemsData();
     for (let itemId in items) {
       const item = items[itemId];
       itemId = String(itemId);
       item.id = itemId;
-      if (item.$data) return items; // do not iterate whole items if $data is present
+      if (itemsData[itemId]) return items; // do not iterate whole items if $data is present
       this.prepareLinkedItems(item, items);
       item.time.start = +item.time.start;
       item.time.end = +item.time.end;
       item.id = String(item.id);
-      //if (typeof item.selected !== 'boolean') item.selected = false;
       const defaultItem: DefaultItem = this.state.get('config.chart.item');
       if (typeof item.height !== 'number') item.height = defaultItemHeight;
-      if (!item.$data)
-        item.$data = {
+      if (!itemsData[item.id])
+        itemsData[item.id] = {
           actualHeight: 0,
           outerHeight: 0,
           time: null,
@@ -275,19 +299,20 @@ export class Api {
           actualWidth: -1,
           detached: false,
         };
-      item.$data.time = {
+      itemsData[item.id].time = {
         startDate: this.time.date(item.time.start),
         endDate: this.time.date(item.time.end),
       };
-      item.$data.actualHeight = item.height;
+      itemsData[item.id].actualHeight = item.height;
       if (typeof item.top !== 'number') item.top = 0;
       if (!item.gap) item.gap = {};
       if (typeof item.gap.top !== 'number') item.gap.top = defaultItem.gap.top;
       if (typeof item.gap.bottom !== 'number') item.gap.bottom = defaultItem.gap.bottom;
       if (typeof item.minWidth !== 'number') item.minWidth = defaultItem.minWidth;
-      item.$data.outerHeight = item.$data.actualHeight + item.gap.top + item.gap.bottom;
-      item.$data.position.actualTop = item.$data.position.top + item.gap.top;
+      itemsData[item.id].outerHeight = itemsData[item.id].actualHeight + item.gap.top + item.gap.bottom;
+      itemsData[item.id].position.actualTop = itemsData[item.id].position.top + item.gap.top;
     }
+    this.setItemsData(itemsData);
     return items;
   }
 
@@ -331,11 +356,13 @@ export class Api {
   }
 
   itemsOnTheSameLevel(item1: Item, item2: Item) {
-    const item1Bottom = item1.$data.position.top + item1.$data.outerHeight;
-    const item2Bottom = item2.$data.position.top + item2.$data.outerHeight;
-    if (item2.$data.position.top <= item1.$data.position.top && item2Bottom > item1.$data.position.top) return true;
-    if (item2.$data.position.top >= item1.$data.position.top && item2.$data.position.top < item1Bottom) return true;
-    if (item2.$data.position.top >= item1.$data.position.top && item2Bottom < item1Bottom) return true;
+    const item1Data = this.getItemData(item1.id);
+    const item2Data = this.getItemData(item2.id);
+    const item1Bottom = item1Data.position.top + item1Data.outerHeight;
+    const item2Bottom = item2Data.position.top + item2Data.outerHeight;
+    if (item2Data.position.top <= item1Data.position.top && item2Bottom > item1Data.position.top) return true;
+    if (item2Data.position.top >= item1Data.position.top && item2Data.position.top < item1Bottom) return true;
+    if (item2Data.position.top >= item1Data.position.top && item2Bottom < item1Bottom) return true;
     return false;
   }
 
@@ -363,15 +390,18 @@ export class Api {
     if (rowItems.length === 0) return;
     let index = 0;
     for (let item of rowItems) {
-      item.$data.position.top = item.top;
-      item.$data.position.actualTop = item.$data.position.top + item.gap.top;
+      const itemData = this.getItemData(item.id);
+      itemData.position.top = item.top;
+      itemData.position.actualTop = itemData.position.top + item.gap.top;
       let overlaps = this.itemOverlapsWithOthers(item, rowItems);
       if (index && overlaps) {
+        const overlapsData = this.getItemData(overlaps.id);
         while ((overlaps = this.itemOverlapsWithOthers(item, rowItems))) {
-          item.$data.position.top += overlaps.$data.outerHeight;
-          item.$data.position.actualTop = item.$data.position.top + item.gap.top;
+          itemData.position.top += overlapsData.outerHeight;
+          itemData.position.actualTop = itemData.position.top + item.gap.top;
         }
       }
+      this.setItemData(item.id, itemData);
       index++;
     }
   }
@@ -384,8 +414,10 @@ export class Api {
       this.fixOverlappedItems(rowItems);
       row.$data.items = rowItems.map((item) => item.id);
     }
+    const itemsData = this.getItemsData();
     for (const item of this.getItems(row.$data.items)) {
-      actualHeight = Math.max(actualHeight, item.$data.position.top + item.$data.outerHeight);
+      const itemData = itemsData[item.id];
+      actualHeight = Math.max(actualHeight, itemData.position.top + itemData.outerHeight);
     }
     if (actualHeight < row.height) actualHeight = row.height;
     row.$data.actualHeight = actualHeight;

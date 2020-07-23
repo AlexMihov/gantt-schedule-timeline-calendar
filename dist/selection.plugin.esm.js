@@ -114,9 +114,6 @@ function generateEmptyData(options) {
         }, selected: {
             [ITEM]: [],
             [CELL]: [],
-        }, previouslySelected: {
-            [ITEM]: [],
-            [CELL]: [],
         }, automaticallySelected: {
             [ITEM]: [],
             [CELL]: [],
@@ -171,11 +168,7 @@ class SelectionPlugin {
             this.data.selected[ITEM] = this.data.selected[ITEM].filter((itemId) => !!items[itemId]);
             this.data.selecting[ITEM] = this.data.selecting[ITEM].filter((itemId) => !!items[itemId]);
         }, {
-            ignore: [
-                'config.chart.items.*.$data.detached',
-                'config.chart.items.*.selected',
-                'config.chart.items.*.selecting',
-            ],
+            ignore: ['$data.chart.items.*.detached', 'config.chart.items.*.selected', 'config.chart.items.*.selecting'],
         }));
         this.onDestroy.push(this.state.subscribe('$data.chart.grid', () => {
             const allCells = this.api.getGridCells();
@@ -289,7 +282,7 @@ class SelectionPlugin {
         }
         else {
             if (this.isMulti()) {
-                selected = Array.from(new Set([...this.data.previouslySelected[ITEM], ...linked]));
+                selected = Array.from(new Set([...this.data.selected[ITEM], ...linked]));
             }
             else {
                 selected = linked;
@@ -334,7 +327,7 @@ class SelectionPlugin {
         const automaticallySelectedItems = [];
         for (let item of visibleItems) {
             item = this.merge({}, item);
-            const itemData = item.$data;
+            const itemData = this.api.getItemData(item.id);
             if (this.isItemVerticallyInsideArea(itemData, areaLocal) &&
                 this.isItemHorizontallyInsideArea(itemData, areaLocal)) {
                 if (!selectedItems.find((selectedItemId) => selectedItemId === item.id))
@@ -393,14 +386,15 @@ class SelectionPlugin {
     updateItems(multi = undefined) {
         if (!multi)
             multi = this.state.multi();
-        multi.update('config.chart.items', (items) => {
-            for (const itemId in items) {
-                const item = items[itemId];
-                item.selected = this.data.selected[ITEM].includes(item.id);
-                item.selecting = this.data.selecting[ITEM].includes(item.id);
-            }
-            return items;
-        });
+        multi = multi.update('config.chart.items.*.selected', false);
+        multi = multi.update('config.chart.items.*.selecting', false);
+        const itemsId = Array.from(new Set([...this.data.selecting[ITEM], ...this.data.selected[ITEM]]));
+        for (const itemId of itemsId) {
+            const selecting = this.data.selecting[ITEM].includes(itemId);
+            const selected = this.data.selected[ITEM].includes(itemId);
+            multi = multi.update(`config.chart.items.${itemId}.selecting`, selecting);
+            multi = multi.update(`config.chart.items.${itemId}.selected`, selected);
+        }
         return multi;
     }
     updateCells(multi = undefined) {

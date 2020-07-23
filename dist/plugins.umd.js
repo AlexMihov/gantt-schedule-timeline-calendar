@@ -276,7 +276,7 @@
           },
           onEnd({ items }) {
               return items.after;
-          }
+          },
       };
       const snapToTime = {
           start({ startTime, time }) {
@@ -284,11 +284,11 @@
           },
           end({ endTime, time }) {
               return endTime.endOf(time.period);
-          }
+          },
       };
       const result = Object.assign({ debug: false, moving: [], targetData: null, initialItems: [], pointerState: 'up', pointerMoved: false, state: '', position: { x: 0, y: 0 }, movement: {
               px: { horizontal: 0, vertical: 0 },
-              time: 0
+              time: 0,
           }, lastMovement: { x: 0, y: 0, time: 0 }, events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
       if (options.snapToTime) {
           result.snapToTime = Object.assign(Object.assign({}, snapToTime), options.snapToTime);
@@ -308,7 +308,7 @@
           this.state = vido.state;
           this.merge = this.state.get('config.merge');
           this.destroy = this.destroy.bind(this);
-          this.onDestroy.push(this.state.subscribe(pluginPath$1, data => {
+          this.onDestroy.push(this.state.subscribe(pluginPath$1, (data) => {
               this.data = data;
               if (!data.enabled) {
                   document.body.classList.remove(this.data.bodyClass);
@@ -323,7 +323,7 @@
           this.onDestroy.push(this.state.subscribe('config.plugin.Selection', this.onSelectionChange));
       }
       destroy() {
-          this.onDestroy.forEach(unsub => unsub());
+          this.onDestroy.forEach((unsub) => unsub());
       }
       updateData() {
           this.state.update(pluginPath$1, Object.assign({}, this.data));
@@ -343,7 +343,8 @@
       }
       getItemMovingTimes(item, time) {
           const horizontal = this.data.movement.px.horizontal;
-          const positionLeft = this.api.time.getViewOffsetPxFromDates(item.$data.time.startDate, false, time);
+          const itemData = this.api.getItemData(item.id);
+          const positionLeft = this.api.time.getViewOffsetPxFromDates(itemData.time.startDate, false, time);
           const x = positionLeft + horizontal + this.getStartCumulationForItem(item);
           const leftGlobal = this.api.time.getTimeFromViewOffsetPx(x, time);
           const startTime = this.data.snapToTime.start({
@@ -351,11 +352,11 @@
               item,
               time,
               movement: this.data.movement,
-              vido: this.vido
+              vido: this.vido,
           });
           const snapStartPxDiff = this.api.time.getDatesDiffPx(startTime, this.api.time.date(leftGlobal), time, true);
           this.setStartCumulationForItem(item, snapStartPxDiff);
-          const startEndTimeDiff = item.$data.time.endDate.diff(item.$data.time.startDate, 'millisecond');
+          const startEndTimeDiff = itemData.time.endDate.diff(itemData.time.startDate, 'millisecond');
           // diff could be too much if we are in the middle of european summer time (daylight-saving time)
           const rightGlobal = startTime.add(startEndTimeDiff, 'millisecond').valueOf();
           const rightGlobalDate = this.api.time.date(rightGlobal);
@@ -370,7 +371,7 @@
               item,
               time,
               movement: this.data.movement,
-              vido: this.vido
+              vido: this.vido,
           });
           return { startTime, endTime };
       }
@@ -387,7 +388,7 @@
       getItemViewTop(item) {
           const rows = this.api.getAllRows();
           const row = rows[item.rowId];
-          return row.$data.position.viewTop + item.$data.position.actualTop;
+          return row.$data.position.viewTop + this.api.getItemData(item.id).position.actualTop;
       }
       saveItemsRelativeVerticalPosition() {
           for (const item of this.data.moving) {
@@ -419,18 +420,18 @@
                   initial: this.data.initialItems,
                   before,
                   after: afterItems,
-                  targetData: this.merge({}, this.data.targetData)
+                  targetData: this.merge({}, this.data.targetData),
               },
               vido: this.vido,
               state: this.state,
-              time: this.state.get('$data.chart.time')
+              time: this.state.get('$data.chart.time'),
           };
       }
       moveItems() {
           if (!this.data.enabled)
               return;
           const time = this.state.get('$data.chart.time');
-          const moving = this.data.moving.map(item => this.merge({}, item));
+          const moving = this.data.moving.map((item) => this.merge({}, item));
           if (this.data.debug)
               console.log('moveItems', moving); // eslint-disable-line no-console
           for (let item of moving) {
@@ -439,8 +440,10 @@
               if (newItemTimes.startTime.valueOf() !== item.time.start || newItemTimes.endTime.valueOf() !== item.time.end) {
                   item.time.start = newItemTimes.startTime.valueOf();
                   item.time.end = newItemTimes.endTime.valueOf();
-                  item.$data.time.startDate = newItemTimes.startTime;
-                  item.$data.time.endDate = newItemTimes.endTime;
+                  const itemData = this.api.getItemData(item.id);
+                  itemData.time.startDate = newItemTimes.startTime;
+                  itemData.time.endDate = newItemTimes.endTime;
+                  this.api.setItemData(item.id, itemData);
               }
           }
           this.dispatchEvent('onMove', moving);
@@ -455,11 +458,11 @@
           this.data.pointerMoved = false;
       }
       dispatchEvent(type, items) {
-          items = items.map(item => this.merge({}, item));
+          items = items.map((item) => this.merge({}, item));
           const modified = this.data.events[type](this.getEventArgument(items));
           let multi = this.state.multi();
           for (const item of modified) {
-              multi = multi.update(`config.chart.items.${item.id}`, currentItem => {
+              multi = multi.update(`config.chart.items.${item.id}`, (currentItem) => {
                   // items should be always references - we cannot make a copy of the object because it may lead us to troubles
                   mergeDeep(currentItem, item);
                   return currentItem;
@@ -469,17 +472,17 @@
           this.data.moving = modified;
       }
       onStart() {
-          this.data.initialItems = this.data.moving.map(item => this.merge({}, item));
+          this.data.initialItems = this.data.moving.map((item) => this.merge({}, item));
           this.clearCumulationsForItems();
           document.body.classList.add(this.data.bodyClassMoving);
           this.data.position = Object.assign({}, this.selection.currentPosition);
           this.data.lastMovement.time = this.data.moving[0].time.start;
           this.saveItemsRelativeVerticalPosition();
-          const initial = this.data.initialItems.map(item => this.merge({}, item));
+          const initial = this.data.initialItems.map((item) => this.merge({}, item));
           this.dispatchEvent('onStart', initial);
       }
       onEnd() {
-          const moving = this.data.moving.map(item => this.merge({}, item));
+          const moving = this.data.moving.map((item) => this.merge({}, item));
           this.dispatchEvent('onEnd', moving);
           document.body.classList.remove(this.data.bodyClassMoving);
           this.clearSelection();
@@ -518,7 +521,7 @@
           this.data.targetData = Object.assign({}, this.selection.targetData);
           if (this.data.state === 'end')
               this.onEnd(); // before this.selection.selected[ITEM] clear
-          this.data.moving = this.selection.selected[ITEM].map(itemId => this.merge({}, this.api.getItem(itemId)));
+          this.data.moving = this.selection.selected[ITEM].map((itemId) => this.merge({}, this.api.getItem(itemId)));
           if (this.data.debug)
               console.log('state', this.data.pointerState); // eslint-disable-line no-console
           if (this.data.state === 'start')
@@ -1728,7 +1731,7 @@
           },
           onEnd({ items }) {
               return items.after;
-          }
+          },
       };
       const snapToTime = {
           start({ startTime, time }) {
@@ -1736,19 +1739,19 @@
           },
           end({ endTime, time }) {
               return endTime.endOf(time.period);
-          }
+          },
       };
       const handle = {
           width: 18,
           horizontalMargin: 0,
           verticalMargin: 0,
           outside: false,
-          onlyWhenSelected: true
+          onlyWhenSelected: true,
       };
       const result = Object.assign({ enabled: true, debug: false, state: '', content: null, bodyClass: 'gstc-item-resizing', bodyClassLeft: 'gstc-items-resizing-left', bodyClassRight: 'gstc-items-resizing-right', initialPosition: { x: 0, y: 0 }, currentPosition: { x: 0, y: 0 }, movement: {
               px: 0,
-              time: 0
-          }, initialItems: [], targetData: null, leftIsMoving: false, rightIsMoving: false, handle: Object.assign({}, handle), events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
+              time: 0,
+          }, initialItems: [], initialItemsData: {}, targetData: null, leftIsMoving: false, rightIsMoving: false, handle: Object.assign({}, handle), events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
       if (options.snapToTime)
           result.snapToTime = Object.assign(Object.assign({}, snapToTime), options.snapToTime);
       if (options.events)
@@ -1783,7 +1786,7 @@
           this.destroy = this.destroy.bind(this);
           this.updateData();
           document.body.classList.add(this.data.bodyClass);
-          this.unsubs.push(this.state.subscribe('config.plugin.ItemResizing', data => {
+          this.unsubs.push(this.state.subscribe('config.plugin.ItemResizing', (data) => {
               if (!data.enabled) {
                   document.body.classList.remove(this.data.bodyClass);
               }
@@ -1804,7 +1807,7 @@
           });
       }
       destroy() {
-          this.unsubs.forEach(unsub => unsub());
+          this.unsubs.forEach((unsub) => unsub());
           document.removeEventListener('pointermove', this.onLeftPointerMove);
           document.removeEventListener('pointerup', this.onLeftPointerUp);
           document.removeEventListener('pointermove', this.onRightPointerMove);
@@ -1825,34 +1828,43 @@
       getSelectedItems() {
           return this.state
               .get(`config.plugin.Selection.selected.${ITEM}`)
-              .map(itemId => this.merge({}, this.api.getItem(itemId)));
+              .map((itemId) => this.merge({}, this.api.getItem(itemId)));
+      }
+      getSelectedItemsData(selectedItems) {
+          const itemsData = {};
+          for (const item of selectedItems) {
+              itemsData[item.id] = this.merge({}, this.api.getItemData(item.id));
+          }
+          return itemsData;
       }
       getRightStyleMap(item) {
           const rightStyleMap = new this.vido.StyleMap({});
-          rightStyleMap.style.top = item.$data.position.actualTop + this.data.handle.verticalMargin + 'px';
+          const itemData = this.api.getItemData(item.id);
+          rightStyleMap.style.top = itemData.position.actualTop + this.data.handle.verticalMargin + 'px';
           if (this.data.handle.outside) {
-              rightStyleMap.style.left = item.$data.position.right + this.data.handle.horizontalMargin - this.spacing + 'px';
+              rightStyleMap.style.left = itemData.position.right + this.data.handle.horizontalMargin - this.spacing + 'px';
           }
           else {
               rightStyleMap.style.left =
-                  item.$data.position.right - this.data.handle.width - this.data.handle.horizontalMargin - this.spacing + 'px';
+                  itemData.position.right - this.data.handle.width - this.data.handle.horizontalMargin - this.spacing + 'px';
           }
           rightStyleMap.style.width = this.data.handle.width + 'px';
-          rightStyleMap.style.height = item.$data.actualHeight - this.data.handle.verticalMargin * 2 + 'px';
+          rightStyleMap.style.height = itemData.actualHeight - this.data.handle.verticalMargin * 2 + 'px';
           return rightStyleMap;
       }
       getLeftStyleMap(item) {
           const leftStyleMap = new this.vido.StyleMap({});
-          leftStyleMap.style.top = item.$data.position.actualTop + this.data.handle.verticalMargin + 'px';
+          const itemData = this.api.getItemData(item.id);
+          leftStyleMap.style.top = itemData.position.actualTop + this.data.handle.verticalMargin + 'px';
           if (this.data.handle.outside) {
               leftStyleMap.style.left =
-                  item.$data.position.left - this.data.handle.width - this.data.handle.horizontalMargin + 'px';
+                  itemData.position.left - this.data.handle.width - this.data.handle.horizontalMargin + 'px';
           }
           else {
-              leftStyleMap.style.left = item.$data.position.left + this.data.handle.horizontalMargin + 'px';
+              leftStyleMap.style.left = itemData.position.left + this.data.handle.horizontalMargin + 'px';
           }
           leftStyleMap.style.width = this.data.handle.width + 'px';
-          leftStyleMap.style.height = item.$data.actualHeight - this.data.handle.verticalMargin * 2 + 'px';
+          leftStyleMap.style.height = itemData.actualHeight - this.data.handle.verticalMargin * 2 + 'px';
           return leftStyleMap;
       }
       getEventArgument(afterItems) {
@@ -1866,38 +1878,39 @@
                   initial: this.data.initialItems,
                   before,
                   after: afterItems,
-                  targetData: this.data.targetData
+                  targetData: this.data.targetData,
               },
               vido: this.vido,
               state: this.state,
-              time: this.state.get('$data.chart.time')
+              time: this.state.get('$data.chart.time'),
           };
       }
-      dispatchEvent(type, items) {
-          items = items.map(item => this.merge({}, item));
+      dispatchEvent(type, items, itemData = null) {
+          items = items.map((item) => this.merge({}, item));
           const modified = this.data.events[type](this.getEventArgument(items));
           let multi = this.state.multi();
           for (const item of modified) {
-              multi = multi
-                  .update(`config.chart.items.${item.id}.time`, item.time)
-                  .update(`config.chart.items.${item.id}.$data`, item.$data);
+              multi = multi.update(`config.chart.items.${item.id}.time`, item.time);
+              if (itemData)
+                  multi = multi.update(`$data.chart.items.${item.id}`, itemData[item.id]);
           }
           multi.done();
       }
       getItemsForDiff() {
           const modified = this.getSelectedItems()[0];
-          const original = this.data.initialItems.find(initial => initial.id === modified.id);
+          const original = this.data.initialItems.find((initial) => initial.id === modified.id);
           return { modified, original };
       }
       onPointerDown(ev) {
           ev.preventDefault();
           ev.stopPropagation();
           this.data.initialItems = this.getSelectedItems();
+          this.data.initialItemsData = this.getSelectedItemsData(this.data.initialItems);
           // @ts-ignore
           this.data.targetData = this.merge({}, ev.target.vido);
           this.data.initialPosition = {
               x: ev.screenX,
-              y: ev.screenY
+              y: ev.screenY,
           };
           this.data.currentPosition = Object.assign({}, this.data.initialPosition);
           if (this.data.state === '' || this.data.state === 'end') {
@@ -1942,24 +1955,26 @@
           const time = this.state.get('$data.chart.time');
           for (let i = 0, len = selected.length; i < len; i++) {
               const item = selected[i];
-              item.$data.position.left = this.data.initialItems[i].$data.position.left + movement.px;
-              if (item.$data.position.left > item.$data.position.right)
-                  item.$data.position.left = item.$data.position.right;
-              item.$data.position.actualLeft = item.$data.position.left;
-              item.$data.width = item.$data.position.right - item.$data.position.left;
-              if (item.$data.width < item.minWidth)
-                  item.$data.width = item.minWidth;
-              item.$data.actualWidth = item.$data.width;
-              const leftGlobal = this.api.time.getTimeFromViewOffsetPx(item.$data.position.left, time, true);
+              const itemData = this.merge({}, this.api.getItemData(item.id));
+              itemData.position.left = this.api.getItemData(this.data.initialItems[i].id).position.left + movement.px;
+              if (itemData.position.left > itemData.position.right)
+                  itemData.position.left = itemData.position.right;
+              itemData.position.actualLeft = itemData.position.left;
+              itemData.width = itemData.position.right - itemData.position.left;
+              if (itemData.width < item.minWidth)
+                  itemData.width = item.minWidth;
+              itemData.actualWidth = itemData.width;
+              const leftGlobal = this.api.time.getTimeFromViewOffsetPx(itemData.position.left, time, true);
               const finalLeftGlobalDate = this.data.snapToTime.start({
                   startTime: this.api.time.date(leftGlobal),
                   item,
                   time,
                   movement,
-                  vido: this.vido
+                  vido: this.vido,
               });
               item.time.start = finalLeftGlobalDate.valueOf();
-              item.$data.time.startDate = finalLeftGlobalDate;
+              itemData.time.startDate = finalLeftGlobalDate;
+              //this.api.setItemData(item.id, itemData);
           }
           this.dispatchEvent('onResize', selected);
           this.updateData();
@@ -1969,30 +1984,32 @@
               return;
           this.onPointerMove(ev);
           const selected = this.getSelectedItems();
+          const itemDataToSave = {};
           const movement = this.data.movement;
           const time = this.state.get('$data.chart.time');
           for (let i = 0, len = selected.length; i < len; i++) {
               const item = selected[i];
-              item.$data.width = this.data.initialItems[i].$data.width + movement.px;
-              if (item.$data.width < item.minWidth)
-                  item.$data.width = item.minWidth;
-              const diff = item.$data.position.actualLeft === item.$data.position.left ? 0 : item.$data.position.left;
-              item.$data.actualWidth = item.$data.width + diff;
-              let right = item.$data.position.left + item.$data.width;
-              item.$data.position.right = right;
-              item.$data.position.actualRight = right;
-              const rightGlobal = this.api.time.getTimeFromViewOffsetPx(right, time, false);
+              const itemData = this.merge({}, this.data.initialItemsData[item.id]);
+              itemData.position.right = itemData.position.right + movement.px;
+              if (itemData.position.right < itemData.position.left)
+                  itemData.position.right = itemData.position.left;
+              const rightGlobal = this.api.time.getTimeFromViewOffsetPx(itemData.position.right, time, false);
+              itemData.width = itemData.position.right - itemData.position.left;
+              if (itemData.width < item.minWidth)
+                  itemData.width = item.minWidth;
+              itemData.actualWidth = itemData.width;
               const finalRightGlobalDate = this.data.snapToTime.end({
                   endTime: this.api.time.date(rightGlobal),
                   item,
                   time,
                   movement,
-                  vido: this.vido
+                  vido: this.vido,
               });
               item.time.end = finalRightGlobalDate.valueOf();
-              item.$data.time.endDate = finalRightGlobalDate;
+              itemData.time.endDate = finalRightGlobalDate;
+              itemDataToSave[item.id] = itemData;
           }
-          this.dispatchEvent('onResize', selected);
+          this.dispatchEvent('onResize', selected, itemDataToSave);
           this.updateData();
       }
       onEnd() {
@@ -2027,15 +2044,14 @@
       wrapper(input, props) {
           const oldContent = this.oldWrapper(input, props);
           const item = props.props.item;
-          let visible = !item.$data.detached;
+          let visible = !this.api.getItemData(item.id).detached;
           if (this.data.handle.onlyWhenSelected) {
               visible = visible && item.selected;
           }
           const rightStyleMap = this.getRightStyleMap(item);
           const leftStyleMap = this.getLeftStyleMap(item); // eslint-disable-line no-unused-vars, @typescript-eslint/no-unused-vars
           const onRightPointerDown = {
-              handleEvent: ev => this.onRightPointerDown(ev)
-              //capture: true,
+              handleEvent: (ev) => this.onRightPointerDown(ev),
           };
           /*const leftHandle = this
             .html`<div class=${this.leftClassName} style=${leftStyleMap} @pointerdown=${onLeftPointerDown}>${this.data.content}</div>`;
@@ -2101,9 +2117,6 @@
           }, selected: {
               [ITEM]: [],
               [CELL]: [],
-          }, previouslySelected: {
-              [ITEM]: [],
-              [CELL]: [],
           }, automaticallySelected: {
               [ITEM]: [],
               [CELL]: [],
@@ -2158,11 +2171,7 @@
               this.data.selected[ITEM] = this.data.selected[ITEM].filter((itemId) => !!items[itemId]);
               this.data.selecting[ITEM] = this.data.selecting[ITEM].filter((itemId) => !!items[itemId]);
           }, {
-              ignore: [
-                  'config.chart.items.*.$data.detached',
-                  'config.chart.items.*.selected',
-                  'config.chart.items.*.selecting',
-              ],
+              ignore: ['$data.chart.items.*.detached', 'config.chart.items.*.selected', 'config.chart.items.*.selecting'],
           }));
           this.onDestroy.push(this.state.subscribe('$data.chart.grid', () => {
               const allCells = this.api.getGridCells();
@@ -2276,7 +2285,7 @@
           }
           else {
               if (this.isMulti()) {
-                  selected = Array.from(new Set([...this.data.previouslySelected[ITEM], ...linked]));
+                  selected = Array.from(new Set([...this.data.selected[ITEM], ...linked]));
               }
               else {
                   selected = linked;
@@ -2321,7 +2330,7 @@
           const automaticallySelectedItems = [];
           for (let item of visibleItems) {
               item = this.merge({}, item);
-              const itemData = item.$data;
+              const itemData = this.api.getItemData(item.id);
               if (this.isItemVerticallyInsideArea(itemData, areaLocal) &&
                   this.isItemHorizontallyInsideArea(itemData, areaLocal)) {
                   if (!selectedItems.find((selectedItemId) => selectedItemId === item.id))
@@ -2380,14 +2389,15 @@
       updateItems(multi = undefined) {
           if (!multi)
               multi = this.state.multi();
-          multi.update('config.chart.items', (items) => {
-              for (const itemId in items) {
-                  const item = items[itemId];
-                  item.selected = this.data.selected[ITEM].includes(item.id);
-                  item.selecting = this.data.selecting[ITEM].includes(item.id);
-              }
-              return items;
-          });
+          multi = multi.update('config.chart.items.*.selected', false);
+          multi = multi.update('config.chart.items.*.selecting', false);
+          const itemsId = Array.from(new Set([...this.data.selecting[ITEM], ...this.data.selected[ITEM]]));
+          for (const itemId of itemsId) {
+              const selecting = this.data.selecting[ITEM].includes(itemId);
+              const selected = this.data.selected[ITEM].includes(itemId);
+              multi = multi.update(`config.chart.items.${itemId}.selecting`, selecting);
+              multi = multi.update(`config.chart.items.${itemId}.selected`, selected);
+          }
           return multi;
       }
       updateCells(multi = undefined) {

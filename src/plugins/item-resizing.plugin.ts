@@ -8,7 +8,7 @@
  * @link      https://github.com/neuronetio/gantt-schedule-timeline-calendar
  */
 
-import { Vido, Wrapper, htmlResult, Item, DataChartTime } from '../gstc';
+import { Vido, Wrapper, htmlResult, Item, DataChartTime, ItemData, DataItems } from '../gstc';
 import DeepState from 'deep-state-observer';
 import { Api, getClass } from '../api/api';
 import { lithtml } from '@neuronet.io/vido/src/vido';
@@ -87,6 +87,7 @@ export interface PluginData extends Options {
   leftIsMoving: boolean;
   rightIsMoving: boolean;
   initialItems: Item[];
+  initialItemsData: DataItems;
   initialPosition: Point;
   currentPosition: Point;
   targetData: Item | null;
@@ -106,7 +107,7 @@ function generateEmptyData(options: Options = {}): PluginData {
     },
     onEnd({ items }) {
       return items.after;
-    }
+    },
   };
   const snapToTime = {
     start({ startTime, time }) {
@@ -114,14 +115,14 @@ function generateEmptyData(options: Options = {}): PluginData {
     },
     end({ endTime, time }) {
       return endTime.endOf(time.period);
-    }
+    },
   };
   const handle = {
     width: 18,
     horizontalMargin: 0,
     verticalMargin: 0,
     outside: false,
-    onlyWhenSelected: true
+    onlyWhenSelected: true,
   };
   const result: PluginData = {
     enabled: true,
@@ -135,16 +136,17 @@ function generateEmptyData(options: Options = {}): PluginData {
     currentPosition: { x: 0, y: 0 },
     movement: {
       px: 0,
-      time: 0
+      time: 0,
     },
     initialItems: [],
+    initialItemsData: {},
     targetData: null,
     leftIsMoving: false,
     rightIsMoving: false,
     handle: { ...handle },
     events: { ...events },
     snapToTime: { ...snapToTime },
-    ...options
+    ...options,
   };
   if (options.snapToTime) result.snapToTime = { ...snapToTime, ...options.snapToTime };
   if (options.events) result.events = { ...events, ...options.events };
@@ -190,7 +192,7 @@ class ItemResizing {
     this.updateData();
     document.body.classList.add(this.data.bodyClass);
     this.unsubs.push(
-      this.state.subscribe('config.plugin.ItemResizing', data => {
+      this.state.subscribe('config.plugin.ItemResizing', (data) => {
         if (!data.enabled) {
           document.body.classList.remove(this.data.bodyClass);
         } else if (data.enabled) {
@@ -211,7 +213,7 @@ class ItemResizing {
   }
 
   public destroy() {
-    this.unsubs.forEach(unsub => unsub());
+    this.unsubs.forEach((unsub) => unsub());
     document.removeEventListener('pointermove', this.onLeftPointerMove);
     document.removeEventListener('pointerup', this.onLeftPointerUp);
     document.removeEventListener('pointermove', this.onRightPointerMove);
@@ -234,34 +236,44 @@ class ItemResizing {
   private getSelectedItems(): Item[] {
     return this.state
       .get(`config.plugin.Selection.selected.${ITEM}`)
-      .map(itemId => this.merge({}, this.api.getItem(itemId)) as Item);
+      .map((itemId) => this.merge({}, this.api.getItem(itemId)) as Item);
+  }
+
+  private getSelectedItemsData(selectedItems: Item[]): DataItems {
+    const itemsData = {};
+    for (const item of selectedItems) {
+      itemsData[item.id] = this.merge({}, this.api.getItemData(item.id));
+    }
+    return itemsData;
   }
 
   private getRightStyleMap(item: Item) {
     const rightStyleMap = new this.vido.StyleMap({});
-    rightStyleMap.style.top = item.$data.position.actualTop + this.data.handle.verticalMargin + 'px';
+    const itemData = this.api.getItemData(item.id);
+    rightStyleMap.style.top = itemData.position.actualTop + this.data.handle.verticalMargin + 'px';
     if (this.data.handle.outside) {
-      rightStyleMap.style.left = item.$data.position.right + this.data.handle.horizontalMargin - this.spacing + 'px';
+      rightStyleMap.style.left = itemData.position.right + this.data.handle.horizontalMargin - this.spacing + 'px';
     } else {
       rightStyleMap.style.left =
-        item.$data.position.right - this.data.handle.width - this.data.handle.horizontalMargin - this.spacing + 'px';
+        itemData.position.right - this.data.handle.width - this.data.handle.horizontalMargin - this.spacing + 'px';
     }
     rightStyleMap.style.width = this.data.handle.width + 'px';
-    rightStyleMap.style.height = item.$data.actualHeight - this.data.handle.verticalMargin * 2 + 'px';
+    rightStyleMap.style.height = itemData.actualHeight - this.data.handle.verticalMargin * 2 + 'px';
     return rightStyleMap;
   }
 
   private getLeftStyleMap(item: Item) {
     const leftStyleMap = new this.vido.StyleMap({});
-    leftStyleMap.style.top = item.$data.position.actualTop + this.data.handle.verticalMargin + 'px';
+    const itemData = this.api.getItemData(item.id);
+    leftStyleMap.style.top = itemData.position.actualTop + this.data.handle.verticalMargin + 'px';
     if (this.data.handle.outside) {
       leftStyleMap.style.left =
-        item.$data.position.left - this.data.handle.width - this.data.handle.horizontalMargin + 'px';
+        itemData.position.left - this.data.handle.width - this.data.handle.horizontalMargin + 'px';
     } else {
-      leftStyleMap.style.left = item.$data.position.left + this.data.handle.horizontalMargin + 'px';
+      leftStyleMap.style.left = itemData.position.left + this.data.handle.horizontalMargin + 'px';
     }
     leftStyleMap.style.width = this.data.handle.width + 'px';
-    leftStyleMap.style.height = item.$data.actualHeight - this.data.handle.verticalMargin * 2 + 'px';
+    leftStyleMap.style.height = itemData.actualHeight - this.data.handle.verticalMargin * 2 + 'px';
     return leftStyleMap;
   }
 
@@ -276,29 +288,28 @@ class ItemResizing {
         initial: this.data.initialItems,
         before,
         after: afterItems,
-        targetData: this.data.targetData
+        targetData: this.data.targetData,
       },
       vido: this.vido,
       state: this.state,
-      time: this.state.get('$data.chart.time')
+      time: this.state.get('$data.chart.time'),
     };
   }
 
-  private dispatchEvent(type: 'onStart' | 'onResize' | 'onEnd', items: Item[]) {
-    items = items.map(item => this.merge({}, item) as Item);
+  private dispatchEvent(type: 'onStart' | 'onResize' | 'onEnd', items: Item[], itemData: DataItems = null) {
+    items = items.map((item) => this.merge({}, item) as Item);
     const modified = this.data.events[type](this.getEventArgument(items));
     let multi = this.state.multi();
     for (const item of modified) {
-      multi = multi
-        .update(`config.chart.items.${item.id}.time`, item.time)
-        .update(`config.chart.items.${item.id}.$data`, item.$data);
+      multi = multi.update(`config.chart.items.${item.id}.time`, item.time);
+      if (itemData) multi = multi.update(`$data.chart.items.${item.id}`, itemData[item.id]);
     }
     multi.done();
   }
 
   private getItemsForDiff(): { original: Item; modified: Item } {
     const modified = this.getSelectedItems()[0];
-    const original = this.data.initialItems.find(initial => initial.id === modified.id);
+    const original = this.data.initialItems.find((initial) => initial.id === modified.id);
     return { modified, original };
   }
 
@@ -306,11 +317,12 @@ class ItemResizing {
     ev.preventDefault();
     ev.stopPropagation();
     this.data.initialItems = this.getSelectedItems();
+    this.data.initialItemsData = this.getSelectedItemsData(this.data.initialItems);
     // @ts-ignore
     this.data.targetData = this.merge({}, ev.target.vido) as Item;
     this.data.initialPosition = {
       x: ev.screenX,
-      y: ev.screenY
+      y: ev.screenY,
     };
     this.data.currentPosition = { ...this.data.initialPosition };
     if (this.data.state === '' || this.data.state === 'end') {
@@ -356,22 +368,24 @@ class ItemResizing {
     const time: DataChartTime = this.state.get('$data.chart.time');
     for (let i = 0, len = selected.length; i < len; i++) {
       const item = selected[i];
-      item.$data.position.left = this.data.initialItems[i].$data.position.left + movement.px;
-      if (item.$data.position.left > item.$data.position.right) item.$data.position.left = item.$data.position.right;
-      item.$data.position.actualLeft = item.$data.position.left;
-      item.$data.width = item.$data.position.right - item.$data.position.left;
-      if (item.$data.width < item.minWidth) item.$data.width = item.minWidth;
-      item.$data.actualWidth = item.$data.width;
-      const leftGlobal = this.api.time.getTimeFromViewOffsetPx(item.$data.position.left, time, true);
+      const itemData = this.merge({}, this.api.getItemData(item.id)) as ItemData;
+      itemData.position.left = this.api.getItemData(this.data.initialItems[i].id).position.left + movement.px;
+      if (itemData.position.left > itemData.position.right) itemData.position.left = itemData.position.right;
+      itemData.position.actualLeft = itemData.position.left;
+      itemData.width = itemData.position.right - itemData.position.left;
+      if (itemData.width < item.minWidth) itemData.width = item.minWidth;
+      itemData.actualWidth = itemData.width;
+      const leftGlobal = this.api.time.getTimeFromViewOffsetPx(itemData.position.left, time, true);
       const finalLeftGlobalDate = this.data.snapToTime.start({
         startTime: this.api.time.date(leftGlobal),
         item,
         time,
         movement,
-        vido: this.vido
+        vido: this.vido,
       });
       item.time.start = finalLeftGlobalDate.valueOf();
-      item.$data.time.startDate = finalLeftGlobalDate;
+      itemData.time.startDate = finalLeftGlobalDate;
+      //this.api.setItemData(item.id, itemData);
     }
     this.dispatchEvent('onResize', selected);
     this.updateData();
@@ -381,29 +395,30 @@ class ItemResizing {
     if (!this.data.enabled || !this.data.rightIsMoving) return;
     this.onPointerMove(ev);
     const selected = this.getSelectedItems();
+    const itemDataToSave = {};
     const movement = this.data.movement;
     const time: DataChartTime = this.state.get('$data.chart.time');
     for (let i = 0, len = selected.length; i < len; i++) {
       const item = selected[i];
-      item.$data.width = this.data.initialItems[i].$data.width + movement.px;
-      if (item.$data.width < item.minWidth) item.$data.width = item.minWidth;
-      const diff = item.$data.position.actualLeft === item.$data.position.left ? 0 : item.$data.position.left;
-      item.$data.actualWidth = item.$data.width + diff;
-      let right = item.$data.position.left + item.$data.width;
-      item.$data.position.right = right;
-      item.$data.position.actualRight = right;
-      const rightGlobal = this.api.time.getTimeFromViewOffsetPx(right, time, false);
+      const itemData = this.merge({}, this.data.initialItemsData[item.id]) as ItemData;
+      itemData.position.right = itemData.position.right + movement.px;
+      if (itemData.position.right < itemData.position.left) itemData.position.right = itemData.position.left;
+      const rightGlobal = this.api.time.getTimeFromViewOffsetPx(itemData.position.right, time, false);
+      itemData.width = itemData.position.right - itemData.position.left;
+      if (itemData.width < item.minWidth) itemData.width = item.minWidth;
+      itemData.actualWidth = itemData.width;
       const finalRightGlobalDate = this.data.snapToTime.end({
         endTime: this.api.time.date(rightGlobal),
         item,
         time,
         movement,
-        vido: this.vido
+        vido: this.vido,
       });
       item.time.end = finalRightGlobalDate.valueOf();
-      item.$data.time.endDate = finalRightGlobalDate;
+      itemData.time.endDate = finalRightGlobalDate;
+      itemDataToSave[item.id] = itemData;
     }
-    this.dispatchEvent('onResize', selected);
+    this.dispatchEvent('onResize', selected, itemDataToSave);
     this.updateData();
   }
 
@@ -441,8 +456,7 @@ class ItemResizing {
   public wrapper(input: htmlResult, props?: any): htmlResult {
     const oldContent = this.oldWrapper(input, props);
     const item: Item = props.props.item;
-
-    let visible = !item.$data.detached;
+    let visible = !this.api.getItemData(item.id).detached;
     if (this.data.handle.onlyWhenSelected) {
       visible = visible && item.selected;
     }
@@ -450,11 +464,11 @@ class ItemResizing {
     const leftStyleMap = this.getLeftStyleMap(item); // eslint-disable-line no-unused-vars, @typescript-eslint/no-unused-vars
     // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     const onLeftPointerDown = {
-      handleEvent: ev => this.onLeftPointerDown(ev)
+      handleEvent: (ev) => this.onLeftPointerDown(ev),
       //capture: true,
     };
     const onRightPointerDown = {
-      handleEvent: ev => this.onRightPointerDown(ev)
+      handleEvent: (ev) => this.onRightPointerDown(ev),
       //capture: true,
     };
     /*const leftHandle = this

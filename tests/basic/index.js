@@ -71,7 +71,7 @@ const columns = {
 };
 
 const config = {
-  debug: true,
+  //debug: true,
   plugins: [HighlightWeekends(), TimelinePointer(), Selection(), ItemMovement(), ItemResizing(), CalendarScroll()],
   list: {
     rows,
@@ -80,6 +80,7 @@ const config = {
   chart: {
     items,
   },
+  usageStatistics: false,
 };
 
 var state = GSTC.api.stateFromConfig(config);

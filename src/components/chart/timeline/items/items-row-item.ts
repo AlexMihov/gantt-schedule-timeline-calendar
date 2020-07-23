@@ -76,8 +76,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
   function updateItem(time: DataChartTime = state.get('$data.chart.time')) {
     if (leave || time.levels.length === 0 || !time.levels[time.level] || time.levels[time.level].length === 0) {
       shouldDetach = true;
-      if (props.item) props.item.$data.detached = shouldDetach;
-      //if (props.item) state.update(`config.chart.items.${props.item.id}.$data.detached`, true);
+      if (props.item) api.setItemData(props.item.id, { detached: shouldDetach });
       return update();
     }
     if (!props.item) {
@@ -90,12 +89,12 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
       console.trace(); // eslint-disable-line no-console
       console.groupEnd(); // eslint-disable-line no-console
     }
-    itemLeftPx = props.item.$data.position.actualLeft;
-    itemWidthPx = props.item.$data.actualWidth;
+    const itemData = api.getItemData(props.item.id);
+    itemLeftPx = itemData.position.actualLeft;
+    itemWidthPx = itemData.actualWidth;
     if (props.item.time.end <= time.leftGlobal || props.item.time.start >= time.rightGlobal || itemWidthPx <= 0) {
       shouldDetach = true;
-      props.item.$data.detached = shouldDetach;
-      //state.update(`config.chart.items.${props.item.id}.$data.detached`, true);
+      itemData.detached = shouldDetach;
       return update();
     }
     classNameCurrent = className;
@@ -105,7 +104,7 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
     } else {
       leftCutStyleMap.style.display = 'none';
     }
-    if (props.item.$data.position.right > time.width) {
+    if (itemData.position.right > time.width) {
       rightCutStyleMap.style.display = 'block';
       classNameCurrent += ' ' + api.getClass(componentName + '--right-cut', props.row.id + '-' + props.item.id);
     } else {
@@ -124,14 +123,13 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
     styleMap.setStyle({});
     const inViewPort = api.isItemInViewport(props.item, time.leftGlobal, time.rightGlobal);
     shouldDetach = !inViewPort;
-    props.item.$data.detached = shouldDetach;
-    //state.update(`config.chart.items.${props.item.id}.$data.detached`, shouldDetach);
+    itemData.detached = shouldDetach;
     if (inViewPort) {
       // update style only when visible to prevent browser's recalculate style
       styleMap.style.width = itemWidthPx + 'px';
       styleMap.style.left = itemLeftPx + 'px';
-      styleMap.style.top = props.item.$data.position.actualTop + 'px';
-      styleMap.style.height = props.item.$data.actualHeight + 'px';
+      styleMap.style.top = itemData.position.actualTop + 'px';
+      styleMap.style.height = itemData.actualHeight + 'px';
     } else {
       styleMap.style.width = oldWidth;
       styleMap.style.left = oldLeft;
@@ -201,16 +199,14 @@ export default function ChartTimelineItemsRowItem(vido: Vido, props: Props) {
       leave = true;
       shouldDetach = true;
       if (props.item) {
-        props.item.$data.detached = shouldDetach;
+        api.setItemData(props.item.id, { detached: shouldDetach });
       }
-      //if (props.item) state.update(`config.chart.items.${props.item.id}.$data.detached`, true);
       //props = changedProps;
       slots.change(changedProps, options);
       return update();
     } else {
       shouldDetach = false;
-      //state.update(`config.chart.items.${props.item.id}.$data.detached`, false);
-      props.item.$data.detached = shouldDetach;
+      api.setItemData(props.item.id, { detached: shouldDetach });
       leave = false;
     }
     props = changedProps;
