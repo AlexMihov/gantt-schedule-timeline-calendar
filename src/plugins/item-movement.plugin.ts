@@ -99,7 +99,7 @@ export interface MovingTimes {
   endTime: Dayjs;
 }
 
-export type State = '' | 'start' | 'end' | 'move' | '';
+export type State = '' | 'start' | 'end' | 'move';
 
 export interface Cumulation {
   start: number;

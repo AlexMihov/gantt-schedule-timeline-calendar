@@ -158,7 +158,7 @@ function generateEmptyData(options: Options): PluginData {
 
 class SelectionPlugin {
   private data: PluginData;
-  private poitnerData: TimelinePointerPluginData;
+  private pointerData: TimelinePointerPluginData;
   private vido: Vido;
   private state: DeepState;
   private api: Api;
@@ -189,7 +189,7 @@ class SelectionPlugin {
     });
     this.onDestroy.push(
       this.state.subscribe('config.plugin.TimelinePointer', (timelinePointerData) => {
-        this.poitnerData = timelinePointerData;
+        this.pointerData = timelinePointerData;
         this.onPointerData();
       })
     );
@@ -259,15 +259,15 @@ class SelectionPlugin {
 
   private canSelect(): boolean {
     let result = this.data.enabled;
-    const downEvent = this.poitnerData.events.down;
+    const downEvent = this.pointerData.events.down;
     if (downEvent && this.data.selectKey) result = result && this.modKeyPressed(this.data.selectKey, downEvent);
     return result;
   }
 
   private getSelectionAreaLocal(): Area {
     const area = { x: 0, y: 0, width: 0, height: 0 };
-    const initial = { ...this.poitnerData.initialPosition };
-    const current = { ...this.poitnerData.currentPosition };
+    const initial = { ...this.pointerData.initialPosition };
+    const current = { ...this.pointerData.currentPosition };
     const width = current.x - initial.x;
     const height = current.y - initial.y;
     if (width >= 0) {
@@ -369,7 +369,7 @@ class SelectionPlugin {
   }
 
   private isMulti(): boolean {
-    const move = this.poitnerData.events.move;
+    const move = this.pointerData.events.move;
     return move && this.data.multiKey && this.modKeyPressed(this.data.multiKey, move);
   }
 
@@ -539,10 +539,10 @@ class SelectionPlugin {
   private selectItemsIndividually() {
     this.data.isSelecting = false;
     this.data.selectionAreaLocal = this.getSelectionAreaLocal();
-    this.data.currentPosition = this.poitnerData.currentPosition;
-    this.data.initialPosition = this.poitnerData.initialPosition;
+    this.data.currentPosition = this.pointerData.currentPosition;
+    this.data.initialPosition = this.pointerData.initialPosition;
     if (!this.canSelect()) return;
-    const item: Item = this.merge({}, this.poitnerData.targetData) as Item;
+    const item: Item = this.merge({}, this.pointerData.targetData) as Item;
     let { selected, automaticallySelected } = this.getSelected(item);
     if (selected.length > 1 && !this.data.multipleSelection) {
       selected = [item.id];
@@ -578,23 +578,23 @@ class SelectionPlugin {
   }
 
   private onPointerData() {
-    if (this.poitnerData.isMoving && this.poitnerData.targetType === CELL && this.data.rectangularSelection) {
+    if (this.pointerData.isMoving && this.pointerData.targetType === CELL && this.data.rectangularSelection) {
       this.selectMultipleCellsAndItems();
-    } else if (this.poitnerData.isMoving && this.poitnerData.targetType === CELL && !this.data.rectangularSelection) {
+    } else if (this.pointerData.isMoving && this.pointerData.targetType === CELL && !this.data.rectangularSelection) {
       this.deselectItems();
-    } else if (this.poitnerData.isMoving && this.poitnerData.targetType === ITEM) {
+    } else if (this.pointerData.isMoving && this.pointerData.targetType === ITEM) {
       this.selectItemsIndividually();
-    } else if (!this.poitnerData.isMoving) {
+    } else if (!this.pointerData.isMoving) {
       if (this.data.isSelecting) this.finishSelection();
       this.data.isSelecting = false;
     }
-    if (this.poitnerData.isMoving && this.poitnerData.targetType !== CELL && this.poitnerData.targetType !== ITEM) {
+    if (this.pointerData.isMoving && this.pointerData.targetType !== CELL && this.pointerData.targetType !== ITEM) {
       this.deselectItems();
     }
-    this.data.events = this.poitnerData.events;
-    this.data.pointerState = this.poitnerData.pointerState;
-    this.data.targetType = this.poitnerData.targetType;
-    this.data.targetData = this.poitnerData.targetData;
+    this.data.events = this.pointerData.events;
+    this.data.pointerState = this.pointerData.pointerState;
+    this.data.targetType = this.pointerData.targetType;
+    this.data.targetData = this.pointerData.targetData;
     this.updateData();
   }
 
