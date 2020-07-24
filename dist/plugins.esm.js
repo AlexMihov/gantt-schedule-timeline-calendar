@@ -2573,7 +2573,7 @@ class SelectionPlugin {
         }
         if (this.isMulti()) {
             if (item.selected) {
-                this.data.selected[ITEM] = selected.filter((itemId) => itemId !== item.id);
+                this.data.selected[ITEM] = selected.filter((itemId) => itemId !== item.id && !automaticallySelected.includes(itemId));
             }
             else {
                 this.data.selected[ITEM] = selected;
