@@ -11436,7 +11436,7 @@ class Api {
                     actualWidth: -1,
                     detached: false,
                     linkedWith: [],
-                    dependant: [],
+                    dependant: this.getChildrenDependantItemsIds(item, items),
                 };
             }
             item.time.start = +item.time.start;
