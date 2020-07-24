@@ -2092,8 +2092,10 @@ function prepareOptions$1(options) {
         showOverlay: true,
         rectangularSelection: true,
         multipleSelection: true,
-        selectedClassName: 'gstc__grid-cell-selected',
-        selectingClassName: 'gstc__grid-cell-selecting',
+        selectedClassName: 'gstc__selected',
+        selectingClassName: 'gstc__selecting',
+        bodySelectedClassName: 'gstc__is-selected',
+        bodySelectingClassName: 'gstc__is-selecting',
         onSelecting(selecting) {
             return selecting;
         },
@@ -2167,11 +2169,16 @@ class SelectionPlugin {
         this.onDestroy.push(this.state.subscribe(pluginPath$3, (value) => {
             this.data = value;
         }));
-        this.updateCellSelectionClassName = this.updateCellSelectionClassName.bind(this);
-        this.selectedCellAction = this.selectedCellAction.bind(this);
+        this.updateSelectionClassName = this.updateSelectionClassName.bind(this);
+        this.selectedAction = this.selectedAction.bind(this);
         this.state.update('config.actions.chart-timeline-grid-row-cell', (actions) => {
-            if (!actions.includes(this.selectedCellAction))
-                actions.push(this.selectedCellAction);
+            if (!actions.includes(this.selectedAction))
+                actions.push(this.selectedAction);
+            return actions;
+        });
+        this.state.update('config.actions.chart-timeline-items-row-item', (actions) => {
+            if (!actions.includes(this.selectedAction))
+                actions.push(this.selectedAction);
             return actions;
         });
         // watch and update items/cells that are inside selection
@@ -2194,7 +2201,10 @@ class SelectionPlugin {
     destroy() {
         this.state.update('config.wrappers.ChartTimelineItems', this.oldWrapper);
         this.state.update('config.actions.chart-timeline-grid-row-cell', (actions) => {
-            return actions.filter((action) => action !== this.selectedCellAction);
+            return actions.filter((action) => action !== this.selectedAction);
+        });
+        this.state.update('config.actions.chart-timeline-items-row-item', (actions) => {
+            return actions.filter((action) => action !== this.selectedAction);
         });
         this.state.update('config.chart.grid.cell.onCreate', (onCreate) => {
             return onCreate.filter((onCreateFn) => onCreateFn !== this.onCellCreate);
@@ -2515,6 +2525,20 @@ class SelectionPlugin {
             [ITEM]: result[ITEM].map((item) => (typeof item !== 'string' ? item.id : item)),
         };
     }
+    updateBodyClass() {
+        if (this.data.isSelecting) {
+            document.body.classList.add(this.data.bodySelectingClassName);
+        }
+        else {
+            document.body.classList.remove(this.data.bodySelectingClassName);
+        }
+        if (this.data.selected[CELL].length || this.data.selected[ITEM].length) {
+            document.body.classList.add(this.data.bodySelectedClassName);
+        }
+        else {
+            document.body.classList.remove(this.data.bodySelectedClassName);
+        }
+    }
     selectMultipleCellsAndItems() {
         if (!this.canSelect())
             return;
@@ -2641,6 +2665,7 @@ class SelectionPlugin {
         this.data.targetType = this.pointerData.targetType;
         this.data.targetData = this.pointerData.targetData;
         this.updateData();
+        this.updateBodyClass();
     }
     wrapper(input, props) {
         if (!this.oldWrapper)
@@ -2662,15 +2687,17 @@ class SelectionPlugin {
         const area = this.html `<div class=${this.wrapperClassName} style=${this.wrapperStyleMap}></div>`;
         return this.html `${oldContent}${shouldDetach ? null : area}`;
     }
-    updateCellSelectionClassName(element, cell) {
-        if (cell.selected) {
+    updateSelectionClassName(element, target) {
+        const selected = typeof target.selected === 'boolean' ? target.selected : target.item.selected;
+        const selecting = typeof target.selecting === 'boolean' ? target.selecting : target.item.selecting;
+        if (selected) {
             element.classList.add(this.data.selectedClassName);
             element.classList.remove(this.data.selectingClassName);
         }
         else {
             element.classList.remove(this.data.selectedClassName);
         }
-        if (cell.selecting) {
+        if (selecting) {
             element.classList.add(this.data.selectingClassName);
             element.classList.remove(this.data.selectedClassName);
         }
@@ -2678,11 +2705,11 @@ class SelectionPlugin {
             element.classList.remove(this.data.selectingClassName);
         }
     }
-    selectedCellAction(element, data) {
-        this.updateCellSelectionClassName(element, data);
+    selectedAction(element, data) {
+        this.updateSelectionClassName(element, data);
         return {
-            update: this.updateCellSelectionClassName,
-            destroy: this.updateCellSelectionClassName,
+            update: this.updateSelectionClassName,
+            destroy: this.updateSelectionClassName,
         };
     }
     onCellCreate(cell) {

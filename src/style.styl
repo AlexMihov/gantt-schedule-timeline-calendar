@@ -18,9 +18,23 @@ $font-color-4 = hsla(210, 5%, 38%, 70%)
 $item-content-padding = 5px
 $item-border-radius = 4px
 
+@keyframes selected-animation {
+  0% {background: #3498DB ;}
+  //50% {background: #3498DBA0 ;}
+  100% {background: #3498DB ;}
+}
+
+@keyframes selected-item-animation {
+  0% {box-shadow: 0px 0px 1px 3px rgba(0,119, 192, 1) ;}
+  //50% {box-shadow: 0px 0px 1px 2px rgba(0,119, 192, 1) ;}
+  100% {box-shadow: 0px 0px 1px 3px rgba(0,119, 192, 1) ;}
+}
+
+$animation-duration= 650ms
+
 // plugins
 
-body.gstc-item-resizing .gstc__chart-timeline-items-row-item--selected .gstc__chart-timeline-items-row-item-label
+body.gstc-item-resizing .gstc__chart-timeline-items-row-item.gstc__selected .gstc__chart-timeline-items-row-item-label
   margin-left: 18px
 body.gstc-items-resizing-left *
   cursor: w-resize !important
@@ -51,11 +65,8 @@ body.gstc-scrolling *
       text-align: center
     &-dark
       background: $bg-dark-2
-
-  &__grid-cell-selecting
-    background: #3498DBA0 !important
-  &__grid-cell-selected
-    background: #3498DB !important
+  &__is-selecting &__selected , &-scrolling &__selected
+    animation-name: none !important
 
   &__list-column-header-resizer--active
     cursor: ew-resize
@@ -351,6 +362,14 @@ body.gstc-scrolling *
               background: rgba(241, 196, 15, 0.1)
             &--weekend
               background: #f9fafb
+            &.gstc__selecting
+              background: #3498DBA0 !important
+            &.gstc__selected
+              background: #3498DB !important
+              animation-name: selected-animation
+              animation-duration: $animation-duration
+              animation-iteration-count: infinite
+              animation-timing-function: linear
       &-dependency-lines
         &-lines , &-handles
           position: absolute
@@ -425,11 +444,6 @@ body.gstc-scrolling *
               margin-left: 10px
               -webkit-mask-image: linear-gradient(to right, black 0%, black 75%, transparent 90%)
               mask-image: linear-gradient(to right, black 0%, black 75%, transparent 90%)
-            &--selecting
-              box-shadow: 0px 0px 2px 2px rgba(0,119, 192, 0.5)
-            &--selected
-              box-shadow: 0px 0px 2px 2px rgba(0,119, 192, 1)
-              cursor: grab
             &--moving
               touch-action: none
               opacity: 0.5
@@ -460,6 +474,15 @@ body.gstc-scrolling *
                 border-bottom-left-radius: $item-border-radius
                 cursor: w-resize
                 padding-left: 7px
+            &.gstc__selecting
+              box-shadow: 0px 0px 1px 3px rgba(0,119, 192, 0.5)
+            &.gstc__selected
+              box-shadow: 0px 0px 1px 3px rgba(0,119, 192, 1)
+              animation-name: selected-item-animation
+              animation-duration: $animation-duration
+              animation-iteration-count: infinite
+              animation-timing-function: linear
+              cursor: grab
           &-item-dependency
             &-line
               position: absolute

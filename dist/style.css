@@ -1,4 +1,4 @@
-body.gstc-item-resizing .gstc__chart-timeline-items-row-item--selected .gstc__chart-timeline-items-row-item-label {
+body.gstc-item-resizing .gstc__chart-timeline-items-row-item.gstc__selected .gstc__chart-timeline-items-row-item-label {
   margin-left: 18px;
 }
 body.gstc-items-resizing-left * {
@@ -30,11 +30,9 @@ body.gstc-scrolling * {
 .gstc__helper-dark {
   background: #f9fafb;
 }
-.gstc__grid-cell-selecting {
-  background: rgba(52,152,219,0.627) !important;
-}
-.gstc__grid-cell-selected {
-  background: #3498db !important;
+.gstc__is-selecting .gstc__selected,
+.gstc-scrolling .gstc__selected {
+  animation-name: none !important;
 }
 .gstc__list-column-header-resizer--active {
   cursor: ew-resize;
@@ -397,6 +395,16 @@ body.gstc-scrolling * {
 .gstc__chart-timeline-grid-row-cell--weekend {
   background: #f9fafb;
 }
+.gstc__chart-timeline-grid-row-cell.gstc__selecting {
+  background: rgba(52,152,219,0.627) !important;
+}
+.gstc__chart-timeline-grid-row-cell.gstc__selected {
+  background: #3498db !important;
+  animation-name: selected-animation;
+  animation-duration: 650ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
 .gstc__chart-timeline-dependency-lines-lines,
 .gstc__chart-timeline-dependency-lines-handles {
   position: absolute;
@@ -479,13 +487,6 @@ body.gstc-scrolling * {
   -webkit-mask-image: linear-gradient(to right, #000 0%, #000 75%, transparent 90%);
   mask-image: linear-gradient(to right, #000 0%, #000 75%, transparent 90%);
 }
-.gstc__chart-timeline-items-row-item--selecting {
-  box-shadow: 0px 0px 2px 2px rgba(0,119,192,0.5);
-}
-.gstc__chart-timeline-items-row-item--selected {
-  box-shadow: 0px 0px 2px 2px #0077c0;
-  cursor: grab;
-}
 .gstc__chart-timeline-items-row-item--moving {
   touch-action: none;
   opacity: 0.5;
@@ -521,6 +522,17 @@ body.gstc-scrolling * {
   cursor: w-resize;
   padding-left: 7px;
 }
+.gstc__chart-timeline-items-row-item.gstc__selecting {
+  box-shadow: 0px 0px 1px 3px rgba(0,119,192,0.5);
+}
+.gstc__chart-timeline-items-row-item.gstc__selected {
+  box-shadow: 0px 0px 1px 3px #0077c0;
+  animation-name: selected-item-animation;
+  animation-duration: 650ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  cursor: grab;
+}
 .gstc__chart-timeline-items-row-item-dependency-line {
   position: absolute;
 }
@@ -529,4 +541,68 @@ body.gstc-scrolling * {
   border-radius: 100%;
   background: #e74c3c;
   box-shadow: 0px 4px 4px rgba(199,44,28,0.678);
+}
+@-moz-keyframes selected-animation {
+  0% {
+    background: #3498db;
+  }
+  100% {
+    background: #3498db;
+  }
+}
+@-webkit-keyframes selected-animation {
+  0% {
+    background: #3498db;
+  }
+  100% {
+    background: #3498db;
+  }
+}
+@-o-keyframes selected-animation {
+  0% {
+    background: #3498db;
+  }
+  100% {
+    background: #3498db;
+  }
+}
+@keyframes selected-animation {
+  0% {
+    background: #3498db;
+  }
+  100% {
+    background: #3498db;
+  }
+}
+@-moz-keyframes selected-item-animation {
+  0% {
+    box-shadow: 0px 0px 1px 3px #0077c0;
+  }
+  100% {
+    box-shadow: 0px 0px 1px 3px #0077c0;
+  }
+}
+@-webkit-keyframes selected-item-animation {
+  0% {
+    box-shadow: 0px 0px 1px 3px #0077c0;
+  }
+  100% {
+    box-shadow: 0px 0px 1px 3px #0077c0;
+  }
+}
+@-o-keyframes selected-item-animation {
+  0% {
+    box-shadow: 0px 0px 1px 3px #0077c0;
+  }
+  100% {
+    box-shadow: 0px 0px 1px 3px #0077c0;
+  }
+}
+@keyframes selected-item-animation {
+  0% {
+    box-shadow: 0px 0px 1px 3px #0077c0;
+  }
+  100% {
+    box-shadow: 0px 0px 1px 3px #0077c0;
+  }
 }
