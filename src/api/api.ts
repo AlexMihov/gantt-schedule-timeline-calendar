@@ -193,7 +193,7 @@ export class Api {
     return item.time.start <= rightGlobal && item.time.end >= leftGlobal;
   }
 
-  getAllLinkedItemsIds(itemId: string, itemsData: DataItems, allLinked: string[] = []) {
+  private getChildrenLinkedItemsIds(itemId: string, itemsData: DataItems, allLinked: string[] = []) {
     const itemData = itemsData[itemId];
     if (itemData.linkedWith && itemData.linkedWith.length) {
       if (!allLinked.includes(itemId)) allLinked.push(itemId);
@@ -202,7 +202,7 @@ export class Api {
         allLinked.push(linkedItemId);
         const linkedItem = itemsData[linkedItemId];
         if (linkedItem.linkedWith && linkedItem.linkedWith.length)
-          this.getAllLinkedItemsIds(linkedItemId, itemsData, allLinked);
+          this.getChildrenLinkedItemsIds(linkedItemId, itemsData, allLinked);
       }
     }
     return allLinked;
@@ -216,7 +216,7 @@ export class Api {
     const parsed = [];
     for (const itemId in itemsData) {
       if (parsed.includes(itemId)) continue;
-      const childLinked = this.getAllLinkedItemsIds(itemId, itemsData);
+      const childLinked = this.getChildrenLinkedItemsIds(itemId, itemsData);
       const allLinked = Array.from(new Set([...itemsData[itemId].linkedWith, ...childLinked]));
       itemsData[itemId].linkedWith = [...allLinked.filter((id) => id !== itemId)];
       if (!parsed.includes(itemId)) parsed.push(itemId);
@@ -227,7 +227,7 @@ export class Api {
     }
   }
 
-  getAllDependantItemsIds(item: Item, items: Items, allDependant: string[] = []) {
+  getChildrenDependantItemsIds(item: Item, items: Items, allDependant: string[] = []) {
     if (item.dependant && item.dependant.length) {
       for (const dependantItemId of item.dependant) {
         if (allDependant.includes(dependantItemId)) continue;
@@ -236,7 +236,7 @@ export class Api {
         if (!dependantItem)
           throw new Error(`Dependant item not found [id:'${dependantItemId}'] found in item [id:'${item.id}']`);
         if (dependantItem.dependant && dependantItem.dependant.length)
-          this.getAllDependantItemsIds(dependantItem, items, allDependant);
+          this.getChildrenDependantItemsIds(dependantItem, items, allDependant);
       }
     }
     return allDependant;
@@ -300,7 +300,7 @@ export class Api {
   }
 
   public prepareDependantItems(item: Item, items: Items): string[] {
-    return this.getAllDependantItemsIds(item, items).filter((itemId) => itemId !== item.id);
+    return this.getChildrenDependantItemsIds(item, items).filter((itemId) => itemId !== item.id);
   }
 
   public prepareItems(items: Items) {

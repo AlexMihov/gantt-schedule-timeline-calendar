@@ -11311,7 +11311,7 @@
 	        }
 	        return item.time.start <= rightGlobal && item.time.end >= leftGlobal;
 	    }
-	    getAllLinkedItemsIds(itemId, itemsData, allLinked = []) {
+	    getChildrenLinkedItemsIds(itemId, itemsData, allLinked = []) {
 	        const itemData = itemsData[itemId];
 	        if (itemData.linkedWith && itemData.linkedWith.length) {
 	            if (!allLinked.includes(itemId))
@@ -11322,7 +11322,7 @@
 	                allLinked.push(linkedItemId);
 	                const linkedItem = itemsData[linkedItemId];
 	                if (linkedItem.linkedWith && linkedItem.linkedWith.length)
-	                    this.getAllLinkedItemsIds(linkedItemId, itemsData, allLinked);
+	                    this.getChildrenLinkedItemsIds(linkedItemId, itemsData, allLinked);
 	            }
 	        }
 	        return allLinked;
@@ -11336,7 +11336,7 @@
 	        for (const itemId in itemsData) {
 	            if (parsed.includes(itemId))
 	                continue;
-	            const childLinked = this.getAllLinkedItemsIds(itemId, itemsData);
+	            const childLinked = this.getChildrenLinkedItemsIds(itemId, itemsData);
 	            const allLinked = Array.from(new Set([...itemsData[itemId].linkedWith, ...childLinked]));
 	            itemsData[itemId].linkedWith = [...allLinked.filter((id) => id !== itemId)];
 	            if (!parsed.includes(itemId))
@@ -11348,7 +11348,7 @@
 	            }
 	        }
 	    }
-	    getAllDependantItemsIds(item, items, allDependant = []) {
+	    getChildrenDependantItemsIds(item, items, allDependant = []) {
 	        if (item.dependant && item.dependant.length) {
 	            for (const dependantItemId of item.dependant) {
 	                if (allDependant.includes(dependantItemId))
@@ -11358,7 +11358,7 @@
 	                if (!dependantItem)
 	                    throw new Error(`Dependant item not found [id:'${dependantItemId}'] found in item [id:'${item.id}']`);
 	                if (dependantItem.dependant && dependantItem.dependant.length)
-	                    this.getAllDependantItemsIds(dependantItem, items, allDependant);
+	                    this.getChildrenDependantItemsIds(dependantItem, items, allDependant);
 	            }
 	        }
 	        return allDependant;
@@ -11415,7 +11415,7 @@
 	        this.state.update('$data.chart.items', data);
 	    }
 	    prepareDependantItems(item, items) {
-	        return this.getAllDependantItemsIds(item, items).filter((itemId) => itemId !== item.id);
+	        return this.getChildrenDependantItemsIds(item, items).filter((itemId) => itemId !== item.id);
 	    }
 	    prepareItems(items) {
 	        const defaultItemHeight = this.state.get('config.chart.item.height');

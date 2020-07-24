@@ -524,7 +524,7 @@ export interface ActionFunctionResult {
   destroy?: (element: HTMLElement, data: unknown) => void;
 }
 
-export type Action = (element: HTMLElement, data: unknown) => ActionFunctionResult | ActionFunctionResult | void;
+export type Action = (element: HTMLElement, data: unknown) => ActionFunctionResult | void;
 
 export type Actions = {
   [name in SlotName]?: Action[];
