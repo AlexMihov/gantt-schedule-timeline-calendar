@@ -97,6 +97,8 @@ export interface ItemData {
   width: number;
   actualWidth: number;
   detached: boolean;
+  linkedWith?: string[];
+  dependant?: string[];
 }
 
 export interface ItemDataUpdate {
@@ -107,6 +109,8 @@ export interface ItemDataUpdate {
   width?: number;
   actualWidth?: number;
   detached?: boolean;
+  linkedWith?: string[];
+  dependant?: string[];
 }
 
 export type ItemLabelFunction = ({ item: Item, vido: Vido }) => lithtml.TemplateResult | string;

@@ -47,6 +47,13 @@ for (let i = 0; i < iterations; i++) {
 items['0'].linkedWith = ['1'];
 items['1'].time = { ...items['0'].time };
 
+items['3'].dependant = ['5'];
+items['5'].time.start = items['3'].time.end;
+items['5'].time.end = GSTC.api.date(items['5'].time.start).add(2, 'day').valueOf();
+items['5'].dependant = ['7'];
+items['7'].time.start = items['5'].time.end;
+items['7'].time.end = GSTC.api.date(items['7'].time.start).add(2, 'day').valueOf();
+
 const columns = {
   data: {
     id: {

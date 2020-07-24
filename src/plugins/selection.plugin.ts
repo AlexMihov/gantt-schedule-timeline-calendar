@@ -19,7 +19,7 @@ import {
   SELECTION_TYPE,
 } from './timeline-pointer.plugin';
 
-import { Item, GridCell, Items, Vido, htmlResult, Wrapper, ItemData, GridCells } from '../gstc';
+import { Item, GridCell, Items, Vido, htmlResult, Wrapper, ItemData, GridCells, DataItems } from '../gstc';
 import DeepState from 'deep-state-observer';
 import { Api } from '../api/api';
 import { StyleMap, lithtml } from '@neuronet.io/vido/src/vido';
@@ -365,24 +365,14 @@ class SelectionPlugin {
     return { ...localArea, x: localArea.x + leftPx, y: localArea.y + topPx };
   }
 
-  private collectLinkedItems(item: Item, current: string[] = []): string[] {
-    if (item.linkedWith && item.linkedWith.length) {
-      const items: Items = this.api.getAllItems();
-      for (const linkedItemId of item.linkedWith) {
-        const linkedItem: Item = items[linkedItemId];
-        if (!current.includes(linkedItem.id)) {
-          current.push(linkedItem.id);
-          // we don't need to go further because linkedWith property already contains all we need
-        }
-      }
-    }
-    return current;
+  private collectLinkedItems(itemId: string, itemsData: DataItems = this.api.getItemsData()): string[] {
+    return [itemId, ...itemsData[itemId].linkedWith];
   }
 
   private getSelectedItem(item: Item): { selected: string[]; automaticallySelected: string[] } {
     let selected: string[];
     let automaticallySelected: string[] = this.data.automaticallySelected[ITEM].slice();
-    const linked = this.collectLinkedItems(item, [item.id]);
+    const linked = this.collectLinkedItems(item.id);
     if (this.data.selected[ITEM].find((selectedItemId) => selectedItemId === item.id)) {
       // if we want to start movement or something - just return currently selected
       selected = this.data.selected[ITEM];
@@ -459,7 +449,7 @@ class SelectionPlugin {
         this.isItemHorizontallyInsideArea(itemData, areaLocal)
       ) {
         if (!selectedItems.find((selectedItemId) => selectedItemId === item.id)) selectedItems.push(item.id);
-        const linked = this.collectLinkedItems(item, [item.id]);
+        const linked = this.collectLinkedItems(item.id);
         for (let linkedItemId of linked) {
           const linkedItem = this.api.getItem(linkedItemId);
           if (!selectedItems.find((selectedItemId) => selectedItemId === linkedItem.id)) {

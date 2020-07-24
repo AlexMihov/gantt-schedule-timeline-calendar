@@ -39,6 +39,7 @@ import {
 import { generateSlots } from './slots';
 import { lithtml } from '@neuronet.io/vido/src/vido';
 import helpers from '@neuronet.io/vido/src/helpers';
+import { cpuUsage } from 'process';
 const mergeDeep = helpers.mergeDeep;
 
 const lib = 'gstc';
@@ -192,25 +193,42 @@ export class Api {
     return item.time.start <= rightGlobal && item.time.end >= leftGlobal;
   }
 
-  getAllLinkedItemsIds(item: Item, items: Items, allLinked: string[] = []) {
-    if (item.linkedWith && item.linkedWith.length) {
-      if (!allLinked.includes(item.id)) allLinked.push(item.id);
-      for (const linkedItemId of item.linkedWith) {
+  getAllLinkedItemsIds(itemId: string, itemsData: DataItems, allLinked: string[] = []) {
+    const itemData = itemsData[itemId];
+    if (itemData.linkedWith && itemData.linkedWith.length) {
+      if (!allLinked.includes(itemId)) allLinked.push(itemId);
+      for (const linkedItemId of itemData.linkedWith) {
         if (allLinked.includes(linkedItemId)) continue;
         allLinked.push(linkedItemId);
-        const linkedItem = items[linkedItemId];
-        if (!linkedItem)
-          throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
+        const linkedItem = itemsData[linkedItemId];
         if (linkedItem.linkedWith && linkedItem.linkedWith.length)
-          this.getAllLinkedItemsIds(linkedItem, items, allLinked);
+          this.getAllLinkedItemsIds(linkedItemId, itemsData, allLinked);
       }
     }
     return allLinked;
   }
 
+  collectAllLinkedItems(items: Items, itemsData: DataItems) {
+    for (const itemId in items) {
+      const item = items[itemId];
+      itemsData[item.id].linkedWith = item.linkedWith || [];
+    }
+    const parsed = [];
+    for (const itemId in itemsData) {
+      if (parsed.includes(itemId)) continue;
+      const childLinked = this.getAllLinkedItemsIds(itemId, itemsData);
+      const allLinked = Array.from(new Set([...itemsData[itemId].linkedWith, ...childLinked]));
+      itemsData[itemId].linkedWith = [...allLinked.filter((id) => id !== itemId)];
+      if (!parsed.includes(itemId)) parsed.push(itemId);
+      for (const linkedId of allLinked) {
+        itemsData[linkedId].linkedWith = [...allLinked.filter((id) => id !== linkedId)];
+        if (!parsed.includes(linkedId)) parsed.push(linkedId);
+      }
+    }
+  }
+
   getAllDependantItemsIds(item: Item, items: Items, allDependant: string[] = []) {
     if (item.dependant && item.dependant.length) {
-      if (!allDependant.includes(item.id)) allDependant.push(item.id);
       for (const dependantItemId of item.dependant) {
         if (allDependant.includes(dependantItemId)) continue;
         allDependant.push(dependantItemId);
@@ -281,23 +299,8 @@ export class Api {
     this.state.update('$data.chart.items', data);
   }
 
-  public prepareLinkedItems(item: Item, items: Items) {
-    const allLinkedIds = this.getAllLinkedItemsIds(item, items);
-    for (const linkedItemId of allLinkedIds) {
-      const linkedItem = items[linkedItemId];
-      if (!linkedItem) throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
-      linkedItem.linkedWith = allLinkedIds.filter((itemId) => itemId !== linkedItem.id);
-    }
-  }
-
-  public prepareDependantItems(item: Item, items: Items) {
-    const allDependantIds = this.getAllLinkedItemsIds(item, items);
-    for (const dependantItemId of allDependantIds) {
-      const dependantItem = items[dependantItemId];
-      if (!dependantItem)
-        throw new Error(`Linked item not found [id:'${dependantItemId}'] found in item [id:'${item.id}']`);
-      dependantItem.dependant = allDependantIds.filter((itemId) => itemId !== dependantItem.id);
-    }
+  public prepareDependantItems(item: Item, items: Items): string[] {
+    return this.getAllDependantItemsIds(item, items).filter((itemId) => itemId !== item.id);
   }
 
   public prepareItems(items: Items) {
@@ -308,14 +311,7 @@ export class Api {
       itemId = String(itemId);
       item.id = itemId;
       if (itemsData[itemId]) return items; // do not iterate whole items if itemData is present
-      this.prepareLinkedItems(item, items);
-      this.prepareDependantItems(item, items);
-      item.time.start = +item.time.start;
-      item.time.end = +item.time.end;
-      item.id = String(item.id);
-      const defaultItem: DefaultItem = this.state.get('config.chart.item');
-      if (typeof item.height !== 'number') item.height = defaultItemHeight;
-      if (!itemsData[item.id])
+      if (!itemsData[item.id]) {
         itemsData[item.id] = {
           actualHeight: 0,
           outerHeight: 0,
@@ -332,7 +328,15 @@ export class Api {
           width: -1,
           actualWidth: -1,
           detached: false,
+          linkedWith: [],
+          dependant: [],
         };
+      }
+      item.time.start = +item.time.start;
+      item.time.end = +item.time.end;
+      item.id = String(item.id);
+      const defaultItem: DefaultItem = this.state.get('config.chart.item');
+      if (typeof item.height !== 'number') item.height = defaultItemHeight;
       itemsData[item.id].time = {
         startDate: this.time.date(item.time.start),
         endDate: this.time.date(item.time.end),
@@ -346,6 +350,7 @@ export class Api {
       itemsData[item.id].outerHeight = itemsData[item.id].actualHeight + item.gap.top + item.gap.bottom;
       itemsData[item.id].position.actualTop = itemsData[item.id].position.top + item.gap.top;
     }
+    this.collectAllLinkedItems(items, itemsData);
     this.setItemsData(itemsData);
     return items;
   }

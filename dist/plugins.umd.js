@@ -2301,23 +2301,13 @@
           const topPx = this.state.get('config.scroll.vertical.posPx');
           return Object.assign(Object.assign({}, localArea), { x: localArea.x + leftPx, y: localArea.y + topPx });
       }
-      collectLinkedItems(item, current = []) {
-          if (item.linkedWith && item.linkedWith.length) {
-              const items = this.api.getAllItems();
-              for (const linkedItemId of item.linkedWith) {
-                  const linkedItem = items[linkedItemId];
-                  if (!current.includes(linkedItem.id)) {
-                      current.push(linkedItem.id);
-                      // we don't need to go further because linkedWith property already contains all we need
-                  }
-              }
-          }
-          return current;
+      collectLinkedItems(itemId, itemsData = this.api.getItemsData()) {
+          return [itemId, ...itemsData[itemId].linkedWith];
       }
       getSelectedItem(item) {
           let selected;
           let automaticallySelected = this.data.automaticallySelected[ITEM].slice();
-          const linked = this.collectLinkedItems(item, [item.id]);
+          const linked = this.collectLinkedItems(item.id);
           if (this.data.selected[ITEM].find((selectedItemId) => selectedItemId === item.id)) {
               // if we want to start movement or something - just return currently selected
               selected = this.data.selected[ITEM];
@@ -2388,7 +2378,7 @@
                   this.isItemHorizontallyInsideArea(itemData, areaLocal)) {
                   if (!selectedItems.find((selectedItemId) => selectedItemId === item.id))
                       selectedItems.push(item.id);
-                  const linked = this.collectLinkedItems(item, [item.id]);
+                  const linked = this.collectLinkedItems(item.id);
                   for (let linkedItemId of linked) {
                       const linkedItem = this.api.getItem(linkedItemId);
                       if (!selectedItems.find((selectedItemId) => selectedItemId === linkedItem.id)) {
