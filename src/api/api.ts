@@ -144,8 +144,8 @@ export class Api {
   public time: Time;
   public vido: Vido;
   public plugins: any = {};
-  private iconsCache: IconsCache = {};
-  private unsubscribes: Unsubscribes = [];
+  public iconsCache: IconsCache = {};
+  public unsubscribes: Unsubscribes = [];
 
   constructor(state: DeepState) {
     this.state = state;
@@ -174,7 +174,7 @@ export class Api {
   getId = getId;
   allActions = [];
 
-  private getActions(name: string) {
+  public getActions(name: string) {
     if (!this.allActions.includes(name)) this.allActions.push(name);
     let actions = this.state.get('config.actions.' + name);
     if (typeof actions === 'undefined') {
@@ -265,7 +265,7 @@ export class Api {
     this.state.update('$data.chart.items', data);
   }
 
-  private prepareLinkedItems(item: Item, items: Items) {
+  public prepareLinkedItems(item: Item, items: Items) {
     const allLinkedIds = this.getAllLinkedItemsIds(item, items);
     for (const linkedItemId of allLinkedIds) {
       const linkedItem = items[linkedItemId];
@@ -274,7 +274,7 @@ export class Api {
     }
   }
 
-  private prepareItems(items: Items) {
+  public prepareItems(items: Items) {
     const defaultItemHeight = this.state.get('config.chart.item.height');
     const itemsData = this.getItemsData();
     for (let itemId in items) {
@@ -323,7 +323,7 @@ export class Api {
     return items;
   }
 
-  private fillEmptyRowValues(rows: Rows) {
+  public fillEmptyRowValues(rows: Rows) {
     const defaultHeight = this.state.get('config.list.row.height');
     let top = 0;
     for (let rowId in rows) {
@@ -362,7 +362,7 @@ export class Api {
     return rows;
   }
 
-  private itemsOnTheSameLevel(item1: Item, item2: Item) {
+  public itemsOnTheSameLevel(item1: Item, item2: Item) {
     const item1Data = this.getItemData(item1.id);
     const item2Data = this.getItemData(item2.id);
     const item1Bottom = item1Data.position.top + item1Data.outerHeight;
@@ -373,7 +373,7 @@ export class Api {
     return false;
   }
 
-  private itemsOverlaps(item1: Item, item2: Item): boolean {
+  public itemsOverlaps(item1: Item, item2: Item): boolean {
     if (this.itemsOnTheSameLevel(item1, item2)) {
       if (item2.time.start >= item1.time.start && item2.time.start <= item1.time.end) return true;
       if (item2.time.end >= item1.time.start && item2.time.end <= item1.time.end) return true;
@@ -384,7 +384,7 @@ export class Api {
     return false;
   }
 
-  private itemOverlapsWithOthers(item: Item, items: Item[]): Item {
+  public itemOverlapsWithOthers(item: Item, items: Item[]): Item {
     for (let i = 0, len = items.length; i < len; i++) {
       const item2 = items[i];
       const nonZeroTime = item2.time.start && item.time.start && item2.time.end && item.time.end;
@@ -393,7 +393,7 @@ export class Api {
     return null;
   }
 
-  private fixOverlappedItems(rowItems: Item[]) {
+  public fixOverlappedItems(rowItems: Item[]) {
     if (rowItems.length === 0) return;
     let index = 0;
     for (let item of rowItems) {
@@ -413,7 +413,7 @@ export class Api {
     }
   }
 
-  private recalculateRowHeight(row: Row, fixOverlapped = false): number {
+  public recalculateRowHeight(row: Row, fixOverlapped = false): number {
     if (!row.$data) return 0;
     let actualHeight = 0;
     if (fixOverlapped) {
@@ -432,7 +432,7 @@ export class Api {
     return row.$data.outerHeight;
   }
 
-  private recalculateRowsHeightsAndFixOverlappingItems(rowsId: string[]): number {
+  public recalculateRowsHeightsAndFixOverlappingItems(rowsId: string[]): number {
     let top = 0;
     const rows: Rows = this.getAllRows();
     for (const rowId of rowsId) {
@@ -444,7 +444,7 @@ export class Api {
     return top;
   }
 
-  private recalculateRowsPercents(rowsId: string[], verticalAreaHeight: number) {
+  public recalculateRowsPercents(rowsId: string[], verticalAreaHeight: number) {
     let top = 0;
     const rows: Rows = this.getAllRows();
     for (const rowId of rowsId) {
@@ -460,7 +460,7 @@ export class Api {
     }
   }
 
-  private generateParents(rows: Rows | Items, parentName = 'parentId') {
+  public generateParents(rows: Rows | Items, parentName = 'parentId') {
     const parents = {};
     for (const rowId in rows) {
       const row = rows[rowId];
@@ -473,7 +473,7 @@ export class Api {
     return parents;
   }
 
-  private fastTree(rowParents, node, parents = []) {
+  public fastTree(rowParents, node, parents = []) {
     const children = rowParents[node.id];
     node.$data.parents = parents;
     if (typeof children === 'undefined') {
@@ -491,7 +491,7 @@ export class Api {
     return node;
   }
 
-  private makeTreeMap(rows: Rows, items: Items) {
+  public makeTreeMap(rows: Rows, items: Items) {
     const itemParents: Items = this.generateParents(items, 'rowId');
     for (const rowId in rows) {
       if (!rows[rowId].$data) return;
@@ -507,7 +507,7 @@ export class Api {
     return this.fastTree(rowParents, tree);
   }
 
-  private getRowsWithParentsExpanded(rows: Rows) {
+  public getRowsWithParentsExpanded(rows: Rows) {
     const rowsWithParentsExpanded = [];
     next: for (const rowId in rows) {
       if (!rows[rowId].$data || !rows[rowId].$data.parents) return [];
@@ -522,7 +522,7 @@ export class Api {
     return rowsWithParentsExpanded;
   }
 
-  private getVisibleRows(rowsWithParentsExpanded: string[]): string[] {
+  public getVisibleRows(rowsWithParentsExpanded: string[]): string[] {
     if (this.debug) console.log('getVisibleRows #1', { rowsWithParentsExpanded }); // eslint-disable-line no-console
     if (rowsWithParentsExpanded.length === 0) return [];
     const visibleRows = [];
@@ -560,7 +560,7 @@ export class Api {
     return visibleRows;
   }
 
-  private normalizeMouseWheelEvent(event: MouseWheelEvent): WheelResult {
+  public normalizeMouseWheelEvent(event: MouseWheelEvent): WheelResult {
     let x = event.deltaX || 0;
     let y = event.deltaY || 0;
     let z = event.deltaZ || 0;
@@ -705,7 +705,7 @@ export class Api {
     return this.state.get(`$data.chart.grid.rows.${rowId}`);
   }
 
-  private getSVGIconSrc(svg) {
+  public getSVGIconSrc(svg) {
     if (typeof this.iconsCache[svg] === 'string') return this.iconsCache[svg];
     this.iconsCache[svg] = 'data:image/svg+xml;base64,' + btoa(svg);
     return this.iconsCache[svg];

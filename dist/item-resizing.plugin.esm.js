@@ -1462,8 +1462,8 @@ class ItemResizing {
             const item = selected[i];
             const itemData = this.merge({}, this.data.initialItemsData[item.id]);
             itemData.position.left = itemData.position.left + movement.px;
-            if (itemData.position.left > itemData.position.right)
-                itemData.position.left = itemData.position.right;
+            if (itemData.position.left > itemData.position.right - item.minWidth)
+                itemData.position.left = itemData.position.right - item.minWidth;
             const leftGlobal = this.api.time.getTimeFromViewOffsetPx(itemData.position.left, time, true);
             itemData.width = itemData.position.right - itemData.position.left;
             if (itemData.width < item.minWidth)
@@ -1495,8 +1495,8 @@ class ItemResizing {
             const item = selected[i];
             const itemData = this.merge({}, this.data.initialItemsData[item.id]);
             itemData.position.right = itemData.position.right + movement.px;
-            if (itemData.position.right < itemData.position.left)
-                itemData.position.right = itemData.position.left;
+            if (itemData.position.right < itemData.position.left + item.minWidth)
+                itemData.position.right = itemData.position.left + item.minWidth;
             const rightGlobal = this.api.time.getTimeFromViewOffsetPx(itemData.position.right, time, false);
             itemData.width = itemData.position.right - itemData.position.left;
             if (itemData.width < item.minWidth)
@@ -1554,17 +1554,18 @@ class ItemResizing {
         }
         const rightStyleMap = this.getRightStyleMap(item);
         const leftStyleMap = this.getLeftStyleMap(item); // eslint-disable-line no-unused-vars, @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+        const onLeftPointerDown = {
+            handleEvent: (ev) => this.onLeftPointerDown(ev),
+        };
         const onRightPointerDown = {
             handleEvent: (ev) => this.onRightPointerDown(ev),
         };
-        /*const leftHandle = this
-          .html`<div class=${this.leftClassName} style=${leftStyleMap} @pointerdown=${onLeftPointerDown}>${this.data.content}</div>`;
-        const rightHandle = this
-          .html`<div class=${this.rightClassName} style=${rightStyleMap} @pointerdown=${onRightPointerDown}>${this.data.content}</div>`;
-        return this.html`${visible ? leftHandle : null}${oldContent}${visible ? rightHandle : null}`;*/
+        const leftHandle = this
+            .html `<div class=${this.leftClassName} style=${leftStyleMap} @pointerdown=${onLeftPointerDown}>${this.data.content}</div>`;
         const rightHandle = this
             .html `<div class=${this.rightClassName} style=${rightStyleMap} @pointerdown=${onRightPointerDown}>${this.data.content}</div>`;
-        return this.html `${oldContent}${visible ? rightHandle : null}`;
+        return this.html `${visible ? leftHandle : null}${oldContent}${visible ? rightHandle : null}`;
     }
 }
 function Plugin(options = {}) {
