@@ -72,7 +72,7 @@ const columns = {
 
 const config = {
   //debug: true,
-  plugins: [HighlightWeekends(), TimelinePointer(), Selection(), ItemMovement(), ItemResizing(), CalendarScroll()],
+  plugins: [HighlightWeekends(), TimelinePointer(), Selection(), /*ItemMovement(),*/ ItemResizing(), CalendarScroll()],
   list: {
     rows,
     columns,

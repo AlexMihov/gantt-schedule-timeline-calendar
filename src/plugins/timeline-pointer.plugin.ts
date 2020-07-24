@@ -17,6 +17,7 @@ export const CELL = 'chart-timeline-grid-row-cell';
 export type CELL_TYPE = 'chart-timeline-grid-row-cell';
 export const ITEM = 'chart-timeline-items-row-item';
 export type ITEM_TYPE = 'chart-timeline-items-row-item';
+export type SELECTION_TYPE = typeof CELL | typeof ITEM;
 
 export interface PointerEvents {
   down: PointerEvent | null;

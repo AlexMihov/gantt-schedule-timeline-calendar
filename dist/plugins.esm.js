@@ -2571,21 +2571,37 @@ class SelectionPlugin {
             selected = [item.id];
             automaticallySelected = [];
         }
-        this.data.selected[ITEM] = selected;
-        if (!this.isMulti())
+        if (this.isMulti()) {
+            if (item.selected) {
+                this.data.selected[ITEM] = selected.filter((itemId) => itemId !== item.id);
+            }
+            else {
+                this.data.selected[ITEM] = selected;
+            }
+        }
+        else {
+            this.data.selected[ITEM] = selected;
             this.data.selected[CELL].length = 0;
+        }
         this.data.automaticallySelected[ITEM] = automaticallySelected;
         this.data.selected = this.onSelected(this.api.mergeDeep({}, this.data.selected), this.api.mergeDeep({}, this.data.lastSelected));
         let multi = this.state.multi();
+        multi = this.updateCells(multi);
         multi = this.updateItems(multi);
         multi.done();
+    }
+    removeMultiUnselected(type) {
+        const elementsToRemove = this.data.selected[type].filter((elementId) => this.data.selecting[type].includes(elementId));
+        const allElements = [...this.data.selected[type], ...this.data.selecting[type]];
+        return Array.from(new Set(allElements.filter((elementId) => !elementsToRemove.includes(elementId))));
     }
     finishSelection() {
         let selected;
         if (this.isMulti()) {
+            // we must remove selected elements when they are selected again (present in selecting)
             selected = {
-                [CELL]: Array.from(new Set([...this.data.selected[CELL], ...this.data.selecting[CELL]])),
-                [ITEM]: Array.from(new Set([...this.data.selected[ITEM], ...this.data.selecting[ITEM]])),
+                [CELL]: this.removeMultiUnselected(CELL),
+                [ITEM]: this.removeMultiUnselected(ITEM),
             };
         }
         else {
