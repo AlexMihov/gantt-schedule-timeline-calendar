@@ -398,7 +398,6 @@ class SelectionPlugin {
     }
     selected = selected.map((itemId) => {
       item = this.api.getItem(itemId);
-      item.selected = true;
       return itemId;
     });
     return { selected, automaticallySelected };
