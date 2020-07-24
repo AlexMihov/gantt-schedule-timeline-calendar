@@ -2497,8 +2497,8 @@
           const items = this.state.get('config.chart.items');
           const cells = this.state.get('$data.chart.grid.cells');
           return {
-              [CELL]: selection[CELL].map((cellId) => cells[cellId]),
-              [ITEM]: selection[ITEM].map((itemId) => items[itemId]),
+              [CELL]: selection[CELL].map((cellId) => (cells[cellId] ? cells[cellId] : cellId)),
+              [ITEM]: selection[ITEM].map((itemId) => (items[itemId] ? items[itemId] : itemId)),
           };
       }
       // send cell and item data to event - not just id
@@ -2507,8 +2507,8 @@
           const lastWithData = this.getSelectionWithData(last);
           const result = this.data.onSelecting(selectingWithData, lastWithData);
           return {
-              [CELL]: result[CELL].map((cell) => cell.id),
-              [ITEM]: result[ITEM].map((item) => item.id),
+              [CELL]: result[CELL].map((cell) => (typeof cell !== 'string' ? cell.id : cell)),
+              [ITEM]: result[ITEM].map((item) => (typeof item !== 'string' ? item.id : item)),
           };
       }
       // send cell and item data to event - not just id
@@ -2517,8 +2517,8 @@
           const lastWithData = this.getSelectionWithData(last);
           const result = this.data.onSelected(selectedWithData, lastWithData);
           return {
-              [CELL]: result[CELL].map((cell) => cell.id),
-              [ITEM]: result[ITEM].map((item) => item.id),
+              [CELL]: result[CELL].map((cell) => (typeof cell !== 'string' ? cell.id : cell)),
+              [ITEM]: result[ITEM].map((item) => (typeof item !== 'string' ? item.id : item)),
           };
       }
       selectMultipleCellsAndItems() {

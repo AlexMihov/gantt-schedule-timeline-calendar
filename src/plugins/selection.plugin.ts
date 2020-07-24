@@ -88,9 +88,12 @@ export interface Selection {
   [ITEM]: string[];
 }
 
+export type GridCellOrId = GridCell | string;
+export type ItemOrId = Item | string;
+
 export interface EventSelection {
-  [CELL]: GridCell[];
-  [ITEM]: Item[];
+  [CELL]: GridCellOrId[];
+  [ITEM]: ItemOrId[];
 }
 
 export interface SelectedCell {
@@ -574,8 +577,8 @@ class SelectionPlugin {
     const items = this.state.get('config.chart.items');
     const cells = this.state.get('$data.chart.grid.cells');
     return {
-      [CELL]: selection[CELL].map((cellId) => cells[cellId]),
-      [ITEM]: selection[ITEM].map((itemId) => items[itemId]),
+      [CELL]: selection[CELL].map((cellId) => (cells[cellId] ? cells[cellId] : cellId)),
+      [ITEM]: selection[ITEM].map((itemId) => (items[itemId] ? items[itemId] : itemId)),
     };
   }
 
@@ -585,8 +588,8 @@ class SelectionPlugin {
     const lastWithData = this.getSelectionWithData(last);
     const result = this.data.onSelecting(selectingWithData, lastWithData);
     return {
-      [CELL]: result[CELL].map((cell) => cell.id),
-      [ITEM]: result[ITEM].map((item) => item.id),
+      [CELL]: result[CELL].map((cell) => (typeof cell !== 'string' ? cell.id : cell)),
+      [ITEM]: result[ITEM].map((item) => (typeof item !== 'string' ? item.id : item)),
     };
   }
 
@@ -596,8 +599,8 @@ class SelectionPlugin {
     const lastWithData = this.getSelectionWithData(last);
     const result = this.data.onSelected(selectedWithData, lastWithData);
     return {
-      [CELL]: result[CELL].map((cell) => cell.id),
-      [ITEM]: result[ITEM].map((item) => item.id),
+      [CELL]: result[CELL].map((cell) => (typeof cell !== 'string' ? cell.id : cell)),
+      [ITEM]: result[ITEM].map((item) => (typeof item !== 'string' ? item.id : item)),
     };
   }
 
