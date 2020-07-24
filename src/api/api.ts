@@ -208,6 +208,22 @@ export class Api {
     return allLinked;
   }
 
+  getAllDependantItemsIds(item: Item, items: Items, allDependant: string[] = []) {
+    if (item.dependant && item.dependant.length) {
+      if (!allDependant.includes(item.id)) allDependant.push(item.id);
+      for (const dependantItemId of item.dependant) {
+        if (allDependant.includes(dependantItemId)) continue;
+        allDependant.push(dependantItemId);
+        const dependantItem = items[dependantItemId];
+        if (!dependantItem)
+          throw new Error(`Dependant item not found [id:'${dependantItemId}'] found in item [id:'${item.id}']`);
+        if (dependantItem.dependant && dependantItem.dependant.length)
+          this.getAllDependantItemsIds(dependantItem, items, allDependant);
+      }
+    }
+    return allDependant;
+  }
+
   public getRow(rowId: string): Row {
     return this.state.get(`config.list.rows.${rowId}`) as Row;
   }
@@ -270,7 +286,17 @@ export class Api {
     for (const linkedItemId of allLinkedIds) {
       const linkedItem = items[linkedItemId];
       if (!linkedItem) throw new Error(`Linked item not found [id:'${linkedItemId}'] found in item [id:'${item.id}']`);
-      linkedItem.linkedWith = allLinkedIds.filter((linkedItemId) => linkedItemId !== linkedItem.id);
+      linkedItem.linkedWith = allLinkedIds.filter((itemId) => itemId !== linkedItem.id);
+    }
+  }
+
+  public prepareDependantItems(item: Item, items: Items) {
+    const allDependantIds = this.getAllLinkedItemsIds(item, items);
+    for (const dependantItemId of allDependantIds) {
+      const dependantItem = items[dependantItemId];
+      if (!dependantItem)
+        throw new Error(`Linked item not found [id:'${dependantItemId}'] found in item [id:'${item.id}']`);
+      dependantItem.dependant = allDependantIds.filter((itemId) => itemId !== dependantItem.id);
     }
   }
 
@@ -281,8 +307,9 @@ export class Api {
       const item = items[itemId];
       itemId = String(itemId);
       item.id = itemId;
-      if (itemsData[itemId]) return items; // do not iterate whole items if $data is present
+      if (itemsData[itemId]) return items; // do not iterate whole items if itemData is present
       this.prepareLinkedItems(item, items);
+      this.prepareDependantItems(item, items);
       item.time.start = +item.time.start;
       item.time.end = +item.time.end;
       item.id = String(item.id);

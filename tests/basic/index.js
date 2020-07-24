@@ -113,7 +113,7 @@ function selectCells() {
   const api = gstc.api;
   const allCells = api.getGridCells();
   api.plugins.selection.selectCells([allCells[0].id, allCells[1].id]);
-  api.plugins.selection.selectItems(['1']);
+  api.plugins.selection.selectItems(['2']);
   console.log(api.plugins.selection.getSelection());
 }
 document.getElementById('select-cells').addEventListener('click', selectCells);
