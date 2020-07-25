@@ -1475,7 +1475,6 @@ class ItemResizing {
         this.data.initialDependant = this.getDependantItems();
         this.data.initialItemsData = this.getSelectedItemsData(this.data.initialItems);
         this.data.initialDependantData = this.getDependantItemsData();
-        console.log(this.data.initialDependantData);
         // @ts-ignore
         this.data.targetData = this.merge({}, ev.target.vido);
         this.data.initialPosition = {
