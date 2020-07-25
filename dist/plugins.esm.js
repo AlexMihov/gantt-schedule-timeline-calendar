@@ -1930,6 +1930,11 @@ class ItemResizing {
                         movement: { px, time: timeDiff },
                         vido: this.vido,
                     });
+                    multi = multi.update(`config.chart.items.${dependantItemId}.time`, (time) => {
+                        time.start = finalLeftGlobalDate.valueOf();
+                        time.end = finalRightGlobalDate.valueOf();
+                        return time;
+                    });
                     multi = multi.update(`$data.chart.items.${dependantItemId}.time`, (time) => {
                         time.startDate = finalLeftGlobalDate;
                         time.endDate = finalRightGlobalDate;
@@ -1965,7 +1970,7 @@ class ItemResizing {
         this.data.initialDependant = this.getDependantItems();
         this.data.initialItemsData = this.getSelectedItemsData(this.data.initialItems);
         this.data.initialDependantData = this.getDependantItemsData();
-        // @ts-ignore
+        // @ts-ignore-next-line
         this.data.targetData = this.merge({}, ev.target.vido);
         this.data.initialPosition = {
             x: ev.screenX,
