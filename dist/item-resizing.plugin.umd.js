@@ -1258,10 +1258,10 @@
           outside: false,
           onlyWhenSelected: true,
       };
-      const result = Object.assign({ enabled: true, debug: false, state: '', content: null, bodyClass: 'gstc-item-resizing', bodyClassLeft: 'gstc-items-resizing-left', bodyClassRight: 'gstc-items-resizing-right', initialPosition: { x: 0, y: 0 }, currentPosition: { x: 0, y: 0 }, movement: {
+      const result = Object.assign({ enabled: true, dependant: true, debug: false, state: '', content: null, bodyClass: 'gstc-item-resizing', bodyClassLeft: 'gstc-items-resizing-left', bodyClassRight: 'gstc-items-resizing-right', initialPosition: { x: 0, y: 0 }, currentPosition: { x: 0, y: 0 }, movement: {
               px: 0,
               time: 0,
-          }, initialItems: [], initialItemsData: {}, targetData: null, leftIsMoving: false, rightIsMoving: false, handle: Object.assign({}, handle), events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
+          }, initialItems: [], initialDependant: [], initialItemsData: {}, initialDependantData: {}, targetData: null, leftIsMoving: false, rightIsMoving: false, handle: Object.assign({}, handle), events: Object.assign({}, events), snapToTime: Object.assign({}, snapToTime) }, options);
       if (options.snapToTime)
           result.snapToTime = Object.assign(Object.assign({}, snapToTime), options.snapToTime);
       if (options.events)
@@ -1395,15 +1395,78 @@
               time: this.state.get('$data.chart.time'),
           };
       }
-      dispatchEvent(type, items, itemData = null) {
+      getDependantItems() {
+          const dependantIds = [];
+          const itemsData = this.api.getItemsData();
+          for (const initialItem of this.data.initialItems) {
+              for (const dependantItemId of itemsData[initialItem.id].dependant) {
+                  if (!dependantIds.includes(dependantItemId))
+                      dependantIds.push(dependantItemId);
+              }
+          }
+          const items = this.state.get('config.chart.items');
+          return dependantIds.map((itemId) => items[itemId]).map((item) => this.api.mergeDeep({}, item));
+      }
+      getDependantItemsData() {
+          const dependantData = {};
+          const itemsData = this.api.getItemsData();
+          for (const dependant of this.data.initialDependant) {
+              dependantData[dependant.id] = this.api.mergeDeep({}, itemsData[dependant.id]);
+          }
+          return dependantData;
+      }
+      moveDependantItems(modified, multi) {
+          if (!this.data.dependant)
+              return multi;
+          const itemsData = this.api.getItemsData();
+          const time = this.state.get('config.chart.time');
+          for (const modifiedItem of modified) {
+              const initialItem = this.data.initialItems.find((initial) => initial.id === modifiedItem.id);
+              const initialItemData = this.data.initialItemsData[initialItem.id];
+              const modifiedItemData = itemsData[modifiedItem.id];
+              if (modifiedItemData.dependant.length) {
+                  for (const dependantItemId of modifiedItemData.dependant) {
+                      const initialDependantItem = this.data.initialDependant.find((item) => item.id === dependantItemId);
+                      const initialDependantItemData = this.data.initialDependantData[dependantItemId];
+                      const timeDiff = modifiedItemData.time.endDate.diff(initialItemData.time.endDate, 'millisecond');
+                      const startDate = initialDependantItemData.time.startDate.add(timeDiff, 'millisecond');
+                      const endDate = initialDependantItemData.time.endDate.add(timeDiff, 'millisecond');
+                      const px = modifiedItemData.position.right - initialDependantItemData.position.right;
+                      const finalLeftGlobalDate = this.data.snapToTime.start({
+                          startTime: startDate,
+                          item: this.api.mergeDeep({}, initialDependantItem),
+                          time,
+                          movement: { px, time: timeDiff },
+                          vido: this.vido,
+                      });
+                      const finalRightGlobalDate = this.data.snapToTime.end({
+                          endTime: endDate,
+                          item: this.api.mergeDeep({}, initialDependantItem),
+                          time,
+                          movement: { px, time: timeDiff },
+                          vido: this.vido,
+                      });
+                      multi = multi.update(`$data.chart.items.${dependantItemId}.time`, (time) => {
+                          time.startDate = finalLeftGlobalDate;
+                          time.endDate = finalRightGlobalDate;
+                          return time;
+                      });
+                  }
+              }
+          }
+          return multi;
+      }
+      dispatchEvent(type, items, itemsData = null) {
           items = items.map((item) => this.merge({}, item));
           const modified = this.data.events[type](this.getEventArgument(items));
           let multi = this.state.multi();
           for (const item of modified) {
               multi = multi.update(`config.chart.items.${item.id}.time`, item.time);
-              if (itemData)
-                  multi = multi.update(`$data.chart.items.${item.id}`, itemData[item.id]);
+              if (itemsData)
+                  multi = multi.update(`$data.chart.items.${item.id}`, itemsData[item.id]);
           }
+          if (type === 'onStart' || type === 'onResize')
+              multi = this.moveDependantItems(modified, multi);
           multi.done();
       }
       getItemsForDiff() {
@@ -1415,7 +1478,10 @@
           ev.preventDefault();
           ev.stopPropagation();
           this.data.initialItems = this.getSelectedItems();
+          this.data.initialDependant = this.getDependantItems();
           this.data.initialItemsData = this.getSelectedItemsData(this.data.initialItems);
+          this.data.initialDependantData = this.getDependantItemsData();
+          console.log(this.data.initialDependantData);
           // @ts-ignore
           this.data.targetData = this.merge({}, ev.target.vido);
           this.data.initialPosition = {

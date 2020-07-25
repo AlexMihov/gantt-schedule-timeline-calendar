@@ -8,7 +8,7 @@
  * @link      https://github.com/neuronetio/gantt-schedule-timeline-calendar
  */
 
-import { Vido, Wrapper, htmlResult, Item, DataChartTime, ItemData, DataItems } from '../gstc';
+import { Vido, Wrapper, htmlResult, Item, DataChartTime, ItemData, DataItems, Items } from '../gstc';
 import DeepState from 'deep-state-observer';
 import { Api, getClass } from '../api/api';
 import { lithtml } from '@neuronet.io/vido/src/vido';
@@ -71,6 +71,7 @@ export interface Events {
 
 export interface Options {
   enabled?: boolean;
+  dependant?: boolean;
   debug?: boolean;
   handle?: Handle;
   content?: htmlResult;
@@ -87,7 +88,9 @@ export interface PluginData extends Options {
   leftIsMoving: boolean;
   rightIsMoving: boolean;
   initialItems: Item[];
+  initialDependant: Item[];
   initialItemsData: DataItems;
+  initialDependantData: DataItems;
   initialPosition: Point;
   currentPosition: Point;
   targetData: Item | null;
@@ -126,6 +129,7 @@ function generateEmptyData(options: Options = {}): PluginData {
   };
   const result: PluginData = {
     enabled: true,
+    dependant: true,
     debug: false,
     state: '',
     content: null,
@@ -139,7 +143,9 @@ function generateEmptyData(options: Options = {}): PluginData {
       time: 0,
     },
     initialItems: [],
+    initialDependant: [],
     initialItemsData: {},
+    initialDependantData: {},
     targetData: null,
     leftIsMoving: false,
     rightIsMoving: false,
@@ -296,14 +302,77 @@ class ItemResizing {
     };
   }
 
-  private dispatchEvent(type: 'onStart' | 'onResize' | 'onEnd', items: Item[], itemData: DataItems = null) {
+  private getDependantItems(): Item[] {
+    const dependantIds = [];
+    const itemsData = this.api.getItemsData();
+    for (const initialItem of this.data.initialItems) {
+      for (const dependantItemId of itemsData[initialItem.id].dependant) {
+        if (!dependantIds.includes(dependantItemId)) dependantIds.push(dependantItemId);
+      }
+    }
+    const items = this.state.get('config.chart.items');
+    return dependantIds.map((itemId) => items[itemId]).map((item) => this.api.mergeDeep({}, item));
+  }
+
+  private getDependantItemsData(): DataItems {
+    const dependantData = {};
+    const itemsData = this.api.getItemsData();
+    for (const dependant of this.data.initialDependant) {
+      dependantData[dependant.id] = this.api.mergeDeep({}, itemsData[dependant.id]);
+    }
+    return dependantData;
+  }
+
+  private moveDependantItems(modified: Item[], multi) {
+    if (!this.data.dependant) return multi;
+    const itemsData = this.api.getItemsData();
+    const time = this.state.get('config.chart.time');
+    for (const modifiedItem of modified) {
+      const initialItem: Item = this.data.initialItems.find((initial) => initial.id === modifiedItem.id);
+      const initialItemData = this.data.initialItemsData[initialItem.id];
+      const modifiedItemData = itemsData[modifiedItem.id];
+      if (modifiedItemData.dependant.length) {
+        for (const dependantItemId of modifiedItemData.dependant) {
+          const initialDependantItem = this.data.initialDependant.find((item) => item.id === dependantItemId);
+          const initialDependantItemData = this.data.initialDependantData[dependantItemId];
+          const timeDiff = modifiedItemData.time.endDate.diff(initialItemData.time.endDate, 'millisecond');
+          const startDate = initialDependantItemData.time.startDate.add(timeDiff, 'millisecond');
+          const endDate = initialDependantItemData.time.endDate.add(timeDiff, 'millisecond');
+          const px = modifiedItemData.position.right - initialDependantItemData.position.right;
+          const finalLeftGlobalDate = this.data.snapToTime.start({
+            startTime: startDate,
+            item: this.api.mergeDeep({}, initialDependantItem),
+            time,
+            movement: { px, time: timeDiff },
+            vido: this.vido,
+          });
+          const finalRightGlobalDate = this.data.snapToTime.end({
+            endTime: endDate,
+            item: this.api.mergeDeep({}, initialDependantItem),
+            time,
+            movement: { px, time: timeDiff },
+            vido: this.vido,
+          });
+          multi = multi.update(`$data.chart.items.${dependantItemId}.time`, (time) => {
+            time.startDate = finalLeftGlobalDate;
+            time.endDate = finalRightGlobalDate;
+            return time;
+          });
+        }
+      }
+    }
+    return multi;
+  }
+
+  private dispatchEvent(type: 'onStart' | 'onResize' | 'onEnd', items: Item[], itemsData: DataItems = null) {
     items = items.map((item) => this.merge({}, item) as Item);
     const modified = this.data.events[type](this.getEventArgument(items));
     let multi = this.state.multi();
     for (const item of modified) {
       multi = multi.update(`config.chart.items.${item.id}.time`, item.time);
-      if (itemData) multi = multi.update(`$data.chart.items.${item.id}`, itemData[item.id]);
+      if (itemsData) multi = multi.update(`$data.chart.items.${item.id}`, itemsData[item.id]);
     }
+    if (type === 'onStart' || type === 'onResize') multi = this.moveDependantItems(modified, multi);
     multi.done();
   }
 
@@ -317,7 +386,10 @@ class ItemResizing {
     ev.preventDefault();
     ev.stopPropagation();
     this.data.initialItems = this.getSelectedItems();
+    this.data.initialDependant = this.getDependantItems();
     this.data.initialItemsData = this.getSelectedItemsData(this.data.initialItems);
+    this.data.initialDependantData = this.getDependantItemsData();
+    console.log(this.data.initialDependantData);
     // @ts-ignore
     this.data.targetData = this.merge({}, ev.target.vido) as Item;
     this.data.initialPosition = {

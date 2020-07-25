@@ -34,7 +34,7 @@ for (let i = 0; i < iterations; i++) {
     id,
     label: 'item id ' + id,
     time: {
-      start: startDayjs.valueOf(),
+      start: startDayjs.startOf('day').valueOf(),
       end: startDayjs
         .clone()
         .add(Math.floor(Math.random() * 20) + 4, 'days')
@@ -44,15 +44,16 @@ for (let i = 0; i < iterations; i++) {
     rowId,
   };
 }
+
 items['0'].linkedWith = ['1'];
 items['1'].time = { ...items['0'].time };
 
 items['3'].dependant = ['5'];
-items['5'].time.start = items['3'].time.end;
-items['5'].time.end = GSTC.api.date(items['5'].time.start).add(2, 'day').valueOf();
+items['5'].time.start = items['3'].time.end + 1;
+items['5'].time.end = GSTC.api.date(items['5'].time.start).endOf('day').add(2, 'day').valueOf();
 items['5'].dependant = ['7'];
-items['7'].time.start = items['5'].time.end;
-items['7'].time.end = GSTC.api.date(items['7'].time.start).add(2, 'day').valueOf();
+items['7'].time.start = items['5'].time.end + 1;
+items['7'].time.end = GSTC.api.date(items['7'].time.start).endOf('day').add(2, 'day').valueOf();
 
 const columns = {
   data: {
